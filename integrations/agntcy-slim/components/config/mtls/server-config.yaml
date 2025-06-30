@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 slim:
+
   config:
     tracing:
       log_level: debug
@@ -21,8 +22,7 @@ slim:
             tls:
               cert_file: "/etc/certs/tls.crt"
               key_file: "/etc/certs/tls.key"
-
-              client_ca_file: "/etc/certs/ca.crt"
+              ca_file: "/etc/certs/ca.crt"
 
           clients: []
 

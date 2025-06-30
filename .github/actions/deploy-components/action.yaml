@@ -17,6 +17,14 @@ inputs:
     description: 'Deploy slim to a kind cluster'
     required: false
     default: 'false'
+  slim-config:
+    description: 'Set slim configuration to deploy'
+    required: false
+    default: 'base'
+  deploy-spire:    
+    description: 'Deploy SPIRE to a kind cluster'
+    required: false
+    default: 'false'
   slim-image-tag:
     description: 'Set slim container image version'
     required: false
@@ -104,11 +112,18 @@ runs:
         task -d ./${{ inputs.checkout-path }} integrations:kind:create \
           KIND_CLUSTER_NAME=${{ inputs.kind-cluster-name }}
 
+    - name: Deploy SPIRE
+      if: ${{ inputs.deploy-spire != 'false' }}      
+      shell: bash
+      run: |
+        task -d ./${{ inputs.checkout-path }} integrations:slim:spire:deploy
+
     - name: Deploy Slim
       if: ${{ inputs.deploy-slim != 'false' }}
       shell: bash
       run: |
         task -d ./${{ inputs.checkout-path }} integrations:slim:test-env:deploy \
+          SLIM_CONFIG=${{ inputs.slim-config }} \
           SLIM_IMAGE_TAG=${{ inputs.slim-image-tag }} \
           SLIM_CHART_TAG=${{ inputs.slim-chart-tag }} \
           KIND_CLUSTER_NAME=${{ inputs.kind-cluster-name }} \
