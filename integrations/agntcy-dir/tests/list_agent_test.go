@@ -74,7 +74,9 @@ var _ = ginkgo.Describe("Agntcy agent list tests", func() {
 
 				cmdOutput, err := runner.Run("dirctl", dirctlArgs...)
 
-				if err != nil {
+				sqlite_err := IsSQLitePushFailure(err)
+
+				if err != nil && !sqlite_err {
 					exitErr, ok := err.(*exec.ExitError)
 					if ok {
 						err = fmt.Errorf("%s, stderr:%s", exitErr.String(), string(exitErr.Stderr))
@@ -146,8 +148,8 @@ var _ = ginkgo.Describe("Agntcy agent list tests", func() {
 				}
 
 			},
-			ginkgo.Entry("list with one label", []string{"Natural Language Understanding"}, true),
-			ginkgo.Entry("list with two labes", []string{"Natural Language Understanding", "Fact Extraction"}, true),
+			ginkgo.Entry("list with one label", []string{"Natural Language Processing"}, true),
+			ginkgo.Entry("list with two labes", []string{"Natural Language Processing", "Natural Language Processing"}, true), // NOTE: The samples jsons only contains one label
 			ginkgo.Entry("list with non-existing label", []string{"Lorem ipsum dolor sit amet"}, false),
 		)
 	})

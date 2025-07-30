@@ -8,15 +8,15 @@
   "skills": [
     {
       "category_name": "Natural Language Processing",
-      "category_uid": "1",
+      "category_uid": 1,
       "class_name": "Text Completion",
-      "class_uid": "10201"
+      "class_uid": 10201
     },
     {
       "category_name": "Natural Language Processing",
-      "category_uid": "1",
+      "category_uid": 1,
       "class_name": "Problem Solving",
-      "class_uid": "10702"
+      "class_uid": 10702
     }
   ],
   "locators": [
@@ -27,7 +27,7 @@
   ],
   "extensions": [
     {
-      "name": "oasf.agntcy.org/features/runtime/framework",
+      "name": "schema.oasf.agntcy.org/features/runtime/framework",
       "version": "v0.0.0",
       "data": {
         "sbom": {
@@ -54,7 +54,7 @@
       }
     },
     {
-      "name": "oasf.agntcy.org/features/runtime/language",
+      "name": "schema.oasf.agntcy.org/features/runtime/language",
       "version": "v0.0.0",
       "data": {
         "type": "python",
@@ -62,14 +62,14 @@
       }
     },
     {
-      "name": "oasf.agntcy.org/features/framework/orchestration",
+      "name": "schema.oasf.agntcy.org/features/framework/orchestration",
       "version": "v1.0.0",
       "data": {
         "type": "graph"
       }
     },
     {
-      "name": "oasf.agntcy.org/features/runtime/io-mapper",
+      "name": "schema.oasf.agntcy.org/features/runtime/io-mapper",
       "version": "v1.0.0",
       "data": {
         "input_name": "topic",
@@ -80,7 +80,7 @@
       }
     },
     {
-      "name": "oasf.agntcy.org/features/observability/logging",
+      "name": "schema.oasf.agntcy.org/features/observability/logging",
       "version": "v1.0.0",
       "data": {
         "format": "\u003cstring\u003e",
@@ -88,7 +88,7 @@
       }
     },
     {
-      "name": "oasf.agntcy.org/features/framework/llm",
+      "name": "schema.oasf.agntcy.org/features/framework/llm",
       "version": "v1.0.0",
       "data": {
         "max_retries": 2,
