@@ -58,6 +58,7 @@ var _ = ginkgo.Describe("Agntcy slim sanity test", func() {
 			switch slimConfig {
 			case "base":
 				k8sHelper = k8sHelper.WithCommand([]string{"python"}).WithArgs([]string{
+					"-u",
 					"autogen_agent.py",
 					"--config",
 					`{"endpoint": "http://agntcy-slim:46357",
@@ -69,6 +70,7 @@ var _ = ginkgo.Describe("Agntcy slim sanity test", func() {
 			case "mtls":
 				// Create a pod with the autogen agent with MTLS cert from secret
 				k8sHelper = k8sHelper.WithCommand([]string{"python"}).WithArgs([]string{
+					"-u",
 					"autogen_agent.py",
 					"--config",
 					`{"endpoint": "https://agntcy-slim:46357",
@@ -93,6 +95,7 @@ var _ = ginkgo.Describe("Agntcy slim sanity test", func() {
 
 				// Create a pod with the autogen agent with MTLS from SPIRE
 				k8sHelper = k8sHelper.WithCommand([]string{"python"}).WithArgs([]string{
+					"-u",
 					"autogen_agent.py",
 					"--config",
 					`{"endpoint": "https://agntcy-slim:46357",
@@ -132,6 +135,7 @@ var _ = ginkgo.Describe("Agntcy slim sanity test", func() {
 			switch slimConfig {
 			case "base":
 				k8sHelper = k8sHelper.WithCommand([]string{"python"}).WithArgs([]string{
+					"-u",
 					"langchain_agent.py",
 					"-m",
 					"Budapest",
@@ -145,6 +149,7 @@ var _ = ginkgo.Describe("Agntcy slim sanity test", func() {
 			case "mtls":
 				// Create a pod with the autogen agent with MTLS cert from secret
 				k8sHelper = k8sHelper.WithCommand([]string{"python"}).WithArgs([]string{
+					"-u",
 					"langchain_agent.py",
 					"-m",
 					"Budapest",
@@ -171,6 +176,7 @@ var _ = ginkgo.Describe("Agntcy slim sanity test", func() {
 
 				// Create a pod with the autogen agent with MTLS from SPIRE
 				k8sHelper = k8sHelper.WithCommand([]string{"python"}).WithArgs([]string{
+					"-u",
 					"langchain_agent.py",
 					"-m",
 					"Budapest",

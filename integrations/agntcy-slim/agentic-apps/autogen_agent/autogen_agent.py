@@ -41,8 +41,9 @@ async def run_agent(message, config, iterations):
 
     async with participant:
         if message:
-            # Create a route to the remote ID
-            await participant.set_route(remote_organization, remote_namespace, remote_agent)
+             # Create a route to the remote ID
+            remote = slim_bindings.PyName(remote_organization, remote_namespace, remote_agent)
+            await participant.set_route(remote)
 
             # create a session
             session = await participant.create_session(
