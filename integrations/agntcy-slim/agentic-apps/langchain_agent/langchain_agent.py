@@ -23,9 +23,17 @@ async def run_agent(message, config, iterations):
     remote_namespace = "default"
     remote_agent = "autogen"
 
-    # create new participant object
-    participant = await slim_bindings.Slim.new(local_organization, local_namespace, local_agent)
+    shared_secret  = "my_shared_secret"
+    provider = slim_bindings.PyIdentityProvider.SharedSecret(
+        identity=local_agent, shared_secret=shared_secret
+    )
+    verifier = slim_bindings.PyIdentityVerifier.SharedSecret(
+        identity=local_agent, shared_secret=shared_secret
+    )
 
+    local_name = slim_bindings.PyName(local_organization, local_namespace, local_agent)
+    # create new participant object
+    participant = await slim_bindings.Slim.new(local_name, provider, verifier)
     # Connect to remote slim server
     print(f"connecting to: {config['endpoint']}")
     _ = await participant.connect(config)
@@ -36,7 +44,8 @@ async def run_agent(message, config, iterations):
     async with participant:
         if message:
             # Create a route to the remote ID
-            await participant.set_route(remote_organization, remote_namespace, remote_agent)
+            remote = slim_bindings.PyName(remote_organization, remote_namespace, remote_agent)
+            await participant.set_route(remote)
 
             # create a session
             session = await participant.create_session(
@@ -49,9 +58,7 @@ async def run_agent(message, config, iterations):
                     await participant.publish(
                         session,
                         message.encode(),
-                        remote_organization,
-                        remote_namespace,
-                        remote_agent,
+                        remote,
                     )
                     print(f"{instance} sent:", message)
 
@@ -102,7 +109,7 @@ async def main():
     parser.add_argument("-m", "--message", type=str, help="Message to send.")
     parser.add_argument("-c", "--config", type=str, help="Slim config.",
     default={
-        "endpoint": "http://127.0.0.1:12345",
+        "endpoint": "http://127.0.0.1:46357",
         "tls": {
             "insecure": True,
         },

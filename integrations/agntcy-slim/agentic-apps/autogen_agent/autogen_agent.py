@@ -20,8 +20,17 @@ async def run_agent(message, config, iterations):
     remote_namespace = "default"
     remote_agent = "langchain"
 
+    shared_secret  = "my_shared_secret"
+    provider = slim_bindings.PyIdentityProvider.SharedSecret(
+        identity=local_agent, shared_secret=shared_secret
+    )
+    verifier = slim_bindings.PyIdentityVerifier.SharedSecret(
+        identity=local_agent, shared_secret=shared_secret
+    )
+
+    local_name = slim_bindings.PyName(local_organization, local_namespace, local_agent)
     # create new participant object
-    participant = await slim_bindings.Slim.new(local_organization, local_namespace, local_agent)
+    participant = await slim_bindings.Slim.new(local_name, provider, verifier)
 
     # Connect to remote slim server
     print(f"connecting to: {config['endpoint']}")
@@ -32,8 +41,9 @@ async def run_agent(message, config, iterations):
 
     async with participant:
         if message:
-            # Create a route to the remote ID
-            await participant.set_route(remote_organization, remote_namespace, remote_agent)
+             # Create a route to the remote ID
+            remote = slim_bindings.PyName(remote_organization, remote_namespace, remote_agent)
+            await participant.set_route(remote)
 
             # create a session
             session = await participant.create_session(
@@ -100,13 +110,13 @@ def convert(value, param):
     try:
         return json.loads(value)
     except json.JSONDecodeError:
-        raise ValueError(f"{value} is not valid JSON for parameter {param}")
+        raise ValueError(f"{value} is not valid JSON for parameter {param}")  
 
 async def main():
     parser = argparse.ArgumentParser(description="Command line client for message passing.")
     parser.add_argument("-c", "--config", type=str, help="Slim config.",
     default={
-        "endpoint": "http://127.0.0.1:12345",
+        "endpoint": "http://127.0.0.1:46357",
         "tls": {
             "insecure": True,
         },
