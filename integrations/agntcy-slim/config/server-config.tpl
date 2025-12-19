@@ -27,12 +27,17 @@ slim:
           - endpoint: "0.0.0.0:{{ .SlimPort }}"
             metadata:
               local_endpoint: ${env:MY_POD_IP}
-              external_endpoint: "{{ .ServiceName }}:{{ .SlimPort }}"     
+              external_endpoint: "{{ .ServiceName }}:{{ .SlimPort }}"    
+              trust_domain: "example.org" 
             tls:
     {{- if .Spire.Enabled }}
-              cert_file: "/svids/tls.crt"
-              key_file: "/svids/tls.key"
-              ca_file: "/svids/svid_bundle.pem"
+              source:
+                type: spire
+                socket_path: unix:/tmp/spire-agent/public/api.sock
+                target_spiffe_id: spiffe://example.local/ns/slim/sa/slim                  
+              ca_source:
+                type: spire
+                socket_path: unix:/tmp/spire-agent/public/api.sock
     {{- else }}
               insecure: true
     {{- end }}
@@ -41,9 +46,14 @@ slim:
             - endpoint: "{{ .SlimControllerEndpoint }}"
               tls:
     {{- if .Spire.Enabled }}
-                cert_file: "/svids/tls.crt"
-                key_file: "/svids/tls.key"
-                ca_file: "/svids/svid_bundle.pem"
+                source:
+                  type: spire
+                  socket_path: unix:/tmp/spire-agent/public/api.sock               
+                ca_source:
+                  type: spire
+                  socket_path: unix:/tmp/spire-agent/public/api.sock
+                  trust_domains:
+                    - example.org
     {{- else }}
                 insecure: true
     {{- end }}
