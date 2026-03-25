@@ -6,11 +6,349 @@ version: '3'
 
 silent: true
 
+vars:
+  BENCH_MODES: '{{ .BENCH_MODES | default "request-reply fire-and-forget write" }}'
+  BENCH_CLIENTS: '{{ .BENCH_CLIENTS | default "1 10 50" }}'
+  BENCH_SIZES: '{{ .BENCH_SIZES | default "16 128 1024 10240" }}'
+  BENCH_REQUEST_RATES: '{{ .BENCH_REQUEST_RATES | default "1000" }}'
+  BENCH_PUB_RATES: '{{ .BENCH_PUB_RATES | default "" }}'
+  BENCH_WRITE_RATES: '{{ .BENCH_WRITE_RATES | default "" }}'
+  BENCH_DURATION: '{{ .BENCH_DURATION | default "5s" }}'
+  BENCH_REPEATS: '{{ .BENCH_REPEATS | default "1" }}'
+  CI_BENCH_REPEATS: '{{ .CI_BENCH_REPEATS | default "25" }}'
+  SLIMCTL_RELEASE_TAG: '{{ .SLIMCTL_RELEASE_TAG | default "slimctl-v1.2.0" }}'
+  SLIMCTL_PATH: '{{ .SLIMCTL_PATH | default "./bin/slimctl" }}'
+  SLIM_BINDINGS_SETUP_VERSION: '{{ .SLIM_BINDINGS_SETUP_VERSION | default "v1.2.0" }}'
+  CI_CAPACITY_REPEATS: '{{ .CI_CAPACITY_REPEATS | default "25" }}'
+  CI_CAPACITY_SWEEP_REPEATS: '{{ .CI_CAPACITY_SWEEP_REPEATS | default "25" }}'
+
+  CAPACITY_MODES: '{{ .CAPACITY_MODES | default "fire-and-forget" }}'
+  CAPACITY_CLIENTS: '{{ .CAPACITY_CLIENTS | default "1" }}'
+  CAPACITY_SIZES: '{{ .CAPACITY_SIZES | default "16384" }}'
+  CAPACITY_DURATION: '{{ .CAPACITY_DURATION | default "2s" }}'
+  CAPACITY_REPEATS: '{{ .CAPACITY_REPEATS | default "1" }}'
+  CAPACITY_SWEEP_REPEATS: '{{ .CAPACITY_SWEEP_REPEATS | default "3" }}'
+  CAPACITY_START_RATE: '{{ .CAPACITY_START_RATE | default "128000" }}'
+  CAPACITY_MAX_RATE: '{{ .CAPACITY_MAX_RATE | default "176000" }}'
+  CAPACITY_GROWTH_FACTOR: '{{ .CAPACITY_GROWTH_FACTOR | default "1.125" }}'
+  CAPACITY_PLATEAU_THRESHOLD: '{{ .CAPACITY_PLATEAU_THRESHOLD | default "0.03" }}'
+  CAPACITY_PLATEAU_STEPS: '{{ .CAPACITY_PLATEAU_STEPS | default "2" }}'
+  CAPACITY_MAX_STEPS: '{{ .CAPACITY_MAX_STEPS | default "6" }}'
+  CAPACITY_REFINEMENT_STEPS: '{{ .CAPACITY_REFINEMENT_STEPS | default "4" }}'
+  CAPACITY_MIN_RATE_DELTA: '{{ .CAPACITY_MIN_RATE_DELTA | default "1000" }}'
+
+  REQUEST_CAPACITY_CLIENTS: '{{ .REQUEST_CAPACITY_CLIENTS | default "1" }}'
+  REQUEST_CAPACITY_SIZES: '{{ .REQUEST_CAPACITY_SIZES | default "16384" }}'
+  REQUEST_CAPACITY_DURATION: '{{ .REQUEST_CAPACITY_DURATION | default "2s" }}'
+  REQUEST_CAPACITY_REPEATS: '{{ .REQUEST_CAPACITY_REPEATS | default "1" }}'
+  REQUEST_CAPACITY_SWEEP_REPEATS: '{{ .REQUEST_CAPACITY_SWEEP_REPEATS | default "3" }}'
+  REQUEST_CAPACITY_START_RATE: '{{ .REQUEST_CAPACITY_START_RATE | default "1000" }}'
+  REQUEST_CAPACITY_MAX_RATE: '{{ .REQUEST_CAPACITY_MAX_RATE | default "8000" }}'
+  REQUEST_CAPACITY_GROWTH_FACTOR: '{{ .REQUEST_CAPACITY_GROWTH_FACTOR | default "2.0" }}'
+  REQUEST_CAPACITY_PLATEAU_THRESHOLD: '{{ .REQUEST_CAPACITY_PLATEAU_THRESHOLD | default "0.05" }}'
+  REQUEST_CAPACITY_PLATEAU_STEPS: '{{ .REQUEST_CAPACITY_PLATEAU_STEPS | default "1" }}'
+  REQUEST_CAPACITY_MAX_STEPS: '{{ .REQUEST_CAPACITY_MAX_STEPS | default "6" }}'
+  REQUEST_CAPACITY_REFINEMENT_STEPS: '{{ .REQUEST_CAPACITY_REFINEMENT_STEPS | default "4" }}'
+  REQUEST_CAPACITY_MIN_RATE_DELTA: '{{ .REQUEST_CAPACITY_MIN_RATE_DELTA | default "250" }}'
+
+  PING_PONG_CAPACITY_CLIENTS: '{{ .PING_PONG_CAPACITY_CLIENTS | default "1" }}'
+  PING_PONG_CAPACITY_SIZES: '{{ .PING_PONG_CAPACITY_SIZES | default "16384" }}'
+  PING_PONG_CAPACITY_DURATION: '{{ .PING_PONG_CAPACITY_DURATION | default "2s" }}'
+  PING_PONG_CAPACITY_REPEATS: '{{ .PING_PONG_CAPACITY_REPEATS | default "1" }}'
+  PING_PONG_CAPACITY_SWEEP_REPEATS: '{{ .PING_PONG_CAPACITY_SWEEP_REPEATS | default "3" }}'
+  PING_PONG_CAPACITY_START_RATE: '{{ .PING_PONG_CAPACITY_START_RATE | default "1000" }}'
+  PING_PONG_CAPACITY_MAX_RATE: '{{ .PING_PONG_CAPACITY_MAX_RATE | default "8000" }}'
+  PING_PONG_CAPACITY_GROWTH_FACTOR: '{{ .PING_PONG_CAPACITY_GROWTH_FACTOR | default "2.0" }}'
+  PING_PONG_CAPACITY_PLATEAU_THRESHOLD: '{{ .PING_PONG_CAPACITY_PLATEAU_THRESHOLD | default "0.05" }}'
+  PING_PONG_CAPACITY_PLATEAU_STEPS: '{{ .PING_PONG_CAPACITY_PLATEAU_STEPS | default "1" }}'
+  PING_PONG_CAPACITY_MAX_STEPS: '{{ .PING_PONG_CAPACITY_MAX_STEPS | default "4" }}'
+
+  WRITE_CAPACITY_CLIENTS: '{{ .WRITE_CAPACITY_CLIENTS | default "1" }}'
+  WRITE_CAPACITY_SIZES: '{{ .WRITE_CAPACITY_SIZES | default "16384" }}'
+  WRITE_CAPACITY_DURATION: '{{ .WRITE_CAPACITY_DURATION | default "2s" }}'
+  WRITE_CAPACITY_REPEATS: '{{ .WRITE_CAPACITY_REPEATS | default "1" }}'
+  WRITE_CAPACITY_SWEEP_REPEATS: '{{ .WRITE_CAPACITY_SWEEP_REPEATS | default "3" }}'
+  WRITE_CAPACITY_START_RATE: '{{ .WRITE_CAPACITY_START_RATE | default "128000" }}'
+  WRITE_CAPACITY_MAX_RATE: '{{ .WRITE_CAPACITY_MAX_RATE | default "176000" }}'
+  WRITE_CAPACITY_GROWTH_FACTOR: '{{ .WRITE_CAPACITY_GROWTH_FACTOR | default "1.125" }}'
+  WRITE_CAPACITY_PLATEAU_THRESHOLD: '{{ .WRITE_CAPACITY_PLATEAU_THRESHOLD | default "0.03" }}'
+  WRITE_CAPACITY_PLATEAU_STEPS: '{{ .WRITE_CAPACITY_PLATEAU_STEPS | default "2" }}'
+  WRITE_CAPACITY_MAX_STEPS: '{{ .WRITE_CAPACITY_MAX_STEPS | default "6" }}'
+  WRITE_CAPACITY_REFINEMENT_STEPS: '{{ .WRITE_CAPACITY_REFINEMENT_STEPS | default "4" }}'
+  WRITE_CAPACITY_MIN_RATE_DELTA: '{{ .WRITE_CAPACITY_MIN_RATE_DELTA | default "1000" }}'
+
 tasks:
   default:
     cmd: task -l
+
+  deps:slimctl-download:
+    desc: Download slimctl executable for the current OS and architecture
+    cmds:
+      - |
+        set -e
+        SLIMCTL_ARCH=$(arch)
+        SLIMCTL_OS=$(uname -s | tr '[:upper:]' '[:lower:]')
+        SLIMCTL_ABI=""
+        if [ "$SLIMCTL_ARCH" = "x86_64" ]; then
+          SLIMCTL_ARCH="amd64"
+        fi
+        if [ "$SLIMCTL_OS" = "linux" ]; then
+          if ldd --version 2>&1 | grep -qi musl; then
+            SLIMCTL_ABI="-musl"
+          else
+            SLIMCTL_ABI="-gnu"
+          fi
+        fi
+        echo "Detected OS: $SLIMCTL_OS, Architecture: $SLIMCTL_ARCH${SLIMCTL_ABI}"
+        SLIMCTL_URL="https://github.com/agntcy/slim/releases/download/{{ .SLIMCTL_RELEASE_TAG }}/slimctl-$SLIMCTL_OS-$SLIMCTL_ARCH${SLIMCTL_ABI}.tar.gz"
+        echo "Downloading slimctl from $SLIMCTL_URL"
+        TARGET_DIR=$(dirname {{ .SLIMCTL_PATH }})
+        mkdir -p "$TARGET_DIR"
+        TMP_DIR=$(mktemp -d)
+        trap 'rm -rf "$TMP_DIR"' EXIT
+        curl --fail --show-error --location -o "$TMP_DIR/slimctl.tar.gz" "$SLIMCTL_URL"
+        tar -xzf "$TMP_DIR/slimctl.tar.gz" -C "$TMP_DIR"
+        mv "$TMP_DIR/slimctl" {{ .SLIMCTL_PATH }}
+        chmod +x {{ .SLIMCTL_PATH }}
+        echo "slimctl downloaded to {{ .SLIMCTL_PATH }}"
+        {{ .SLIMCTL_PATH }} version || true
+
+  deps:slim-bindings-setup:
+    desc: Install the native SLIM bindings library required by benchmark helpers
+    dir: .
+    cmds:
+      - |
+        set -e
+        CACHE_DIR="$HOME/go/.cgo-cache/slim-bindings"
+        if [ -d "$CACHE_DIR" ] && find "$CACHE_DIR" -maxdepth 1 -type f -name 'libslim_bindings_*' | grep -q .; then
+          echo "Using existing SLIM bindings in $CACHE_DIR"
+          find "$CACHE_DIR" -maxdepth 1 -type f -name 'libslim_bindings_*' -print
+          exit 0
+        fi
+        go run github.com/agntcy/slim-bindings-go/cmd/slim-bindings-setup@{{ .SLIM_BINDINGS_SETUP_VERSION }}
+
+  benchmark:local:cleanup:
+    internal: true
+    desc: Stop leftover local benchmark processes before a fresh run
+    dir: .
+    cmds:
+      - pkill -f 'echo-client.*-local agntcy/demo/echo' 2>/dev/null || true
+      - pkill -f 'rate-client.*-local agntcy/demo/client' 2>/dev/null || true
+      - pkill -f 'slimctl slim start -c' 2>/dev/null || true
+      - pkill -9 slimctl 2>/dev/null || true
 
   test:
     desc: All Slim benchmark test
     cmds:
       - go test ./tests -v -failfast -test.v -test.paniconexit0 -ginkgo.timeout 30m -timeout 30m -ginkgo.v --ginkgo.json-report=../../reports/test-report-agntcy-slim.json --ginkgo.junit-report=../../reports/test-report-agntcy-slim.xml
+
+  benchmark:suite:
+    desc: Run the local SLIM benchmark suite with reproducible defaults and optional overrides
+    dir: .
+    deps:
+      - benchmark:local:cleanup
+      - deps:slim-bindings-setup
+    env:
+      MODES: '{{ .BENCH_MODES }}'
+      CLIENTS: '{{ .BENCH_CLIENTS }}'
+      SIZES: '{{ .BENCH_SIZES }}'
+      REQUEST_RATES: '{{ .BENCH_REQUEST_RATES }}'
+      PUB_RATES: '{{ .BENCH_PUB_RATES }}'
+      WRITE_RATES: '{{ .BENCH_WRITE_RATES }}'
+      DURATION: '{{ .BENCH_DURATION }}'
+      REPEATS: '{{ .BENCH_REPEATS }}'
+    cmds:
+      - bash ./scripts/run_suite.sh
+
+  benchmark:request-reply:
+    desc: Run a reproducible request-reply-only benchmark suite profile
+    dir: .
+    deps:
+      - benchmark:local:cleanup
+      - deps:slim-bindings-setup
+    env:
+      MODES: 'request-reply'
+      CLIENTS: '{{ .BENCH_CLIENTS }}'
+      SIZES: '{{ .BENCH_SIZES }}'
+      REQUEST_RATES: '{{ .BENCH_REQUEST_RATES }}'
+      WRITE_RATES: '{{ .BENCH_WRITE_RATES }}'
+      DURATION: '{{ .BENCH_DURATION }}'
+      REPEATS: '{{ .BENCH_REPEATS }}'
+    cmds:
+      - bash ./scripts/run_suite.sh
+
+  benchmark:fire-and-forget:
+    desc: Run a reproducible fire-and-forget-only benchmark suite profile
+    dir: .
+    deps:
+      - benchmark:local:cleanup
+      - deps:slim-bindings-setup
+    env:
+      MODES: 'fire-and-forget'
+      CLIENTS: '{{ .BENCH_CLIENTS }}'
+      SIZES: '{{ .BENCH_SIZES }}'
+      PUB_RATES: '{{ .BENCH_PUB_RATES }}'
+      WRITE_RATES: '{{ .BENCH_WRITE_RATES }}'
+      DURATION: '{{ .BENCH_DURATION }}'
+      REPEATS: '{{ .BENCH_REPEATS }}'
+    cmds:
+      - bash ./scripts/run_suite.sh
+
+  benchmark:write:
+    desc: Run a reproducible write-only benchmark suite profile with no responder
+    dir: .
+    deps:
+      - benchmark:local:cleanup
+      - deps:slim-bindings-setup
+    env:
+      MODES: 'write'
+      CLIENTS: '{{ .BENCH_CLIENTS }}'
+      SIZES: '{{ .BENCH_SIZES }}'
+      PUB_RATES: '{{ .BENCH_PUB_RATES }}'
+      WRITE_RATES: '{{ .BENCH_WRITE_RATES }}'
+      DURATION: '{{ .BENCH_DURATION }}'
+      REPEATS: '{{ .BENCH_REPEATS }}'
+    cmds:
+      - bash ./scripts/run_suite.sh
+
+  benchmark:capacity:fire-and-forget-16kb:
+    desc: Run the repeated adaptive fire-and-forget capacity sweep for 1 client at 16kB
+    dir: .
+    deps:
+      - benchmark:local:cleanup
+      - deps:slim-bindings-setup
+    env:
+      MODES: '{{ .CAPACITY_MODES }}'
+      CLIENTS: '{{ .CAPACITY_CLIENTS }}'
+      SIZES: '{{ .CAPACITY_SIZES }}'
+      DURATION: '{{ .CAPACITY_DURATION }}'
+      REPEATS: '{{ .CAPACITY_REPEATS }}'
+      CAPACITY_SWEEP: '1'
+      CAPACITY_SWEEP_MODES: '{{ .CAPACITY_MODES }}'
+      CAPACITY_SWEEP_CLIENTS: '{{ .CAPACITY_CLIENTS }}'
+      CAPACITY_SWEEP_SIZES: '{{ .CAPACITY_SIZES }}'
+      CAPACITY_SWEEP_START_RATE: '{{ .CAPACITY_START_RATE }}'
+      CAPACITY_SWEEP_MAX_RATE: '{{ .CAPACITY_MAX_RATE }}'
+      CAPACITY_SWEEP_GROWTH_FACTOR: '{{ .CAPACITY_GROWTH_FACTOR }}'
+      CAPACITY_SWEEP_PLATEAU_THRESHOLD: '{{ .CAPACITY_PLATEAU_THRESHOLD }}'
+      CAPACITY_SWEEP_PLATEAU_STEPS: '{{ .CAPACITY_PLATEAU_STEPS }}'
+      CAPACITY_SWEEP_MAX_STEPS: '{{ .CAPACITY_MAX_STEPS }}'
+      CAPACITY_SWEEP_REPEATS: '{{ .CAPACITY_SWEEP_REPEATS }}'
+      CAPACITY_SWEEP_REFINEMENT_STEPS: '{{ .CAPACITY_REFINEMENT_STEPS }}'
+      CAPACITY_SWEEP_MIN_RATE_DELTA: '{{ .CAPACITY_MIN_RATE_DELTA }}'
+    cmds:
+      - bash ./scripts/run_suite.sh
+
+  benchmark:capacity:request-reply-16kb:
+    desc: Run the repeated adaptive request-reply capacity sweep for 1 client at 16kB
+    dir: .
+    deps:
+      - benchmark:local:cleanup
+      - deps:slim-bindings-setup
+    env:
+      MODES: 'request-reply'
+      CLIENTS: '{{ .REQUEST_CAPACITY_CLIENTS }}'
+      SIZES: '{{ .REQUEST_CAPACITY_SIZES }}'
+      REQUEST_RATES: '{{ .REQUEST_CAPACITY_START_RATE }}'
+      DURATION: '{{ .REQUEST_CAPACITY_DURATION }}'
+      REPEATS: '{{ .REQUEST_CAPACITY_REPEATS }}'
+      CAPACITY_SWEEP: '1'
+      CAPACITY_SWEEP_MODES: 'request-reply'
+      CAPACITY_SWEEP_CLIENTS: '{{ .REQUEST_CAPACITY_CLIENTS }}'
+      CAPACITY_SWEEP_SIZES: '{{ .REQUEST_CAPACITY_SIZES }}'
+      CAPACITY_SWEEP_START_RATE: '{{ .REQUEST_CAPACITY_START_RATE }}'
+      CAPACITY_SWEEP_MAX_RATE: '{{ .REQUEST_CAPACITY_MAX_RATE }}'
+      CAPACITY_SWEEP_GROWTH_FACTOR: '{{ .REQUEST_CAPACITY_GROWTH_FACTOR }}'
+      CAPACITY_SWEEP_PLATEAU_THRESHOLD: '{{ .REQUEST_CAPACITY_PLATEAU_THRESHOLD }}'
+      CAPACITY_SWEEP_PLATEAU_STEPS: '{{ .REQUEST_CAPACITY_PLATEAU_STEPS }}'
+      CAPACITY_SWEEP_MAX_STEPS: '{{ .REQUEST_CAPACITY_MAX_STEPS }}'
+      CAPACITY_SWEEP_REPEATS: '{{ .REQUEST_CAPACITY_SWEEP_REPEATS }}'
+      CAPACITY_SWEEP_REFINEMENT_STEPS: '{{ .REQUEST_CAPACITY_REFINEMENT_STEPS }}'
+      CAPACITY_SWEEP_MIN_RATE_DELTA: '{{ .REQUEST_CAPACITY_MIN_RATE_DELTA }}'
+    cmds:
+      - bash ./scripts/run_suite.sh
+
+  benchmark:capacity:write-16kb:
+    desc: Run the repeated adaptive write capacity sweep for 1 client at 16kB with no responder
+    dir: .
+    deps:
+      - benchmark:local:cleanup
+      - deps:slim-bindings-setup
+    env:
+      MODES: 'write'
+      CLIENTS: '{{ .WRITE_CAPACITY_CLIENTS }}'
+      SIZES: '{{ .WRITE_CAPACITY_SIZES }}'
+      PUB_RATES: '{{ .WRITE_CAPACITY_START_RATE }}'
+      DURATION: '{{ .WRITE_CAPACITY_DURATION }}'
+      REPEATS: '{{ .WRITE_CAPACITY_REPEATS }}'
+      CAPACITY_SWEEP: '1'
+      CAPACITY_SWEEP_MODES: 'write'
+      CAPACITY_SWEEP_CLIENTS: '{{ .WRITE_CAPACITY_CLIENTS }}'
+      CAPACITY_SWEEP_SIZES: '{{ .WRITE_CAPACITY_SIZES }}'
+      CAPACITY_SWEEP_START_RATE: '{{ .WRITE_CAPACITY_START_RATE }}'
+      CAPACITY_SWEEP_MAX_RATE: '{{ .WRITE_CAPACITY_MAX_RATE }}'
+      CAPACITY_SWEEP_GROWTH_FACTOR: '{{ .WRITE_CAPACITY_GROWTH_FACTOR }}'
+      CAPACITY_SWEEP_PLATEAU_THRESHOLD: '{{ .WRITE_CAPACITY_PLATEAU_THRESHOLD }}'
+      CAPACITY_SWEEP_PLATEAU_STEPS: '{{ .WRITE_CAPACITY_PLATEAU_STEPS }}'
+      CAPACITY_SWEEP_MAX_STEPS: '{{ .WRITE_CAPACITY_MAX_STEPS }}'
+      CAPACITY_SWEEP_REPEATS: '{{ .WRITE_CAPACITY_SWEEP_REPEATS }}'
+      CAPACITY_SWEEP_REFINEMENT_STEPS: '{{ .WRITE_CAPACITY_REFINEMENT_STEPS }}'
+      CAPACITY_SWEEP_MIN_RATE_DELTA: '{{ .WRITE_CAPACITY_MIN_RATE_DELTA }}'
+    cmds:
+      - bash ./scripts/run_suite.sh
+
+  benchmark:ci:suite-smoke:
+    desc: Run a bounded CI-safe smoke suite across request-reply, fire-and-forget, and write with statistically meaningful repeats
+    dir: .
+    deps:
+      - benchmark:local:cleanup
+      - deps:slim-bindings-setup
+    env:
+      MODES: 'request-reply fire-and-forget write'
+      CLIENTS: '1'
+      SIZES: '16'
+      REQUEST_RATES: '100'
+      PUB_RATES: '1000'
+      DURATION: '1s'
+      REPEATS: '{{ .CI_BENCH_REPEATS }}'
+    cmds:
+      - bash ./scripts/run_suite.sh
+
+  benchmark:ci:capacity:
+    desc: Run bounded CI-safe capacity sweeps for fire-and-forget, request-reply, and write with 1 client at 16kB and statistically meaningful repeats
+    dir: .
+    cmds:
+      - rm -f reports/capacity-fire-and-forget.md reports/capacity-request-reply.md reports/capacity-write.md
+      - task benchmark:capacity:fire-and-forget-16kb CAPACITY_DURATION=5s CAPACITY_REPEATS={{ .CI_CAPACITY_REPEATS }} CAPACITY_SWEEP_REPEATS={{ .CI_CAPACITY_SWEEP_REPEATS }}
+      - cp reports/capacity_sweep.md reports/capacity-fire-and-forget.md
+      - task benchmark:capacity:request-reply-16kb REQUEST_CAPACITY_DURATION=5s REQUEST_CAPACITY_REPEATS={{ .CI_CAPACITY_REPEATS }} REQUEST_CAPACITY_SWEEP_REPEATS={{ .CI_CAPACITY_SWEEP_REPEATS }}
+      - cp reports/capacity_sweep.md reports/capacity-request-reply.md
+      - task benchmark:capacity:write-16kb WRITE_CAPACITY_DURATION=5s WRITE_CAPACITY_REPEATS={{ .CI_CAPACITY_REPEATS }} WRITE_CAPACITY_SWEEP_REPEATS={{ .CI_CAPACITY_SWEEP_REPEATS }}
+      - cp reports/capacity_sweep.md reports/capacity-write.md
+      - |
+        set -e
+        OUTPUT_FILE="reports/capacity_sweep.md"
+        {
+          echo "# SLIM Adaptive Capacity Sweep Report"
+          echo
+          echo "**Generated:** $(date '+%Y-%m-%d %H:%M:%S')"
+          echo
+          echo "This CI report combines the sink-backed capacity sweeps and the write capacity sweep into one markdown artifact."
+          echo
+          echo "## Sink-Backed Modes"
+          echo
+          if [ -f reports/capacity-fire-and-forget.md ]; then
+            sed -n '/^#### /,$p' reports/capacity-fire-and-forget.md
+            echo
+          fi
+          if [ -f reports/capacity-request-reply.md ]; then
+            sed -n '/^#### /,$p' reports/capacity-request-reply.md
+            echo
+          fi
+          echo "## Write Mode"
+          echo
+          if [ -f reports/capacity-write.md ]; then
+            sed -n '/^#### /,$p' reports/capacity-write.md
+            echo
+          fi
+        } > "$OUTPUT_FILE"
