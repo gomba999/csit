@@ -45,7 +45,7 @@ on:
         default: true
         type: boolean
       skip_a2a_test:
-        description: "Skip A2A Rust-Go interoperability tests"
+        description: "Skip A2A interoperability tests"
         required: false
         default: false
         type: boolean
@@ -59,7 +59,74 @@ on:
     - cron: "0 4 * * *"
 
 jobs:
+  detect-changes:
+    runs-on: ubuntu-latest
+    outputs:
+      run-a2a: ${{ steps.compute.outputs.run-a2a }}
+      run-slim: ${{ steps.compute.outputs.run-slim }}
+      run-directory: ${{ steps.compute.outputs.run-directory }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Detect integration changes
+        id: filter
+        if: ${{ github.event_name != 'workflow_dispatch' && github.event_name != 'schedule' }}
+        uses: dorny/paths-filter@v3
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          filters: |
+            a2a:
+              - integrations/agntcy-a2a/**
+            slim:
+              - integrations/agntcy-slim/**
+            directory:
+              - integrations/agntcy-dir/**
+            shared:
+              - .github/workflows/test-integrations.yaml
+              - Taskfile.yml
+              - integrations/Taskfile.yml
+              - .github/actions/setup-env/**
+              - .github/actions/setup-go/**
+              - .github/actions/setup-python/**
+              - .github/actions/setup-k8s/**
+              - .github/actions/deploy-components/**
+              - .github/actions/create-artifact/**
+              - .github/actions/collect-reports/**
+
+      - name: Compute job selection
+        id: compute
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" || "${{ github.event_name }}" == "schedule" ]]; then
+            run_a2a=true
+            run_slim=true
+            run_directory=true
+          elif [[ "${{ steps.filter.outputs.a2a }}" == "true" || "${{ steps.filter.outputs.slim }}" == "true" || "${{ steps.filter.outputs.directory }}" == "true" ]]; then
+            run_a2a=${{ steps.filter.outputs.a2a }}
+            run_slim=${{ steps.filter.outputs.slim }}
+            run_directory=${{ steps.filter.outputs.directory }}
+          elif [[ "${{ steps.filter.outputs.shared }}" == "true" ]]; then
+            run_a2a=true
+            run_slim=true
+            run_directory=true
+          else
+            run_a2a=false
+            run_slim=false
+            run_directory=false
+          fi
+
+          echo "run-a2a=$run_a2a" >> "$GITHUB_OUTPUT"
+          echo "run-slim=$run_slim" >> "$GITHUB_OUTPUT"
+          echo "run-directory=$run_directory" >> "$GITHUB_OUTPUT"
+
   set-kind-version:
+    needs: [detect-changes]
+    if: ${{ (github.event_name == 'workflow_dispatch' && (!inputs.skip_slim_test || !inputs.skip_directory_test)) || (github.event_name != 'workflow_dispatch' && (needs.detect-changes.outputs.run-slim == 'true' || needs.detect-changes.outputs.run-directory == 'true')) }}
     runs-on: ubuntu-latest
     outputs:
       kind-version: ${{steps.set-kind-version.outputs.kind-version }}
@@ -78,8 +145,8 @@ jobs:
           echo "kind-version=$KIND_VERSION" >> "$GITHUB_OUTPUT"
 
   run-tests-slim-topology:
-    if: ${{ !inputs.skip_slim_test }}
-    needs: [set-kind-version]
+    if: ${{ (github.event_name == 'workflow_dispatch' && !inputs.skip_slim_test) || (github.event_name != 'workflow_dispatch' && needs.detect-changes.outputs.run-slim == 'true') }}
+    needs: [detect-changes, set-kind-version]
     runs-on: ubuntu-latest
 
     permissions:
@@ -132,8 +199,8 @@ jobs:
           artifact-name: "slim-test-result"
 
   run-tests-directory:
-    if: ${{ !inputs.skip_directory_test }}
-    needs: [set-kind-version]
+    if: ${{ (github.event_name == 'workflow_dispatch' && !inputs.skip_directory_test) || (github.event_name != 'workflow_dispatch' && needs.detect-changes.outputs.run-directory == 'true') }}
+    needs: [detect-changes, set-kind-version]
     runs-on: ubuntu-latest
 
     permissions:
@@ -183,8 +250,36 @@ jobs:
           artifact-name: "directory-test-result"
 
   run-tests-a2a:
-    if: ${{ github.event_name != 'workflow_dispatch' || !inputs.skip_a2a_test }}
+    if: ${{ (github.event_name == 'workflow_dispatch' && !inputs.skip_a2a_test) || (github.event_name != 'workflow_dispatch' && needs.detect-changes.outputs.run-a2a == 'true') }}
+    needs: [detect-changes]
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # Add one entry per SDK pair. Each row runs as its own parallel job.
+          # Future pairs should follow the same shape, for example rust-javascript,
+          # rust-java, or rust-python with the task and runtime setup they require.
+          - id: rust-go
+            display-name: Rust/Go
+            task: integrations:a2a:test:rust-go
+            artifact-name: a2a-interop-test-result-rust-go
+            setup-python: 'false'
+            setup-go: 'true'
+            go-version: '1.24.4'
+            setup-dotnet: 'false'
+            dotnet-version: '8.0.x'
+          - id: rust-dotnet
+            display-name: Rust/C#
+            task: integrations:a2a:test:rust-dotnet
+            artifact-name: a2a-interop-test-result-rust-dotnet
+            setup-python: 'false'
+            setup-go: 'true'
+            go-version: '1.24.4'
+            setup-dotnet: 'true'
+            dotnet-version: '8.0.x'
+
+    name: A2A ${{ matrix.display-name }}
 
     permissions:
       contents: "read"
@@ -198,20 +293,23 @@ jobs:
       - name: Setup Environment
         uses: ./.github/actions/setup-env
         with:
-          go: true
-          go-version: "1.24.4"
+          python: ${{ matrix.setup-python }}
+          go: ${{ matrix.setup-go }}
+          go-version: ${{ matrix.go-version }}
+          dotnet: ${{ matrix.setup-dotnet }}
+          dotnet-version: ${{ matrix.dotnet-version }}
 
       - name: Setup Rust toolchain
         uses: dtolnay/rust-toolchain@stable
 
-      - name: Run A2A interoperability tests
-        run: task integrations:a2a:test:rust-go
+      - name: Run A2A ${{ matrix.display-name }} interoperability tests
+        run: task ${{ matrix.task }}
         shell: bash
 
       - name: Create artifact from integrations test reports
         uses: ./.github/actions/create-artifact
         with:
-          artifact-name: "a2a-rust-go-test-result"
+          artifact-name: ${{ matrix.artifact-name }}
           path-to-archive: "./integrations/agntcy-a2a/reports/*"
 
   run-agentic-apps:

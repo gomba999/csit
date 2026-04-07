@@ -2,11 +2,13 @@
 
 This component hosts cross-SDK A2A interoperability checks.
 
-The current slice covers Rust and Go across the released JSON-RPC, HTTP+JSON, and gRPC bindings.
+The current coverage includes Rust and Go across the released JSON-RPC, HTTP+JSON, and gRPC bindings plus a Rust/.NET slice across JSON-RPC and HTTP+JSON.
 
 All 12 Rust/Go client-server legs in the current core lifecycle matrix are green across JSON-RPC, HTTP+JSON, and gRPC.
 
 The Go and Rust fixtures now expose push-config CRUD. CSIT validates that path from both clients against both server targets across JSON-RPC, HTTP+JSON, and gRPC.
+
+The Rust/.NET slice now exists alongside the Rust/Go suite. It reuses the existing Rust fixture and Rust probe, adds CSIT-owned .NET fixture and probe binaries, and runs exactly 8 specs: 4 JSON-RPC legs (`dotnet-dotnet`, `dotnet-rust`, `rust-dotnet`, `rust-rust-dotnet`) plus the same 4 legs over HTTP+JSON. Each of those specs exercises unary and streaming `SendMessage`, `GetTask`, `ListTasks`, `CancelTask`, the missing-task and non-cancelable-task error paths, and preservation of mixed text plus structured-data content through task history. Push-config is covered in this slice as well, but only the Rust-server legs are expected to support push-config CRUD; the .NET-server legs are expected to return the current unsupported error. This slice does not cover gRPC. The default `task test` and `task integrations:a2a:test` entrypoints now run both the established Rust/Go matrix and this Rust/.NET slice.
 
 Across the matrix, the scenarios validate the same core interoperability behavior:
 
@@ -22,22 +24,50 @@ Each scenario is tagged with a dedicated Ginkgo label and exposed through a matc
 
 The gRPC legs follow the same agent-card discovery path as the other transports: each fixture serves `/.well-known/agent-card.json` over HTTP and advertises a separate gRPC transport endpoint from that card.
 
+The Rust/.NET slice currently requires a local `dotnet` CLI for the .NET 8 SDK because the CSIT harness builds the fixture and probe from published `A2A` and `A2A.AspNetCore` NuGet packages at test time.
+
 ## Matrix
 
-| Transport | Label | Scenario | Current outcome | Component task | Repository task |
-| --- | --- | --- | --- | --- | --- |
-| JSON-RPC | `go-go` | Go client -> Go server | Pass | `task test:rust-go:jsonrpc:go-go` | `task integrations:a2a:test:rust-go:jsonrpc:go-go` |
-| JSON-RPC | `go-rust` | Go client -> Rust server | Pass | `task test:rust-go:jsonrpc:go-rust` | `task integrations:a2a:test:rust-go:jsonrpc:go-rust` |
-| JSON-RPC | `rust-go` | Rust client -> Go server | Pass | `task test:rust-go:jsonrpc:rust-go` | `task integrations:a2a:test:rust-go:jsonrpc:rust-go` |
-| JSON-RPC | `rust-rust` | Rust client -> Rust server | Pass | `task test:rust-go:jsonrpc:rust-rust` | `task integrations:a2a:test:rust-go:jsonrpc:rust-rust` |
-| HTTP+JSON | `go-go` | Go client -> Go server | Pass | `task test:rust-go:rest:go-go` | `task integrations:a2a:test:rust-go:rest:go-go` |
-| HTTP+JSON | `go-rust` | Go client -> Rust server | Pass | `task test:rust-go:rest:go-rust` | `task integrations:a2a:test:rust-go:rest:go-rust` |
-| HTTP+JSON | `rust-go` | Rust client -> Go server | Pass | `task test:rust-go:rest:rust-go` | `task integrations:a2a:test:rust-go:rest:rust-go` |
-| HTTP+JSON | `rust-rust` | Rust client -> Rust server | Pass | `task test:rust-go:rest:rust-rust` | `task integrations:a2a:test:rust-go:rest:rust-rust` |
-| gRPC | `go-go` | Go client -> Go server | Pass | `task test:rust-go:grpc:go-go` | `task integrations:a2a:test:rust-go:grpc:go-go` |
-| gRPC | `go-rust` | Go client -> Rust server | Pass | `task test:rust-go:grpc:go-rust` | `task integrations:a2a:test:rust-go:grpc:go-rust` |
-| gRPC | `rust-go` | Rust client -> Go server | Pass | `task test:rust-go:grpc:rust-go` | `task integrations:a2a:test:rust-go:grpc:rust-go` |
-| gRPC | `rust-rust` | Rust client -> Rust server | Pass | `task test:rust-go:grpc:rust-rust` | `task integrations:a2a:test:rust-go:grpc:rust-rust` |
+Legend: ✅ covered by passing automated CSIT, ❌ not currently covered by this suite.
+
+### SDK Pair Coverage
+
+| SDK pair | JSON-RPC | HTTP+JSON | gRPC |
+| --- | --- | --- | --- |
+| Rust/Go | ✅ | ✅ | ✅ |
+| Rust/.NET | ✅ | ✅ | ❌ |
+
+### Rust/Go Leg Coverage
+
+| Client -> Server | JSON-RPC | HTTP+JSON | gRPC |
+| --- | --- | --- | --- |
+| Go -> Go | ✅ | ✅ | ✅ |
+| Go -> Rust | ✅ | ✅ | ✅ |
+| Rust -> Go | ✅ | ✅ | ✅ |
+| Rust -> Rust | ✅ | ✅ | ✅ |
+
+### Rust/.NET Leg Coverage
+
+| Client -> Server | JSON-RPC | HTTP+JSON | gRPC |
+| --- | --- | --- | --- |
+| .NET -> .NET | ✅ | ✅ | ❌ |
+| .NET -> Rust | ✅ | ✅ | ❌ |
+| Rust -> .NET | ✅ | ✅ | ❌ |
+| Rust -> Rust (Rust/.NET slice) | ✅ | ✅ | ❌ |
+
+### Behavior Coverage
+
+| Behavior | Rust/Go | Rust/.NET |
+| --- | --- | --- |
+| Unary `SendMessage` | ✅ | ✅ |
+| Streaming `SendMessage` | ✅ | ✅ |
+| `GetTask`, `ListTasks`, and `CancelTask` lifecycle | ✅ | ✅ |
+| Missing-task and non-cancelable-task errors | ✅ | ✅ |
+| Mixed text + structured-data payload preserved through task history | ✅ | ✅ |
+| Push-config CRUD against Rust-server targets | ✅ | ✅ |
+| Unsupported push-config response against non-Rust server targets | ✅ | ✅ |
+
+For Rust/.NET, the uncovered cells are the current gRPC gap. For push-config, a ✅ means the suite verifies the expected behavior for that leg: CRUD succeeds on Rust-server targets and the current unsupported error is returned on Go-server or .NET-server targets.
 
 ## Running the Suite
 
@@ -63,7 +93,23 @@ task test:rust-go:grpc:rust-go
 task test:rust-go:grpc:rust-rust
 ```
 
-`task test` is an alias for the full `task test:rust-go` transport matrix run.
+`task test` now runs the full `task test:rust-go` transport matrix plus `task test:rust-dotnet`.
+
+The Rust/.NET slice is also exposed separately so it can be iterated independently:
+
+```sh
+task test:rust-dotnet
+task test:rust-dotnet:jsonrpc
+task test:rust-dotnet:jsonrpc:dotnet-dotnet
+task test:rust-dotnet:jsonrpc:dotnet-rust
+task test:rust-dotnet:jsonrpc:rust-dotnet
+task test:rust-dotnet:jsonrpc:rust-rust
+task test:rust-dotnet:rest
+task test:rust-dotnet:rest:dotnet-dotnet
+task test:rust-dotnet:rest:dotnet-rust
+task test:rust-dotnet:rest:rust-dotnet
+task test:rust-dotnet:rest:rust-rust
+```
 
 From the repository root:
 
@@ -87,6 +133,22 @@ task integrations:a2a:test:rust-go:grpc:rust-go
 task integrations:a2a:test:rust-go:grpc:rust-rust
 ```
 
-`task integrations:a2a:test` is the repository-level alias for the same full matrix run.
+`task integrations:a2a:test` is the repository-level alias for the same combined Rust/Go plus Rust/.NET run.
 
-Each run writes Ginkgo JSON and JUnit reports under `integrations/agntcy-a2a/reports/`. The full transport matrix emits `report-agntcy-a2a.{json,xml}`, the transport-scoped tasks emit `report-agntcy-a2a-jsonrpc.{json,xml}`, `report-agntcy-a2a-rest.{json,xml}`, and `report-agntcy-a2a-grpc.{json,xml}`, and the per-case tasks emit scenario-specific report names via `-ginkgo.label-filter`.
+The repository-level aliases for the new slice remain available for focused runs:
+
+```sh
+task integrations:a2a:test:rust-dotnet
+task integrations:a2a:test:rust-dotnet:jsonrpc
+task integrations:a2a:test:rust-dotnet:jsonrpc:dotnet-dotnet
+task integrations:a2a:test:rust-dotnet:jsonrpc:dotnet-rust
+task integrations:a2a:test:rust-dotnet:jsonrpc:rust-dotnet
+task integrations:a2a:test:rust-dotnet:jsonrpc:rust-rust
+task integrations:a2a:test:rust-dotnet:rest
+task integrations:a2a:test:rust-dotnet:rest:dotnet-dotnet
+task integrations:a2a:test:rust-dotnet:rest:dotnet-rust
+task integrations:a2a:test:rust-dotnet:rest:rust-dotnet
+task integrations:a2a:test:rust-dotnet:rest:rust-rust
+```
+
+Each run writes Ginkgo JSON and JUnit reports under `integrations/agntcy-a2a/reports/`. The combined Rust/Go suite emits `report-agntcy-a2a.{json,xml}`, the combined Rust/.NET suite emits `report-agntcy-a2a-rust-dotnet.{json,xml}`, the transport-scoped tasks emit `report-agntcy-a2a-jsonrpc.{json,xml}`, `report-agntcy-a2a-rest.{json,xml}`, `report-agntcy-a2a-grpc.{json,xml}`, `report-agntcy-a2a-rust-dotnet-jsonrpc.{json,xml}`, and `report-agntcy-a2a-rust-dotnet-rest.{json,xml}`, and the per-case tasks emit scenario-specific report names via `-ginkgo.label-filter`.
