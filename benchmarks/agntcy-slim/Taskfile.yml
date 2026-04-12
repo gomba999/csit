@@ -142,6 +142,23 @@ tasks:
     cmds:
       - go test ./tests -v -failfast -test.v -test.paniconexit0 -ginkgo.timeout 30m -timeout 30m -ginkgo.v --ginkgo.json-report=../../reports/test-report-agntcy-slim.json --ginkgo.junit-report=../../reports/test-report-agntcy-slim.xml
 
+  reports:dashboard:
+    desc: Render the SLIM benchmark HTML dashboard from the available report artifacts
+    dir: .
+    vars:
+      SMOKE_DIR: '{{ .SMOKE_DIR | default "./reports" }}'
+      CAPACITY_DIR: '{{ .CAPACITY_DIR | default "./reports" }}'
+      SLIM_REPO_CSV: '{{ .SLIM_REPO_CSV | default "" }}'
+      OUTPUT_FILE: '{{ .OUTPUT_FILE | default "./reports/index.html" }}'
+    cmds:
+      - |
+        set -euo pipefail
+        cmd=(go run ./tools/report_dashboard.go --smoke-dir '{{ .SMOKE_DIR }}' --capacity-dir '{{ .CAPACITY_DIR }}' --output '{{ .OUTPUT_FILE }}')
+        if [ -n '{{ .SLIM_REPO_CSV }}' ]; then
+          cmd+=(--slim-csv '{{ .SLIM_REPO_CSV }}')
+        fi
+        "${cmd[@]}"
+
   benchmark:suite:
     desc: Run the local SLIM benchmark suite with reproducible defaults and optional overrides
     dir: .
@@ -318,13 +335,16 @@ tasks:
     desc: Run bounded CI-safe capacity sweeps for fire-and-forget, request-reply, and write with 1 client at 16kB and statistically meaningful repeats
     dir: .
     cmds:
-      - rm -f reports/capacity-fire-and-forget.md reports/capacity-request-reply.md reports/capacity-write.md
+      - rm -f reports/capacity-fire-and-forget.md reports/capacity-request-reply.md reports/capacity-write.md reports/results-fire-and-forget.tsv reports/results-request-reply.tsv reports/results-write.tsv
       - task benchmark:capacity:fire-and-forget-16kb CAPACITY_DURATION=5s CAPACITY_REPEATS={{ .CI_CAPACITY_REPEATS }} CAPACITY_SWEEP_REPEATS={{ .CI_CAPACITY_SWEEP_REPEATS }}
       - cp reports/capacity_sweep.md reports/capacity-fire-and-forget.md
+      - cp reports/results.tsv reports/results-fire-and-forget.tsv
       - task benchmark:capacity:request-reply-16kb REQUEST_CAPACITY_DURATION=5s REQUEST_CAPACITY_REPEATS={{ .CI_CAPACITY_REPEATS }} REQUEST_CAPACITY_SWEEP_REPEATS={{ .CI_CAPACITY_SWEEP_REPEATS }}
       - cp reports/capacity_sweep.md reports/capacity-request-reply.md
+      - cp reports/results.tsv reports/results-request-reply.tsv
       - task benchmark:capacity:write-16kb WRITE_CAPACITY_DURATION=5s WRITE_CAPACITY_REPEATS={{ .CI_CAPACITY_REPEATS }} WRITE_CAPACITY_SWEEP_REPEATS={{ .CI_CAPACITY_SWEEP_REPEATS }}
       - cp reports/capacity_sweep.md reports/capacity-write.md
+      - cp reports/results.tsv reports/results-write.tsv
       - |
         set -e
         OUTPUT_FILE="reports/capacity_sweep.md"

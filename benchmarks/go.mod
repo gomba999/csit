@@ -6,6 +6,7 @@ require (
 	gonum.org/v1/gonum v0.16.0
 	github.com/onsi/ginkgo/v2 v2.23.4
 	github.com/onsi/gomega v1.37.0
+	github.com/yuin/goldmark v1.8.2
 )
 
 require (

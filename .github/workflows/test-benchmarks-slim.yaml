@@ -4,6 +4,14 @@
 name: test-benchmarks-slim
 
 on:
+  push:
+    branches:
+      - main
+    paths:
+      - '.github/workflows/test-benchmarks-slim.yaml'
+      - 'Taskfile.yml'
+      - 'benchmarks/Taskfile.yml'
+      - 'benchmarks/agntcy-slim/**'
   pull_request:
     paths:
       - '.github/workflows/test-benchmarks-slim.yaml'
@@ -89,6 +97,34 @@ jobs:
             fi
           } > "$OUTPUT_FILE"
 
+      - name: Stage smoke dashboard artifact
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          REPORT_DIR="benchmarks/agntcy-slim/reports"
+          PUBLISH_DIR="benchmarks/agntcy-slim/published/smoke"
+
+          rm -rf "$PUBLISH_DIR"
+          mkdir -p "$PUBLISH_DIR"
+
+          for file in \
+            "$REPORT_DIR/results.tsv" \
+            "$REPORT_DIR/suite_summary.md" \
+            "$REPORT_DIR/technical_report.md" \
+            "$REPORT_DIR/ci-smoke-report.md" \
+            "$REPORT_DIR/ci-smoke.log"
+          do
+            if [ -f "$file" ]; then
+              cp "$file" "$PUBLISH_DIR/"
+            fi
+          done
+
+          task benchmarks:slim:reports:dashboard \
+            SMOKE_DIR="$PUBLISH_DIR" \
+            CAPACITY_DIR="$PUBLISH_DIR" \
+            OUTPUT_FILE="$PUBLISH_DIR/index.html"
+
       - name: Print smoke markdown report
         if: always()
         shell: bash
@@ -146,13 +182,11 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: slim-benchmark-smoke-report
-          path: |
-            benchmarks/agntcy-slim/reports/*.md
-            benchmarks/agntcy-slim/reports/ci-smoke.log
+          path: benchmarks/agntcy-slim/published/smoke
           retention-days: 30
 
   slim-benchmark-capacity:
-    if: ${{ github.event_name == 'pull_request' || (github.event_name == 'workflow_dispatch' && inputs.run_capacity) }}
+    if: ${{ github.event_name == 'pull_request' || github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.run_capacity) }}
     runs-on: ubuntu-latest
 
     permissions:
@@ -229,6 +263,38 @@ jobs:
             fi
           } > "$OUTPUT_FILE"
 
+      - name: Stage capacity dashboard artifact
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          REPORT_DIR="benchmarks/agntcy-slim/reports"
+          PUBLISH_DIR="benchmarks/agntcy-slim/published/capacity"
+
+          rm -rf "$PUBLISH_DIR"
+          mkdir -p "$PUBLISH_DIR"
+
+          for file in \
+            "$REPORT_DIR/capacity_sweep.md" \
+            "$REPORT_DIR/capacity-fire-and-forget.md" \
+            "$REPORT_DIR/capacity-request-reply.md" \
+            "$REPORT_DIR/capacity-write.md" \
+            "$REPORT_DIR/results-fire-and-forget.tsv" \
+            "$REPORT_DIR/results-request-reply.tsv" \
+            "$REPORT_DIR/results-write.tsv" \
+            "$REPORT_DIR/ci-capacity-report.md" \
+            "$REPORT_DIR/ci-capacity.log"
+          do
+            if [ -f "$file" ]; then
+              cp "$file" "$PUBLISH_DIR/"
+            fi
+          done
+
+          task benchmarks:slim:reports:dashboard \
+            SMOKE_DIR="$PUBLISH_DIR" \
+            CAPACITY_DIR="$PUBLISH_DIR" \
+            OUTPUT_FILE="$PUBLISH_DIR/index.html"
+
       - name: Print capacity markdown report
         if: always()
         shell: bash
@@ -293,7 +359,5 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: slim-benchmark-capacity-report
-          path: |
-            benchmarks/agntcy-slim/reports/*.md
-            benchmarks/agntcy-slim/reports/ci-capacity.log
+          path: benchmarks/agntcy-slim/published/capacity
           retention-days: 30
