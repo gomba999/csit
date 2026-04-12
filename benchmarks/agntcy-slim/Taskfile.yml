@@ -144,12 +144,12 @@ tasks:
       - go test ./tests -v -failfast -test.v -test.paniconexit0 -ginkgo.timeout 30m -timeout 30m -ginkgo.v --ginkgo.json-report=../../reports/test-report-agntcy-slim.json --ginkgo.junit-report=../../reports/test-report-agntcy-slim.xml
 
   reports:dashboard:
-    desc: Render the SLIM benchmark HTML dashboard from the available report artifacts
+    desc: Render the SLIM benchmark HTML dashboard from the available report artifacts and optional agntcy/slim CSV
     dir: .
     vars:
       SMOKE_DIR: '{{ .SMOKE_DIR | default "./reports" }}'
       CAPACITY_DIR: '{{ .CAPACITY_DIR | default "./reports" }}'
-      SLIM_REPO_CSV: '{{ .SLIM_REPO_CSV | default "" }}'
+      SLIM_REPO_CSV: '{{ .SLIM_REPO_CSV | default "./reports/external/benchmark-results.csv" }}'
       OUTPUT_FILE: '{{ .OUTPUT_FILE | default "./reports/index.html" }}'
     cmds:
       - |
@@ -161,12 +161,12 @@ tasks:
         "${cmd[@]}"
 
   benchmark:report:
-    desc: Run the local SLIM benchmark suite and render the HTML dashboard from the generated report artifacts
+    desc: Run the local SLIM benchmark suite and render the HTML dashboard from the generated report artifacts and optional agntcy/slim CSV
     dir: .
     deps:
       - benchmark:suite
     cmds:
-      - task reports:dashboard MIN_CONFIDENCE_INTERVAL_RUNS='{{ .MIN_CONFIDENCE_INTERVAL_RUNS }}'
+      - task reports:dashboard MIN_CONFIDENCE_INTERVAL_RUNS='{{ .MIN_CONFIDENCE_INTERVAL_RUNS }}' SLIM_REPO_CSV='{{ .SLIM_REPO_CSV | default "./reports/external/benchmark-results.csv" }}'
 
   benchmark:suite:
     desc: Run the local SLIM benchmark suite with reproducible defaults and optional overrides
