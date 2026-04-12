@@ -23,7 +23,10 @@ import (
 	"gonum.org/v1/gonum/stat/distuv"
 )
 
-const confidenceIntervalAlpha = 0.05
+const (
+	confidenceIntervalAlpha       = 0.05
+	minimumConfidenceIntervalRuns = 20
+)
 
 var benchmarkModeOrder = []string{"request-reply", "fire-and-forget", "write"}
 
@@ -862,9 +865,20 @@ func computeSampleStats(values []float64) sampleStats {
 	return sampleStats{Count: count, Mean: mean, Variance: variance, CILow: ciLow, CIHigh: ciHigh}
 }
 
+func confidenceIntervalAvailable(count int) bool {
+	return count >= minimumConfidenceIntervalRuns
+}
+
+func unavailableConfidenceIntervalLabel() string {
+	return fmt.Sprintf("n/a (need >=%d runs)", minimumConfidenceIntervalRuns)
+}
+
 func formatCI(stats sampleStats) string {
 	if stats.Count == 0 {
 		return "-"
+	}
+	if !confidenceIntervalAvailable(stats.Count) {
+		return unavailableConfidenceIntervalLabel()
 	}
 	return fmt.Sprintf("[%s, %s]", formatFloat(stats.CILow), formatFloat(stats.CIHigh))
 }
@@ -1220,7 +1234,7 @@ func renderDashboard(view dashboardView) ([]byte, error) {
     <section class="hero">
       <div class="eyebrow">Static Benchmark Dashboard</div>
       <h1>SLIM benchmark reports.</h1>
-      <p class="lead">This dashboard turns the benchmark artifacts into a browsable report surface. It keeps the raw markdown, logs, and TSV or CSV files one click away, while surfacing the benchmark tables and summary statistics in HTML.</p>
+	<p class="lead">This dashboard turns the benchmark artifacts into a browsable report surface. It keeps the raw markdown, logs, and TSV or CSV files one click away, while surfacing the benchmark tables and summary statistics in HTML. Confidence intervals are shown only when a case has at least 20 repeated runs.</p>
       <div class="nav">
         {{range .Sections}}<a href="#{{.ID}}">{{.Title}}</a>{{end}}
       </div>

@@ -8,7 +8,10 @@ import (
 	"gonum.org/v1/gonum/stat/distuv"
 )
 
-const confidenceIntervalAlpha = 0.05
+const (
+	confidenceIntervalAlpha       = 0.05
+	minimumConfidenceIntervalRuns = 20
+)
 
 type sampleStats struct {
 	Count    int
@@ -144,6 +147,37 @@ func computeSampleStats(values []float64) sampleStats {
 	}
 }
 
+func confidenceIntervalAvailable(count int) bool {
+	return count >= minimumConfidenceIntervalRuns
+}
+
+func unavailableConfidenceIntervalLabel() string {
+	return fmt.Sprintf("n/a (need >=%d runs)", minimumConfidenceIntervalRuns)
+}
+
 func formatCI(stats sampleStats) string {
+	if stats.Count == 0 {
+		return "-"
+	}
+	if !confidenceIntervalAvailable(stats.Count) {
+		return unavailableConfidenceIntervalLabel()
+	}
 	return fmt.Sprintf("[%s, %s]", formatFloat(stats.CILow), formatFloat(stats.CIHigh))
+}
+
+func formatCIBounds(count int, low float64, high float64) string {
+	if count == 0 {
+		return "-"
+	}
+	if !confidenceIntervalAvailable(count) {
+		return unavailableConfidenceIntervalLabel()
+	}
+	return fmt.Sprintf("[%s, %s]", formatFloat(low), formatFloat(high))
+}
+
+func formatCISentence(count int, low float64, high float64) string {
+	if !confidenceIntervalAvailable(count) {
+		return fmt.Sprintf("95%% CI unavailable (need >=%d runs)", minimumConfidenceIntervalRuns)
+	}
+	return fmt.Sprintf("95%% CI [%s, %s]", formatFloat(low), formatFloat(high))
 }

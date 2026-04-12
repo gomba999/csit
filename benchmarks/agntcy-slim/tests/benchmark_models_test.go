@@ -149,6 +149,7 @@ type capacitySweepCaseResult struct {
 	Clients             int
 	Size                int
 	BestRate            int
+	BestRepeats         int
 	CapacityRateLower   int
 	CapacityRateUpper   int
 	BestObservedMeanMPS float64

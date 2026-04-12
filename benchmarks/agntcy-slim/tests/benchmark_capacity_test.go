@@ -99,6 +99,7 @@ func runCapacitySweepCase(mode string, clients int, size int, cfg suiteConfig) c
 	if bestIndex >= 0 {
 		best := caseResult.Steps[bestIndex]
 		caseResult.BestRate = best.Rate
+		caseResult.BestRepeats = best.Repeats
 		caseResult.CapacityRateLower = maxInt(capacityLower, best.Rate)
 		if capacityUpper > 0 {
 			caseResult.CapacityRateUpper = capacityUpper

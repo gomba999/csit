@@ -538,20 +538,22 @@ For each case, the report computes:
 - standard deviation
 - Student's t 95%% confidence interval for the mean
 
+Confidence intervals are only reported when a case has at least %d repeated runs. Cases below that threshold keep their mean and variance columns, but the 95%% CI columns are marked unavailable.
+
 The sample variance is:
 
 $$
 s^2 = \frac{1}{n-1} \sum_{i=1}^n (x_i - \bar{x})^2
 $$
 
-The Student's t 95%% confidence interval is:
+When enough samples are available, the Student's t 95%% confidence interval is:
 
 $$
 \bar{x} \pm t_{1-\alpha/2, n-1} \cdot \frac{s}{\sqrt{n}}
 $$
 
-where $\alpha = 0.05$ and $n = %d$ for each case in this report.
-`, repeats, duration, cpuFormula, repeats)
+where $\alpha = 0.05$ and $n$ is the number of repeated runs for that case.
+`, repeats, duration, cpuFormula, minimumConfidenceIntervalRuns)
 }
 
 func resetSuiteReports(cfg suiteConfig) {
