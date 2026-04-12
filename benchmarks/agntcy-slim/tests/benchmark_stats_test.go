@@ -3,14 +3,17 @@ package tests
 import (
 	"fmt"
 	"math"
+	"os"
+	"strconv"
+	"strings"
 
 	"gonum.org/v1/gonum/stat"
 	"gonum.org/v1/gonum/stat/distuv"
 )
 
 const (
-	confidenceIntervalAlpha       = 0.05
-	minimumConfidenceIntervalRuns = 20
+	confidenceIntervalAlpha              = 0.05
+	defaultMinimumConfidenceIntervalRuns = 20
 )
 
 type sampleStats struct {
@@ -147,12 +150,24 @@ func computeSampleStats(values []float64) sampleStats {
 	}
 }
 
+func configuredMinimumConfidenceIntervalRuns() int {
+	raw := strings.TrimSpace(os.Getenv("MIN_CONFIDENCE_INTERVAL_RUNS"))
+	if raw == "" {
+		return defaultMinimumConfidenceIntervalRuns
+	}
+	parsed, err := strconv.Atoi(raw)
+	if err != nil || parsed < 1 {
+		return defaultMinimumConfidenceIntervalRuns
+	}
+	return parsed
+}
+
 func confidenceIntervalAvailable(count int) bool {
-	return count >= minimumConfidenceIntervalRuns
+	return count >= configuredMinimumConfidenceIntervalRuns()
 }
 
 func unavailableConfidenceIntervalLabel() string {
-	return fmt.Sprintf("n/a (need >=%d runs)", minimumConfidenceIntervalRuns)
+	return fmt.Sprintf("n/a (need >=%d runs)", configuredMinimumConfidenceIntervalRuns())
 }
 
 func formatCI(stats sampleStats) string {
@@ -177,7 +192,7 @@ func formatCIBounds(count int, low float64, high float64) string {
 
 func formatCISentence(count int, low float64, high float64) string {
 	if !confidenceIntervalAvailable(count) {
-		return fmt.Sprintf("95%% CI unavailable (need >=%d runs)", minimumConfidenceIntervalRuns)
+		return fmt.Sprintf("95%% CI unavailable (need >=%d runs)", configuredMinimumConfidenceIntervalRuns())
 	}
 	return fmt.Sprintf("95%% CI [%s, %s]", formatFloat(low), formatFloat(high))
 }

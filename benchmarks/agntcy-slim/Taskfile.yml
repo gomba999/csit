@@ -15,6 +15,7 @@ vars:
   BENCH_WRITE_RATES: '{{ .BENCH_WRITE_RATES | default "" }}'
   BENCH_DURATION: '{{ .BENCH_DURATION | default "5s" }}'
   BENCH_REPEATS: '{{ .BENCH_REPEATS | default "1" }}'
+  MIN_CONFIDENCE_INTERVAL_RUNS: '{{ .MIN_CONFIDENCE_INTERVAL_RUNS | default "20" }}'
   CI_BENCH_REPEATS: '{{ .CI_BENCH_REPEATS | default "25" }}'
   SLIMCTL_RELEASE_TAG: '{{ .SLIMCTL_RELEASE_TAG | default "slimctl-v1.2.0" }}'
   SLIMCTL_PATH: '{{ .SLIMCTL_PATH | default "./bin/slimctl" }}'
@@ -153,11 +154,19 @@ tasks:
     cmds:
       - |
         set -euo pipefail
-        cmd=(go run ./tools/report_dashboard.go --smoke-dir '{{ .SMOKE_DIR }}' --capacity-dir '{{ .CAPACITY_DIR }}' --output '{{ .OUTPUT_FILE }}')
+        cmd=(go run ./tools/report_dashboard.go --smoke-dir '{{ .SMOKE_DIR }}' --capacity-dir '{{ .CAPACITY_DIR }}' --min-ci-runs '{{ .MIN_CONFIDENCE_INTERVAL_RUNS }}' --output '{{ .OUTPUT_FILE }}')
         if [ -n '{{ .SLIM_REPO_CSV }}' ]; then
           cmd+=(--slim-csv '{{ .SLIM_REPO_CSV }}')
         fi
         "${cmd[@]}"
+
+  benchmark:report:
+    desc: Run the local SLIM benchmark suite and render the HTML dashboard from the generated report artifacts
+    dir: .
+    deps:
+      - benchmark:suite
+    cmds:
+      - task reports:dashboard MIN_CONFIDENCE_INTERVAL_RUNS='{{ .MIN_CONFIDENCE_INTERVAL_RUNS }}'
 
   benchmark:suite:
     desc: Run the local SLIM benchmark suite with reproducible defaults and optional overrides
@@ -174,6 +183,7 @@ tasks:
       WRITE_RATES: '{{ .BENCH_WRITE_RATES }}'
       DURATION: '{{ .BENCH_DURATION }}'
       REPEATS: '{{ .BENCH_REPEATS }}'
+      MIN_CONFIDENCE_INTERVAL_RUNS: '{{ .MIN_CONFIDENCE_INTERVAL_RUNS }}'
     cmds:
       - bash ./scripts/run_suite.sh
 
@@ -191,6 +201,7 @@ tasks:
       WRITE_RATES: '{{ .BENCH_WRITE_RATES }}'
       DURATION: '{{ .BENCH_DURATION }}'
       REPEATS: '{{ .BENCH_REPEATS }}'
+      MIN_CONFIDENCE_INTERVAL_RUNS: '{{ .MIN_CONFIDENCE_INTERVAL_RUNS }}'
     cmds:
       - bash ./scripts/run_suite.sh
 
@@ -208,6 +219,7 @@ tasks:
       WRITE_RATES: '{{ .BENCH_WRITE_RATES }}'
       DURATION: '{{ .BENCH_DURATION }}'
       REPEATS: '{{ .BENCH_REPEATS }}'
+      MIN_CONFIDENCE_INTERVAL_RUNS: '{{ .MIN_CONFIDENCE_INTERVAL_RUNS }}'
     cmds:
       - bash ./scripts/run_suite.sh
 
@@ -225,6 +237,7 @@ tasks:
       WRITE_RATES: '{{ .BENCH_WRITE_RATES }}'
       DURATION: '{{ .BENCH_DURATION }}'
       REPEATS: '{{ .BENCH_REPEATS }}'
+      MIN_CONFIDENCE_INTERVAL_RUNS: '{{ .MIN_CONFIDENCE_INTERVAL_RUNS }}'
     cmds:
       - bash ./scripts/run_suite.sh
 
@@ -240,6 +253,7 @@ tasks:
       SIZES: '{{ .CAPACITY_SIZES }}'
       DURATION: '{{ .CAPACITY_DURATION }}'
       REPEATS: '{{ .CAPACITY_REPEATS }}'
+      MIN_CONFIDENCE_INTERVAL_RUNS: '{{ .MIN_CONFIDENCE_INTERVAL_RUNS }}'
       CAPACITY_SWEEP: '1'
       CAPACITY_SWEEP_MODES: '{{ .CAPACITY_MODES }}'
       CAPACITY_SWEEP_CLIENTS: '{{ .CAPACITY_CLIENTS }}'
@@ -269,6 +283,7 @@ tasks:
       REQUEST_RATES: '{{ .REQUEST_CAPACITY_START_RATE }}'
       DURATION: '{{ .REQUEST_CAPACITY_DURATION }}'
       REPEATS: '{{ .REQUEST_CAPACITY_REPEATS }}'
+      MIN_CONFIDENCE_INTERVAL_RUNS: '{{ .MIN_CONFIDENCE_INTERVAL_RUNS }}'
       CAPACITY_SWEEP: '1'
       CAPACITY_SWEEP_MODES: 'request-reply'
       CAPACITY_SWEEP_CLIENTS: '{{ .REQUEST_CAPACITY_CLIENTS }}'
@@ -298,6 +313,7 @@ tasks:
       PUB_RATES: '{{ .WRITE_CAPACITY_START_RATE }}'
       DURATION: '{{ .WRITE_CAPACITY_DURATION }}'
       REPEATS: '{{ .WRITE_CAPACITY_REPEATS }}'
+      MIN_CONFIDENCE_INTERVAL_RUNS: '{{ .MIN_CONFIDENCE_INTERVAL_RUNS }}'
       CAPACITY_SWEEP: '1'
       CAPACITY_SWEEP_MODES: 'write'
       CAPACITY_SWEEP_CLIENTS: '{{ .WRITE_CAPACITY_CLIENTS }}'
@@ -328,6 +344,7 @@ tasks:
       PUB_RATES: '1000'
       DURATION: '1s'
       REPEATS: '{{ .CI_BENCH_REPEATS }}'
+      MIN_CONFIDENCE_INTERVAL_RUNS: '{{ .MIN_CONFIDENCE_INTERVAL_RUNS }}'
     cmds:
       - bash ./scripts/run_suite.sh
 

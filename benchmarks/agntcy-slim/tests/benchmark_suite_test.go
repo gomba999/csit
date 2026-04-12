@@ -553,7 +553,7 @@ $$
 $$
 
 where $\alpha = 0.05$ and $n$ is the number of repeated runs for that case.
-`, repeats, duration, cpuFormula, minimumConfidenceIntervalRuns)
+`, repeats, duration, cpuFormula, configuredMinimumConfidenceIntervalRuns())
 }
 
 func resetSuiteReports(cfg suiteConfig) {

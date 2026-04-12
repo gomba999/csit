@@ -24,9 +24,11 @@ import (
 )
 
 const (
-	confidenceIntervalAlpha       = 0.05
-	minimumConfidenceIntervalRuns = 20
+	confidenceIntervalAlpha              = 0.05
+	defaultMinimumConfidenceIntervalRuns = 20
 )
+
+var configuredMinimumConfidenceIntervalRuns = defaultMinimumConfidenceIntervalRuns
 
 var benchmarkModeOrder = []string{"request-reply", "fire-and-forget", "write"}
 
@@ -142,8 +144,12 @@ func main() {
 	smokeDir := flag.String("smoke-dir", "", "directory containing the benchmark smoke report bundle")
 	capacityDir := flag.String("capacity-dir", "", "directory containing the benchmark capacity report bundle")
 	slimCSV := flag.String("slim-csv", "", "path to an optional agntcy/slim benchmark-results.csv file")
+	minCIRuns := flag.Int("min-ci-runs", defaultMinimumConfidenceIntervalRuns, "minimum repeated runs required before confidence intervals are shown")
 	outputPath := flag.String("output", "./reports/index.html", "path to the generated HTML dashboard")
 	flag.Parse()
+	if *minCIRuns > 0 {
+		configuredMinimumConfidenceIntervalRuns = *minCIRuns
+	}
 
 	view, err := buildDashboard(*smokeDir, *capacityDir, *slimCSV, *outputPath)
 	if err != nil {
@@ -866,11 +872,11 @@ func computeSampleStats(values []float64) sampleStats {
 }
 
 func confidenceIntervalAvailable(count int) bool {
-	return count >= minimumConfidenceIntervalRuns
+	return count >= configuredMinimumConfidenceIntervalRuns
 }
 
 func unavailableConfidenceIntervalLabel() string {
-	return fmt.Sprintf("n/a (need >=%d runs)", minimumConfidenceIntervalRuns)
+	return fmt.Sprintf("n/a (need >=%d runs)", configuredMinimumConfidenceIntervalRuns)
 }
 
 func formatCI(stats sampleStats) string {

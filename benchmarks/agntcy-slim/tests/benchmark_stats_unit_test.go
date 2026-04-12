@@ -8,16 +8,23 @@ import (
 )
 
 func TestFormatCIRequiresMinimumSampleCount(t *testing.T) {
-	label := formatCI(sampleStats{Count: minimumConfidenceIntervalRuns - 1, CILow: 1.2, CIHigh: 3.4})
+	label := formatCI(sampleStats{Count: defaultMinimumConfidenceIntervalRuns - 1, CILow: 1.2, CIHigh: 3.4})
 	if label != unavailableConfidenceIntervalLabel() {
 		t.Fatalf("formatCI below threshold = %q, want %q", label, unavailableConfidenceIntervalLabel())
 	}
 }
 
 func TestFormatCIBoundsRequiresMinimumSampleCount(t *testing.T) {
-	label := formatCIBounds(minimumConfidenceIntervalRuns-1, 1.2, 3.4)
+	label := formatCIBounds(defaultMinimumConfidenceIntervalRuns-1, 1.2, 3.4)
 	if label != unavailableConfidenceIntervalLabel() {
 		t.Fatalf("formatCIBounds below threshold = %q, want %q", label, unavailableConfidenceIntervalLabel())
+	}
+}
+
+func TestConfiguredMinimumConfidenceIntervalRunsOverride(t *testing.T) {
+	t.Setenv("MIN_CONFIDENCE_INTERVAL_RUNS", "1")
+	if got := configuredMinimumConfidenceIntervalRuns(); got != 1 {
+		t.Fatalf("configuredMinimumConfidenceIntervalRuns = %d, want 1", got)
 	}
 }
 
@@ -66,7 +73,7 @@ func TestComputeSampleStatsSampleVariance(t *testing.T) {
 }
 
 func TestFormatCIWithEnoughSamples(t *testing.T) {
-	stats := sampleStats{Count: minimumConfidenceIntervalRuns, CILow: 1.23, CIHigh: 4.56}
+	stats := sampleStats{Count: defaultMinimumConfidenceIntervalRuns, CILow: 1.23, CIHigh: 4.56}
 	if got := formatCI(stats); got != "[1.23, 4.56]" {
 		t.Fatalf("formatCI = %q, want [1.23, 4.56]", got)
 	}

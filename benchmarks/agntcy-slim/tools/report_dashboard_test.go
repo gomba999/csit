@@ -26,15 +26,15 @@ func TestBuildDashboardWithSmokeCapacityAndSlimRepo(t *testing.T) {
 	}
 
 	smokeRows := []string{benchmarkTSVHeader}
-	smokeRows = append(smokeRows, buildRepeatedBenchmarkRows("request-reply", 1, 16, 100, minimumConfidenceIntervalRuns, "1s", 98, 99, 2.10, 1.90, 3.30, 22, 46, true)...)
-	smokeRows = append(smokeRows, buildRepeatedBenchmarkRows("fire-and-forget", 1, 16, 1000, minimumConfidenceIntervalRuns, "1s", 940, 925, 0, 0, 0, 28, 46, true)...)
-	smokeRows = append(smokeRows, buildRepeatedBenchmarkRows("write", 1, 16, 1000, minimumConfidenceIntervalRuns, "1s", 980, 0, 0, 0, 0, 18, 27, false)...)
+	smokeRows = append(smokeRows, buildRepeatedBenchmarkRows("request-reply", 1, 16, 100, defaultMinimumConfidenceIntervalRuns, "1s", 98, 99, 2.10, 1.90, 3.30, 22, 46, true)...)
+	smokeRows = append(smokeRows, buildRepeatedBenchmarkRows("fire-and-forget", 1, 16, 1000, defaultMinimumConfidenceIntervalRuns, "1s", 940, 925, 0, 0, 0, 28, 46, true)...)
+	smokeRows = append(smokeRows, buildRepeatedBenchmarkRows("write", 1, 16, 1000, defaultMinimumConfidenceIntervalRuns, "1s", 980, 0, 0, 0, 0, 18, 27, false)...)
 	writeFile(t, filepath.Join(smokeDir, "results.tsv"), strings.Join(smokeRows, "\n"))
 	writeFile(t, filepath.Join(smokeDir, "suite_summary.md"), "# Smoke Summary\n\n| Column | Value |\n| --- | --- |\n| Modes | 3 |\n")
 	writeFile(t, filepath.Join(smokeDir, "technical_report.md"), "# Smoke Technical\n\nRendered markdown body.")
 
 	capacityRows := []string{benchmarkTSVHeader}
-	capacityRows = append(capacityRows, buildRepeatedBenchmarkRows("fire-and-forget", 1, 16384, 128000, minimumConfidenceIntervalRuns, "5s", 118000, 109500, 0, 0, 0, 42, 74, true)...)
+	capacityRows = append(capacityRows, buildRepeatedBenchmarkRows("fire-and-forget", 1, 16384, 128000, defaultMinimumConfidenceIntervalRuns, "5s", 118000, 109500, 0, 0, 0, 42, 74, true)...)
 	writeFile(t, filepath.Join(capacityDir, "results-fire-and-forget.tsv"), strings.Join(capacityRows, "\n"))
 	writeFile(t, filepath.Join(capacityDir, "capacity_sweep.md"), "# Capacity Sweep\n\n## Sink-Backed Modes\n\n| Mode | Best Offered Rate |\n| --- | --- |\n| fire-and-forget | 128000 |\n")
 
@@ -88,7 +88,8 @@ func TestBuildDashboardWithoutInputsProducesEmptyState(t *testing.T) {
 }
 
 func TestFormatCIRequiresMinimumSampleCount(t *testing.T) {
-	if got := formatCI(sampleStats{Count: minimumConfidenceIntervalRuns - 1, CILow: 1.23, CIHigh: 4.56}); got != unavailableConfidenceIntervalLabel() {
+	configuredMinimumConfidenceIntervalRuns = defaultMinimumConfidenceIntervalRuns
+	if got := formatCI(sampleStats{Count: defaultMinimumConfidenceIntervalRuns - 1, CILow: 1.23, CIHigh: 4.56}); got != unavailableConfidenceIntervalLabel() {
 		t.Fatalf("formatCI below threshold = %q, want %q", got, unavailableConfidenceIntervalLabel())
 	}
 }
