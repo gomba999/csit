@@ -155,6 +155,8 @@ task test:python-dotnet
 
 `task test` now runs the full `task test:rust-go` transport matrix plus `task test:rust-dotnet`, `task test:go-dotnet`, `task test:python-go`, `task test:rust-python`, and `task test:python-dotnet`.
 
+To keep the Taskfile compact, `task -l` now shows wildcard-backed task families such as `test:rust-go:*`, `test:rust-go:*:*`, and `test:rust-go:behavior:*` rather than one line per expanded matrix case. The concrete commands below still work unchanged.
+
 The user-facing task triggers are organized by scope:
 
 - Full suites:
@@ -334,6 +336,8 @@ task integrations:a2a:test:python-dotnet:jsonrpc:dotnet-python
 
 Each run writes Ginkgo JSON and JUnit reports under `integrations/agntcy-a2a/reports/`. The combined Rust/Go suite emits `report-agntcy-a2a.{json,xml}`, the combined Rust/.NET suite emits `report-agntcy-a2a-rust-dotnet.{json,xml}`, the combined Go/.NET suite emits `report-agntcy-a2a-go-dotnet.{json,xml}`, the combined Python/Go suite emits `report-agntcy-a2a-python-go.{json,xml}`, the combined Rust/Python suite emits `report-agntcy-a2a-rust-python.{json,xml}`, and the combined Python/.NET suite emits `report-agntcy-a2a-python-dotnet.{json,xml}`. The transport-scoped tasks emit `report-agntcy-a2a-jsonrpc.{json,xml}`, `report-agntcy-a2a-rest.{json,xml}`, `report-agntcy-a2a-grpc.{json,xml}`, `report-agntcy-a2a-rust-dotnet-jsonrpc.{json,xml}`, `report-agntcy-a2a-rust-dotnet-rest.{json,xml}`, `report-agntcy-a2a-go-dotnet-jsonrpc.{json,xml}`, `report-agntcy-a2a-go-dotnet-rest.{json,xml}`, `report-agntcy-a2a-python-go-jsonrpc.{json,xml}`, `report-agntcy-a2a-python-go-rest.{json,xml}`, `report-agntcy-a2a-python-go-grpc.{json,xml}`, `report-agntcy-a2a-rust-python-jsonrpc.{json,xml}`, `report-agntcy-a2a-rust-python-rest.{json,xml}`, `report-agntcy-a2a-rust-python-grpc.{json,xml}`, `report-agntcy-a2a-python-dotnet-jsonrpc.{json,xml}`, and `report-agntcy-a2a-python-dotnet-rest.{json,xml}`, and the per-case tasks emit scenario-specific report names via `-ginkgo.label-filter`.
 
+After every run, the suite also refreshes `integrations/agntcy-a2a/reports/index.html`, a static dashboard that summarizes the saved reports, links back to the raw JSON/XML artifacts, and surfaces failures in a readable HTML view. To rebuild that dashboard without rerunning tests, use `task reports:dashboard` from the component directory or `task integrations:a2a:reports:dashboard` from the repository root.
+
 ## How to Add a Test
 
 Most new interop coverage should be added once in the shared behavior layer so the same assertions automatically run across the existing client/server matrix.
@@ -357,8 +361,8 @@ That one behavior entry is expanded into multiple specs because the suite wrappe
 To add a new shared behavior:
 
 1. Add a new method to `interopHarness` in `tests/interop_behaviors_test.go`.
-2. Implement that method in each harness that should participate, such as `goSDKHarness`, `rustProbeHarness`, `dotNetProbeHarness`, and `pythonProbeHarness`.
-3. Add a new entry to `sharedInteropBehaviorSpecs` with a stable label. If the behavior should be runnable as a first-class filtered target like the current behavior slices, add matching Taskfile targets and document them here.
+2. Implement that method in each harness that should participate. The native Go path lives in `goSDKHarness` in `tests/native_go_harness_test.go`; the external SDK probe paths are wired through `newRustProbeHarness(...)`, `newDotNetProbeHarness(...)`, and `newPythonProbeHarness(...)` in `tests/interop_behaviors_test.go`.
+3. Add a new entry to `sharedInteropBehaviorSpecs` with a stable label. If the behavior should be runnable as a first-class filtered target like the current behavior slices, extend the wildcard-backed behavior task families in `Taskfile.yml` and document the new label here.
 4. If the Rust, .NET, or Python harnesses need their own focused scenario selection, add a new `probeScenario` in `tests/interop_shared_test.go`, pass it through `tests/interop_launchers_test.go`, and implement the scenario in the matching probe binary:
    `fixtures/rust/src/bin/interop-rust-probe.rs`
    `fixtures/dotnet/InteropProbe/Program.cs`
