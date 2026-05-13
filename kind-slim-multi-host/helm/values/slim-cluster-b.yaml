@@ -1,0 +1,54 @@
+# Copyright AGNTCY Contributors (https://github.com/agntcy)
+# SPDX-License-Identifier: Apache-2.0
+# agntcy slim — KinD cluster B, namespace cluster-b
+# Controller on cluster A via cluster-A ingress (nginx). Pods resolve control.cluster-a.csit.test
+# to the ingress LoadBalancer IP (cloud-provider-kind); CoreDNS on B is patched by
+# task stack:install / stack:up.
+# From the host: local DNS resolves slim.cluster-b.csit.test → loopback; use ports 9080/9443 (KinD maps).
+# If pods cannot reach the LB VIP (some Docker Desktop setups), merge slim-cluster-b.docker-desktop.yaml.
+slim:
+  replicaCount: 1
+  daemonset: false
+  image:
+    repository: ghcr.io/agntcy/slim
+    pullPolicy: IfNotPresent
+    tag: ""
+  overrideConfig:
+    tracing:
+      log_level: debug
+      display_thread_names: true
+      display_thread_ids: true
+    runtime:
+      n_cores: 0
+      thread_name: slim-data-plane
+      drain_timeout: 10s
+    services:
+      slim/0:
+        node_id: ${env:SLIM_SVC_ID}
+        group_name: cluster-b
+        dataplane:
+          servers:
+            - endpoint: "0.0.0.0:46357"
+              metadata:
+                local_endpoint: ${env:MY_POD_IP}
+              tls:
+                insecure: true
+        controller:
+          clients:
+            - endpoint: "https://control.cluster-a.csit.test:443"
+              keepalive:
+                tcp_keepalive: 20s
+                http2_keepalive: 20s
+                timeout: 10s
+                keep_alive_while_idle: true
+              tls:
+                insecure: false
+                # because we are using self-signed certificate
+                insecure_skip_verify: true
+                include_system_ca_certs_pool: true 
+
+  # Cluster B does not run ingress-nginx; host gRPC via slim.cluster-b.csit.test is not wired here.
+  ingresses: []
+
+mcpProxy:
+  enabled: false

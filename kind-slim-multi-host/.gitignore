@@ -1,0 +1,5 @@
+# Generated at runtime (LB IP, cpkind logs, local DNS Corefile)
+.gen/
+compose/dns/Corefile
+compose/dns/csittest.zone
+.bin/

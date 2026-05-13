@@ -1,0 +1,63 @@
+# Copyright AGNTCY Contributors (https://github.com/agntcy)
+# SPDX-License-Identifier: Apache-2.0
+# agntcy slim — KinD cluster A, namespace cluster-a
+slim:
+  replicaCount: 1
+  daemonset: false
+  image:
+    repository: ghcr.io/agntcy/slim
+    pullPolicy: IfNotPresent
+    tag: ""
+  overrideConfig:
+    tracing:
+      log_level: debug
+      display_thread_names: true
+      display_thread_ids: true
+    runtime:
+      n_cores: 0
+      thread_name: slim-data-plane
+      drain_timeout: 10s
+    services:
+      slim/0:
+        node_id: ${env:SLIM_SVC_ID}
+        group_name: cluster-a
+        dataplane:
+          servers:
+            - endpoint: "0.0.0.0:46357"
+              keepalive:
+                time: "20s"
+              metadata:
+                external_endpoint: "slim.cluster-a.csit.test:443"   
+                client_config:
+                  keepalive:
+                    keep_alive_while_idle: true
+                  tls:
+                    insecure: false
+                    # because we are using self-signed certificate
+                    insecure_skip_verify: true
+                    include_system_ca_certs_pool: true
+              tls:
+                insecure: true
+        controller:
+          clients:
+            # URI scheme required (slim parses endpoint as a URL; bare host:port => "invalid endpoint scheme")
+            - endpoint: "https://slim-control.admin.svc.cluster.local:50052"
+              tls:
+                insecure: true
+
+
+  # gRPC Ingress (slim chart slim.ingresses); matches ingress-nginx + *.csit.test DNS helper.
+  ingresses:
+    - portName: data-plane-0
+      className: nginx
+      annotations:
+        nginx.ingress.kubernetes.io/backend-protocol: "GRPC"
+        nginx.ingress.kubernetes.io/ssl-redirect: "false"
+      hosts:
+        - host: slim.cluster-a.csit.test
+          paths:
+            - path: /
+              pathType: Prefix
+
+mcpProxy:
+  enabled: false

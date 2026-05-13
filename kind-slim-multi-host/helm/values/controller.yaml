@@ -1,0 +1,86 @@
+# Copyright AGNTCY Contributors (https://github.com/agntcy)
+# SPDX-License-Identifier: Apache-2.0
+# slim-control-plane — cluster A only (namespace admin)
+replicaCount: 1
+image:
+  repository: ghcr.io/agntcy/slim/control-plane
+  pullPolicy: IfNotPresent
+  tag: ""
+
+fullnameOverride: slim-control
+
+spire:
+  enabled: false
+
+config:
+  northbound:
+    httpHost: 0.0.0.0
+    httpPort: 50051
+  southbound:
+    httpHost: 0.0.0.0
+    httpPort: 50052
+    # Do not set tls.useSpiffe: false without certFile/keyFile/caFile — the binary
+    # requires caFile when useSpiffe is false. With no southbound.tls key, the
+    # chart matches upstream defaults for spire.enabled: false.
+  logging:
+    level: DEBUG
+
+service:
+  type: ClusterIP
+  south:
+    port: 50052
+  north:
+    port: 50051
+
+# Northbound gRPC exposed for cross-cluster / host DNS (slim-control-plane ingressNorth).
+ingressNorth:
+  enabled: true
+  className: nginx
+  annotations:
+    nginx.ingress.kubernetes.io/backend-protocol: "GRPC"
+    nginx.ingress.kubernetes.io/ssl-redirect: "false"
+    # Match south ingress gRPC tuning — helps host/LB clients that saw resets or slow streams.
+    nginx.ingress.kubernetes.io/proxy-buffering: "off"
+    nginx.ingress.kubernetes.io/proxy-connect-timeout: "60"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
+    nginx.ingress.kubernetes.io/proxy-stream-timeout: "3600"
+    # Cleartext gRPC (h2c) from host→nginx needs HTTP/2 on :80 (nginx 1.25+; controller v1.10+).
+    nginx.ingress.kubernetes.io/server-snippet: |
+      http2 on;
+      grpc_socket_keepalive on;
+      grpc_read_timeout 3600s;
+      grpc_send_timeout 3600s;
+      http2_max_concurrent_streams 128;
+  hosts:
+    - host: control.nb.cluster-a.csit.test
+      paths:
+        - path: /
+          pathType: Prefix
+          port: 50051
+
+ingressSouth:
+  enabled: true
+  className: nginx
+  annotations:
+    nginx.ingress.kubernetes.io/backend-protocol: "GRPC"
+    nginx.ingress.kubernetes.io/use-regex: "true"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
+    nginx.ingress.kubernetes.io/proxy-stream-timeout: "3600"
+    nginx.ingress.kubernetes.io/ssl-redirect: 'true'   
+    nginx.ingress.kubernetes.io/server-snippet: |
+      grpc_socket_keepalive on;
+      keepalive_timeout 3600s;
+      grpc_read_timeout 3600s;
+      grpc_send_timeout 3600s;
+      client_header_timeout 60m;
+      client_body_timeout 60m;
+      http2_max_requests 10000;
+      http2_max_concurrent_streams 128; 
+  hosts:
+    - host: control.cluster-a.csit.test
+      paths:
+        - path: /
+          pathType: Prefix
+          port: 50052

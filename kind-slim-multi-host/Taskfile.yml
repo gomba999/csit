@@ -1,0 +1,558 @@
+# Copyright AGNTCY Contributors (https://github.com/agntcy)
+# SPDX-License-Identifier: Apache-2.0
+---
+version: "3"
+
+silent: true
+
+env:
+  PATH: '{{env "HOME"}}/.asdf/shims:{{env "HOME"}}/.asdf/bin:/opt/homebrew/opt/asdf/libexec/bin:/usr/local/opt/asdf/libexec/bin:{{env "PATH"}}'
+
+vars:
+  CLUSTER_A: '{{ .CLUSTER_A | default "csit-a" }}'
+  CLUSTER_B: '{{ .CLUSTER_B | default "csit-b" }}'
+  CTX_A: '{{ .CTX_A | default "kind-csit-a" }}'
+  CTX_B: '{{ .CTX_B | default "kind-csit-b" }}'
+
+  SLIM_CHART: '{{ .SLIM_CHART | default "oci://ghcr.io/agntcy/slim/helm/slim" }}'
+  SLIM_CHART_TAG: '{{ .SLIM_CHART_TAG | default "v0.7.0" }}'
+  # Prefer CLI/task var, then OS env (CI sets SLIM_IMAGE_TAG / CTRL_IMAGE_TAG), then default tags.
+  SLIM_IMAGE_TAG: '{{ .SLIM_IMAGE_TAG | default (env "SLIM_IMAGE_TAG") | default "1.3.0-dev03" }}'
+
+  CTRL_CHART: '{{ .CTRL_CHART | default "oci://ghcr.io/agntcy/slim/helm/slim-control-plane" }}'
+  CTRL_CHART_TAG: '{{ .CTRL_CHART_TAG | default "v0.7.0" }}'
+  CTRL_IMAGE_TAG: '{{ .CTRL_IMAGE_TAG | default (env "CTRL_IMAGE_TAG") | default (env "SLIM_CONTROLLER_IMAGE_TAG") | default "1.0.0-dev.07" }}'
+
+  # Default local layout: `slim` checkout is a sibling of the `csit` repo (…/agntcy/csit/kind-slim-multi-host → …/agntcy/slim).
+  # Override with SLIM_REPO_PATH / SLIM_CHARTS_PATH (env or `task VAR=…`). CI sets these explicitly.
+  SLIM_CHARTS_PATH: '{{ .SLIM_CHARTS_PATH | default (env "SLIM_CHARTS_PATH") | default (printf "%s/../../slim/charts" .TASKFILE_DIR) }}'
+
+  # agntcy/slim repo root (cargo slimctl:build, charts fallback). Same sibling default as SLIM_CHARTS_PATH.
+  SLIM_REPO_PATH: '{{ .SLIM_REPO_PATH | default (env "SLIM_REPO_PATH") | default (printf "%s/../../slim" .TASKFILE_DIR) }}'
+  SLIMCTL_PATH: '{{ .SLIMCTL_PATH | default "./bin/slimctl" }}'
+  # Must match SLIMCTL_PF_LOCAL_PORT when overriding local port (e.g. http://localhost:150051).
+  SLIM_CONTROLLER_HTTP_URL: '{{ .SLIM_CONTROLLER_HTTP_URL | default "http://localhost:50051" }}'
+  SLIMCTL_PF_LOCAL_PORT: '{{ .SLIMCTL_PF_LOCAL_PORT | default "50051" }}'
+
+  # ingress-nginx Helm chart (KinD: helm/values/ingress-nginx-kind.yaml). Bump chart + sync controller.image digest there.
+  INGRESS_NGINX_HELM_REPO: '{{ .INGRESS_NGINX_HELM_REPO | default "https://kubernetes.github.io/ingress-nginx" }}'
+  INGRESS_NGINX_HELM_CHART: '{{ .INGRESS_NGINX_HELM_CHART | default "ingress-nginx" }}'
+  INGRESS_NGINX_HELM_VERSION: '{{ .INGRESS_NGINX_HELM_VERSION | default "4.15.1" }}'
+  INGRESS_NGINX_RELEASE: '{{ .INGRESS_NGINX_RELEASE | default "ingress-nginx" }}'
+
+  CTRL_RELEASE: '{{ .CTRL_RELEASE | default "slim-control" }}'
+  SLIM_RELEASE_A: '{{ .SLIM_RELEASE_A | default "agntcy-cluster-a" }}'
+  SLIM_RELEASE_B: '{{ .SLIM_RELEASE_B | default "agntcy-cluster-b" }}'
+  NS_ADMIN: '{{ .NS_ADMIN | default "admin" }}'
+  NS_A: '{{ .NS_A | default "cluster-a" }}'
+  NS_B: '{{ .NS_B | default "cluster-b" }}'
+  # Host loopback port for local *.csit.test DNS helper (macOS often uses 5353 for mDNS; 53 is blocked/unavailable in Docker).
+  CSIT_LOCAL_DNS_HOST_PORT: '{{ .CSIT_LOCAL_DNS_HOST_PORT | default "8053" }}'
+  INGRESS_SVC: '{{ .INGRESS_SVC | default "ingress-nginx-controller" }}'
+
+  # cert-manager + SPIRE (cluster-a root, cluster-b downstream via charts/slim-spire)
+  CERT_MANAGER_HELM_VERSION: '{{ .CERT_MANAGER_HELM_VERSION | default "v1.20.1" }}'
+  SPIRE_CHART_VERSION: '{{ .SPIRE_CHART_VERSION | default "0.28.3" }}'
+  SPIRE_CRDS_CHART_VERSION: '{{ .SPIRE_CRDS_CHART_VERSION | default "0.5.0" }}'
+  SPIRE_TRUST_DOMAIN: '{{ .SPIRE_TRUST_DOMAIN | default "cluster-a.example" }}'
+  SPIRE_CLUSTER_B_BOOTSTRAP_SLUG: '{{ .SPIRE_CLUSTER_B_BOOTSTRAP_SLUG | default "cluster-b" }}'
+  # Optional; else minted via kubectl exec on cluster-a spire-server (see spire:deploy:cluster-b).
+  SPIRE_JOIN_TOKEN: '{{ .SPIRE_JOIN_TOKEN | default "" }}'
+
+tasks:
+  prereq:
+    desc: Check kind, kubectl, docker, jq
+    cmds:
+      - command -v kind
+      - command -v kubectl
+      - command -v docker
+      - command -v jq
+      - chmod +x scripts/run-cloud-provider-kind.sh scripts/discover-ingress-lb-ip-a.sh scripts/coredns-apply-cluster-b-ingress-alias.sh scripts/verify-local-dns-helper.sh scripts/ensure-slim-headless-service.sh scripts/slimctl-controller-via-port-forward.sh scripts/install-macos-resolver-csit.sh
+
+  prereq:stack:
+    desc: prereq + helm + go (Helm installs and cloud-provider-kind)
+    deps: [prereq]
+    cmds:
+      - command -v helm
+      - command -v go
+
+  prereq:slimctl:
+    desc: Check Rust toolchain (cargo, rustc) for slimctl:build
+    cmds:
+      - command -v cargo
+      - command -v rustc
+
+  slimctl:build:
+    desc: Build slimctl from SLIM_REPO_PATH data-plane/slimctl (cargo release); copy to SLIMCTL_PATH
+    deps: [prereq:slimctl]
+    dir: "{{.TASKFILE_DIR}}"
+    cmds:
+      - |
+        set -euo pipefail
+        REPO='{{ .SLIM_REPO_PATH }}'
+        if [ -z "$REPO" ]; then
+          echo "Set SLIM_REPO_PATH to the root of an agntcy/slim checkout (contains data-plane/slimctl)" >&2
+          exit 1
+        fi
+        CRATE_DIR="$REPO/data-plane/slimctl"
+        if [ ! -d "$CRATE_DIR" ]; then
+          echo "Not found: $CRATE_DIR" >&2
+          exit 1
+        fi
+        OUT='{{ .SLIMCTL_PATH }}'
+        OUT_DIR=$(dirname "$OUT")
+        mkdir -p "$OUT_DIR"
+        (cd "$CRATE_DIR" && cargo build --release)
+        # Workspace lives under data-plane/; artifacts go to data-plane/target (not $REPO/target).
+        BIN=""
+        for p in "$REPO/data-plane/target/release/slimctl" "$REPO/target/release/slimctl"; do
+          if [ -f "$p" ]; then BIN="$p"; break; fi
+        done
+        if [ -z "$BIN" ]; then
+          echo "slimctl binary not found after cargo build (looked under $REPO/data-plane/target/release and $REPO/target/release)" >&2
+          exit 1
+        fi
+        cp "$BIN" "$OUT"
+        chmod +x "$OUT"
+        echo "Built slimctl -> $OUT"
+
+  slimctl:controller:link:outline:
+    desc: |
+      Port-forward svc/slim-control northbound to localhost, then slimctl controller link outline.
+      Requires helm:install:controller (or stack:install) on CTX_A. Set SLIM_REPO_PATH; build runs via deps.
+    deps: [slimctl:build]
+    dir: "{{.TASKFILE_DIR}}"
+    env:
+      SLIMCTL_PATH: '{{ .SLIMCTL_PATH }}'
+      CTX_A: '{{ .CTX_A }}'
+      CTRL_RELEASE: '{{ .CTRL_RELEASE }}'
+      NS_ADMIN: '{{ .NS_ADMIN }}'
+      SLIMCTL_PF_LOCAL_PORT: '{{ .SLIMCTL_PF_LOCAL_PORT }}'
+      SLIM_CONTROLLER_HTTP_URL: '{{ .SLIM_CONTROLLER_HTTP_URL }}'
+    cmds:
+      - bash scripts/slimctl-controller-via-port-forward.sh link
+
+  slimctl:controller:route:outline:
+    desc: |
+      Port-forward svc/slim-control northbound to localhost, then slimctl controller route outline.
+      Requires helm:install:controller (or stack:install) on CTX_A. Set SLIM_REPO_PATH; build runs via deps.
+    deps: [slimctl:build]
+    dir: "{{.TASKFILE_DIR}}"
+    env:
+      SLIMCTL_PATH: '{{ .SLIMCTL_PATH }}'
+      CTX_A: '{{ .CTX_A }}'
+      CTRL_RELEASE: '{{ .CTRL_RELEASE }}'
+      NS_ADMIN: '{{ .NS_ADMIN }}'
+      SLIMCTL_PF_LOCAL_PORT: '{{ .SLIMCTL_PF_LOCAL_PORT }}'
+      SLIM_CONTROLLER_HTTP_URL: '{{ .SLIM_CONTROLLER_HTTP_URL }}'
+    cmds:
+      - bash scripts/slimctl-controller-via-port-forward.sh route
+
+  kind:create:a:
+    desc: Create KinD cluster A (minimal config)
+    cmds:
+      - kind create cluster --config kind/cluster-a.yaml --wait 90s
+      - kubectl config use-context {{ .CTX_A }}
+      - kubectl cluster-info
+
+  kind:create:b:
+    desc: Create KinD cluster B (minimal config)
+    cmds:
+      - kind create cluster --config kind/cluster-b.yaml --wait 90s
+      - kubectl config use-context {{ .CTX_B }}
+      - kubectl cluster-info
+
+  kind:create:all:
+    desc: Create both KinD clusters (A then B)
+    cmds:
+      - task kind:create:a
+      - task kind:create:b
+
+  kind:delete:a:
+    desc: Delete KinD cluster A
+    cmds:
+      - kind delete cluster --name {{ .CLUSTER_A }}
+
+  kind:delete:b:
+    desc: Delete KinD cluster B
+    cmds:
+      - kind delete cluster --name {{ .CLUSTER_B }}
+
+  kind:delete:all:
+    desc: Delete both KinD clusters (B then A)
+    cmds:
+      - task kind:delete:b
+      - task kind:delete:a
+
+  # LoadBalancer — https://github.com/kubernetes-sigs/cloud-provider-kind (requires Go)
+  kind:cloud-provider-kind:up:
+    desc: Start cloud-provider-kind (macOS sudo -v may prompt); wait until controller process is running
+    cmds:
+      - ./scripts/run-cloud-provider-kind.sh
+
+  ingress:install:a:
+    desc: Install ingress-nginx on cluster A (Helm; required before slim / controller Ingress)
+    deps: [prereq:stack]
+    silent: false
+    cmds:
+      - |
+        set -euo pipefail
+        echo "Helm: ingress-nginx on {{ .CTX_A }} (NodePort + wait, then promote Service to LoadBalancer)..."
+        helm upgrade --install {{ .INGRESS_NGINX_RELEASE }} {{ .INGRESS_NGINX_HELM_CHART }} \
+          --repo {{ .INGRESS_NGINX_HELM_REPO }} \
+          --version {{ .INGRESS_NGINX_HELM_VERSION }} \
+          -f helm/values/ingress-nginx-kind.yaml \
+          --namespace ingress-nginx --create-namespace \
+          --wait --timeout 15m \
+          --kube-context {{ .CTX_A }}
+        echo "Helm upgrade: set ingress Service on {{ .CTX_A }} to LoadBalancer (Helm-owned — avoids SSA conflict with kubectl patch on reruns)..."
+        helm upgrade {{ .INGRESS_NGINX_RELEASE }} {{ .INGRESS_NGINX_HELM_CHART }} \
+          --repo {{ .INGRESS_NGINX_HELM_REPO }} \
+          --version {{ .INGRESS_NGINX_HELM_VERSION }} \
+          --reuse-values \
+          --set controller.service.type=LoadBalancer \
+          --namespace ingress-nginx \
+          --kube-context {{ .CTX_A }}
+
+  ingress:a:wait-lb-ip:
+    desc: Wait for cluster A ingress LoadBalancer IP → .gen/ingress-a.env
+    cmds:
+      - INGRESS_SVC={{ .INGRESS_SVC }} ./scripts/discover-ingress-lb-ip-a.sh {{ .CTX_A }}
+
+  coredns:apply:cluster-b:ingress-alias:
+    desc: Patch CoreDNS on cluster B — control/slim/spire hostnames under cluster-a.csit.test → cluster A ingress LB IP
+    cmds:
+      - ./scripts/coredns-apply-cluster-b-ingress-alias.sh {{ .CTX_B }}
+
+  cert-manager:install:a:
+    desc: Install cert-manager on cluster A and apply selfsigned ClusterIssuer (SPIRE ingress TLS)
+    deps: [prereq:stack]
+    cmds:
+      - helm repo add jetstack https://charts.jetstack.io 2>/dev/null || true
+      - helm repo update
+      - |
+        set -euo pipefail
+        helm upgrade --install cert-manager jetstack/cert-manager \
+          --namespace cert-manager \
+          --create-namespace \
+          --version {{ .CERT_MANAGER_HELM_VERSION }} \
+          --set crds.enabled=true \
+          --kube-context {{ .CTX_A }} \
+          --wait \
+          --wait-for-jobs \
+          --timeout 15m
+      - kubectl apply --context {{ .CTX_A }} -f helm/manifests/cert-manager-selfsigned-clusterissuer.yaml
+
+  spire:deploy:cluster-a:
+    desc: Root SPIRE on cluster-a (spire-crds + spire-root; namespace spire-system). Requires ingress-nginx and cert-manager.
+    deps: [ingress:install:a, cert-manager:install:a]
+    cmds:
+      - helm repo add spiffe https://spiffe.github.io/helm-charts-hardened/ 2>/dev/null || true
+      - helm repo update
+      - |
+        set -euo pipefail
+        helm upgrade --install spire-crds spiffe/spire-crds \
+          --namespace spire-system \
+          --create-namespace \
+          --version "{{ .SPIRE_CRDS_CHART_VERSION }}" \
+          --kube-context {{ .CTX_A }} \
+          --wait \
+          --wait-for-jobs \
+          --timeout 15m
+      - |
+        set -euo pipefail
+        helm upgrade --install spire-root spiffe/spire \
+          --namespace spire-system \
+          --create-namespace \
+          --version "{{ .SPIRE_CHART_VERSION }}" \
+          -f helm/values/spire-cluster-a-values.yaml \
+          --kube-context {{ .CTX_A }} \
+          --wait \
+          --wait-for-jobs \
+          --timeout 25m
+
+  spire:deploy:cluster-b:
+    desc: Downstream SPIRE on cluster-b (spire-crds + slim-spire). Requires spire on cluster-a; set SLIM_CHARTS_PATH or SLIM_REPO_PATH to a checkout containing charts/slim-spire.
+    deps: [spire:deploy:cluster-a]
+    cmds:
+      - |
+        set -euo pipefail
+        CTX_A="{{ .CTX_A }}"
+        CTX_B="{{ .CTX_B }}"
+        helm repo add spiffe https://spiffe.github.io/helm-charts-hardened/ 2>/dev/null || true
+        helm repo update
+        helm upgrade --install spire-crds spiffe/spire-crds \
+          --namespace spire-system \
+          --create-namespace \
+          --version "{{ .SPIRE_CRDS_CHART_VERSION }}" \
+          --kube-context "$CTX_B" \
+          --wait \
+          --wait-for-jobs \
+          --timeout 15m
+        CHART_ROOT='{{ .SLIM_CHARTS_PATH }}'
+        if { [ -z "$CHART_ROOT" ] || [ ! -d "${CHART_ROOT}/slim-spire" ]; } && [ -n "${SLIM_REPO_PATH:-}" ] && [ -d "${SLIM_REPO_PATH}/charts/slim-spire" ]; then
+          CHART_ROOT="${SLIM_REPO_PATH}/charts"
+        fi
+        if [ ! -d "${CHART_ROOT}/slim-spire" ]; then
+          echo "ERROR: slim-spire chart not found under ${CHART_ROOT} (set SLIM_CHARTS_PATH or SLIM_REPO_PATH to agntcy/slim charts directory)" >&2
+          exit 1
+        fi
+        helm dependency build --skip-refresh "${CHART_ROOT}/slim-spire"
+        SPIFFE_ID="spiffe://{{ .SPIRE_TRUST_DOMAIN }}/bootstrap/upstream-agent/{{ .SPIRE_CLUSTER_B_BOOTSTRAP_SLUG }}"
+        MANUAL_TOKEN='{{ .SPIRE_JOIN_TOKEN }}'
+        if [ -z "$MANUAL_TOKEN" ] && [ -n "${SPIRE_JOIN_TOKEN:-}" ]; then
+          MANUAL_TOKEN="${SPIRE_JOIN_TOKEN}"
+        fi
+        if [ -n "$MANUAL_TOKEN" ]; then
+          TOKEN="$MANUAL_TOKEN"
+        else
+          POD=$(kubectl --context "$CTX_A" get pod -n spire-system -l app.kubernetes.io/component=server -o jsonpath='{.items[0].metadata.name}' 2>/dev/null || true)
+          if [ -z "$POD" ]; then
+            echo "No spire-server pod on cluster-a; set SPIRE_JOIN_TOKEN or re-run after spire:deploy:cluster-a" >&2
+            exit 1
+          fi
+          TOKEN=$(kubectl --context "$CTX_A" exec -n spire-system "$POD" -c spire-server -- \
+            spire-server token generate -spiffeID "$SPIFFE_ID" | sed 's/^Token:[[:space:]]*//' | tr -d '\r\n ')
+        fi
+        kubectl --context "$CTX_B" create namespace spire-system --dry-run=client -o yaml | kubectl --context "$CTX_B" apply -f -
+        kubectl --context "$CTX_B" delete secret spire-upstream-bootstrap-token -n spire-system --ignore-not-found=true
+        kubectl --context "$CTX_B" create secret generic spire-upstream-bootstrap-token -n spire-system --from-literal=token="$TOKEN"
+        helm upgrade --install spire-downstream "${CHART_ROOT}/slim-spire" \
+          --namespace spire-system \
+          --create-namespace \
+          -f helm/values/spire-cluster-b-values.yaml \
+          --kube-context "$CTX_B" \
+          --wait \
+          --wait-for-jobs \
+          --timeout 25m
+
+  cluster:up:
+    desc: Create both KinD clusters (prereq + kind)
+    cmds:
+      - task prereq
+      - task kind:create:all
+
+  cluster:teardown:
+    desc: Delete both KinD clusters (no Helm uninstall)
+    cmds:
+      - task kind:delete:all
+
+  stack:install:
+    desc: cloud-provider-kind + ingress (A) + cert-manager + LB wait + CoreDNS B + SPIRE (A/B) + Helm apps + host DNS helper + verify
+    cmds:
+      - task prereq:stack
+      - task kind:cloud-provider-kind:up
+      - task ingress:install:a
+      - task cert-manager:install:a
+      - task ingress:a:wait-lb-ip
+      - task coredns:apply:cluster-b:ingress-alias
+      - task spire:deploy:cluster-a
+      - task spire:deploy:cluster-b
+      - task apps:install:cluster-a
+      - task apps:install:cluster-b
+      - task compose:dns:up
+      - task compose:dns:verify
+      - task echo-agent:server:deploy
+      - task echo-agent:client:deploy
+      - task slimctl:controller:link:outline
+      - task slimctl:controller:route:outline
+
+  stack:up:
+    desc: cluster:up + stack:install (full dev environment)
+    cmds:
+      - task cluster:up
+      - task stack:install
+
+  stack:down:
+    desc: Helm uninstall slim stack, compose down, delete KinD clusters
+    cmds:
+      - task apps:uninstall
+      - task compose:dns:down
+      - task cluster:teardown
+
+  compose:dns:render:
+    desc: Write compose/dns/Corefile for local *.csit.test
+    cmds:
+      - chmod +x scripts/render-local-dns-corefile.sh
+      - ./scripts/render-local-dns-corefile.sh
+
+  compose:dns:up:
+    desc: Start local DNS helper (render + compose/dns)
+    deps: [compose:dns:render]
+    dir: compose/dns
+    env:
+      CSIT_LOCAL_DNS_HOST_PORT: '{{ .CSIT_LOCAL_DNS_HOST_PORT }}'
+    cmds:
+      - docker compose up -d
+
+  compose:dns:down:
+    desc: Stop local DNS helper
+    dir: compose/dns
+    env:
+      CSIT_LOCAL_DNS_HOST_PORT: '{{ .CSIT_LOCAL_DNS_HOST_PORT }}'
+    cmds:
+      - docker compose down
+
+  compose:dns:verify:
+    desc: Assert host DNS helper resolves cluster-A ingress and SPIRE names to INGRESS_A_LB_IP (dig @127.0.0.1 CSIT_LOCAL_DNS_HOST_PORT)
+    env:
+      CSIT_LOCAL_DNS_HOST_PORT: '{{ .CSIT_LOCAL_DNS_HOST_PORT }}'
+    cmds:
+      - ./scripts/verify-local-dns-helper.sh
+
+  compose:dns:resolver:install:
+    desc: macOS only — install /etc/resolver/csit.test for split DNS to local-dns (sudo; matches CSIT_LOCAL_DNS_HOST_PORT)
+    env:
+      CSIT_LOCAL_DNS_HOST_PORT: '{{ .CSIT_LOCAL_DNS_HOST_PORT }}'
+    cmds:
+      - ./scripts/install-macos-resolver-csit.sh
+
+  apps:install:cluster-a:
+    desc: Helm controller + slim on cluster A only (Ingress in admin + cluster-a; requires ingress-nginx on A)
+    deps: [ingress:install:a]
+    cmds:
+      - task helm:install:controller
+      - task helm:install:slim:a
+
+  apps:install:cluster-b:
+    desc: Helm slim on cluster B (after CoreDNS maps control.cluster-a.csit.test → LB IP; no ingress-nginx on B)
+    deps: [prereq:stack]
+    cmds:
+      - task helm:install:slim:b
+
+  apps:uninstall:
+    desc: Remove optional Helm releases (Ingress objects owned by Helm releases)
+    cmds:
+      - helm uninstall spire-downstream --namespace spire-system --kube-context {{ .CTX_B }} || true
+      - helm uninstall spire-crds --namespace spire-system --kube-context {{ .CTX_B }} || true
+      - helm uninstall spire-root --namespace spire-system --kube-context {{ .CTX_A }} || true
+      - helm uninstall spire-crds --namespace spire-system --kube-context {{ .CTX_A }} || true
+      - helm uninstall {{ .SLIM_RELEASE_B }} --namespace {{ .NS_B }} --kube-context {{ .CTX_B }} || true
+      - kubectl --context {{ .CTX_B }} -n {{ .NS_B }} delete service {{ .SLIM_RELEASE_B }}-slim-headless --ignore-not-found
+      - helm uninstall {{ .SLIM_RELEASE_A }} --namespace {{ .NS_A }} --kube-context {{ .CTX_A }} || true
+      - kubectl --context {{ .CTX_A }} -n {{ .NS_A }} delete service {{ .SLIM_RELEASE_A }}-slim-headless --ignore-not-found
+      - helm uninstall {{ .CTRL_RELEASE }} --namespace {{ .NS_ADMIN }} --kube-context {{ .CTX_A }} || true
+
+  helm:install:controller:
+    desc: Install slim-control-plane on cluster A; prefers SLIM_CHARTS_PATH then SLIM_REPO_PATH/charts else OCI
+    cmds:
+      - |
+        set -euo pipefail
+        CHART_ROOT='{{ .SLIM_CHARTS_PATH }}'
+        if { [ -z "$CHART_ROOT" ] || [ ! -d "${CHART_ROOT}/slim" ]; } && [ -n "${SLIM_REPO_PATH:-}" ] && [ -d "${SLIM_REPO_PATH}/charts/slim" ]; then
+          CHART_ROOT="${SLIM_REPO_PATH}/charts"
+        fi
+        if [ -d "${CHART_ROOT}/slim-control-plane" ]; then
+          helm upgrade {{ .CTRL_RELEASE }} "${CHART_ROOT}/slim-control-plane" \
+            --set image.tag="{{ .CTRL_IMAGE_TAG }}" \
+            -f helm/values/controller.yaml \
+            --namespace {{ .NS_ADMIN }} \
+            --create-namespace \
+            --install \
+            --wait \
+            --timeout 25m \
+            --kube-context {{ .CTX_A }}
+        else
+          helm upgrade {{ .CTRL_RELEASE }} {{ .CTRL_CHART }} \
+            --version {{ .CTRL_CHART_TAG }} \
+            --set image.tag="{{ .CTRL_IMAGE_TAG }}" \
+            -f helm/values/controller.yaml \
+            --namespace {{ .NS_ADMIN }} \
+            --create-namespace \
+            --install \
+            --wait \
+            --timeout 25m \
+            --kube-context {{ .CTX_A }}
+        fi
+
+  helm:install:slim:a:
+    desc: Helm slim chart on cluster A
+    cmds:
+      - |
+        set -euo pipefail
+        ./scripts/ensure-slim-headless-service.sh {{ .CTX_A }} {{ .NS_A }} {{ .SLIM_RELEASE_A }}
+        CHART_ROOT='{{ .SLIM_CHARTS_PATH }}'
+        if { [ -z "$CHART_ROOT" ] || [ ! -d "${CHART_ROOT}/slim" ]; } && [ -n "${SLIM_REPO_PATH:-}" ] && [ -d "${SLIM_REPO_PATH}/charts/slim" ]; then
+          CHART_ROOT="${SLIM_REPO_PATH}/charts"
+        fi
+        if [ -d "${CHART_ROOT}/slim" ]; then
+          helm upgrade {{ .SLIM_RELEASE_A }} "${CHART_ROOT}/slim" \
+            --set slim.image.tag="{{ .SLIM_IMAGE_TAG }}" \
+            -f helm/values/slim-cluster-a.yaml \
+            --namespace {{ .NS_A }} \
+            --create-namespace \
+            --install \
+            --wait \
+            --timeout 25m \
+            --kube-context {{ .CTX_A }}
+        else
+          helm upgrade {{ .SLIM_RELEASE_A }} {{ .SLIM_CHART }} \
+            --version {{ .SLIM_CHART_TAG }} \
+            --set slim.image.tag="{{ .SLIM_IMAGE_TAG }}" \
+            -f helm/values/slim-cluster-a.yaml \
+            --namespace {{ .NS_A }} \
+            --create-namespace \
+            --install \
+            --wait \
+            --timeout 25m \
+            --kube-context {{ .CTX_A }}
+        fi
+
+  helm:install:slim:b:
+    desc: Helm slim chart on cluster B
+    cmds:
+      - |
+        set -euo pipefail
+        ./scripts/ensure-slim-headless-service.sh {{ .CTX_B }} {{ .NS_B }} {{ .SLIM_RELEASE_B }}
+        CHART_ROOT='{{ .SLIM_CHARTS_PATH }}'
+        if { [ -z "$CHART_ROOT" ] || [ ! -d "${CHART_ROOT}/slim" ]; } && [ -n "${SLIM_REPO_PATH:-}" ] && [ -d "${SLIM_REPO_PATH}/charts/slim" ]; then
+          CHART_ROOT="${SLIM_REPO_PATH}/charts"
+        fi
+        if [ -d "${CHART_ROOT}/slim" ]; then
+          helm upgrade {{ .SLIM_RELEASE_B }} "${CHART_ROOT}/slim" \
+            --set slim.image.tag="{{ .SLIM_IMAGE_TAG }}" \
+            -f helm/values/slim-cluster-b.yaml \
+            --namespace {{ .NS_B }} \
+            --create-namespace \
+            --install \
+            --wait \
+            --timeout 25m \
+            --kube-context {{ .CTX_B }}
+        else
+          helm upgrade {{ .SLIM_RELEASE_B }} {{ .SLIM_CHART }} \
+            --version {{ .SLIM_CHART_TAG }} \
+            --set slim.image.tag="{{ .SLIM_IMAGE_TAG }}" \
+            -f helm/values/slim-cluster-b.yaml \
+            --namespace {{ .NS_B }} \
+            --create-namespace \
+            --install \
+            --wait \
+            --timeout 25m \
+            --kube-context {{ .CTX_B }}
+        fi
+
+  echo-agent:server:deploy:
+    desc: |
+      Deploy echo A2A server on cluster-a (slima2a from PyPI on container start; see client_apps/a2a/echo-agent-server.yaml).
+      Requires Slim dataplane Service slim.slim (run cluster-a:deploy-all first). Optional NAMESPACE (default default).
+    dir: "{{.TASKFILE_DIR}}"
+    vars:
+      TEMPLATE: '{{ .TEMPLATE | default "agents/echo-agent-server.yaml" }}'
+      NAMESPACE: '{{ .NAMESPACE | default "default" }}'
+    cmds:      
+      - kubectl apply --context {{ .CTX_A }} -n {{ .NS_A }} -f {{ .TEMPLATE }}
+
+  echo-agent:client:deploy:
+    desc: |
+      Deploy echo A2A client on cluster-b (slima2a from PyPI on container start; see client_apps/a2a/echo-agent-client.yaml).
+      Requires Slim dataplane on cluster-b and federation path to the echo server on cluster-a.
+      Optional NAMESPACE (default default).
+    dir: "{{.TASKFILE_DIR}}"
+    vars:
+      TEMPLATE: '{{ .TEMPLATE | default "agents/echo-agent-client.yaml" }}'
+      NAMESPACE: '{{ .NAMESPACE | default "default" }}'
+    cmds:      
+      - kubectl apply --context {{ .CTX_B }} -n {{ .NS_B }} -f {{ .TEMPLATE }}        
+
+  default:
+    cmd: task -l
