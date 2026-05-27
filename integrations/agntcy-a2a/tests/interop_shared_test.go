@@ -3,10 +3,11 @@
 
 package tests
 
-// This file holds the reusable interop test primitives: shared constants, transport and
-// scenario enums, fixture process types, and generic lifecycle helpers.
-// Add code here only when multiple suites or harnesses need the same low-level plumbing.
-// New behavior assertions belong in interop_behaviors_test.go, and suite-specific matrix
+// This file holds the reusable interop test primitives: shared constants, transport
+// enums, fixture process types, the interopSuiteRuntime, and the fixtureServer
+// abstraction that each suite wrapper uses to manage server lifecycle.
+// Add code here only when multiple suites or behaviors need the same low-level plumbing.
+// New behavior assertions belong in interop_behaviors_test.go, and suite-specific
 // wiring belongs in the suite wrapper files.
 
 import (
@@ -60,26 +61,11 @@ const (
 	transportGRPC    transportProtocol = "grpc"
 )
 
-type probeScenario string
-
-const (
-	probeScenarioCore           probeScenario = "core"
-	probeScenarioTaskStreaming probeScenario = "task-streaming"
-	probeScenarioTaskLifecycle  probeScenario = "task-lifecycle"
-	probeScenarioPushConfig     probeScenario = "push-config"
-	probeScenarioParity         probeScenario = "parity"
-)
-
-type rustProbeOptions struct {
-	scenario                   probeScenario
-	expectSubscribeUnsupported bool
-	expectPushSupported        bool
-	expectPushUnsupported      bool
-	relaxedErrorChecks         bool
-	expectedPushErrorCode      int
+type interopTarget struct {
+	baseURL             string
+	serverPrefix        string
+	expectPushSupported bool
 }
-
-type dotNetProbeOptions = rustProbeOptions
 
 type fixtureBinaries struct {
 	tempDir    string
@@ -299,21 +285,6 @@ func (runtime *interopSuiteRuntime) fixtureURL(label string, protocol transportP
 	return runtime.urls[interopSuiteFixtureKey(label, protocol)]
 }
 
-func (runtime *interopSuiteRuntime) fixtureURLs(
-	label string,
-	protocols ...transportProtocol,
-) map[transportProtocol]func() string {
-	urls := make(map[transportProtocol]func() string, len(protocols))
-	for _, protocol := range protocols {
-		protocol := protocol
-		urls[protocol] = func() string {
-			return runtime.fixtureURL(label, protocol)
-		}
-	}
-
-	return urls
-}
-
 func (runtime *interopSuiteRuntime) stopFixtures(fixtures []interopSuiteFixtureSpec) {
 	for index := len(fixtures) - 1; index >= 0; index-- {
 		fixture := fixtures[index]
@@ -337,20 +308,32 @@ func startInteropSuiteFixtures(runtime *interopSuiteRuntime, fixtures []interopS
 	return nil
 }
 
-func newInteropServerSpec(
-	runtime *interopSuiteRuntime,
-	label string,
-	displayName string,
-	serverPrefix string,
-	expectPushSupported bool,
-	protocols ...transportProtocol,
-) interopServerMatrixSpec {
-	return interopServerMatrixSpec{
-		label:               label,
-		displayName:         displayName,
-		serverPrefix:        serverPrefix,
-		expectPushSupported: expectPushSupported,
-		urls:                runtime.fixtureURLs(label, protocols...),
+// fixtureServer manages the lifecycle of a server fixture for a single When block.
+type fixtureServer struct {
+	serverPrefix        string
+	expectPushSupported bool
+	runtime             *interopSuiteRuntime
+	fixtures            []interopSuiteFixtureSpec
+}
+
+func (s *fixtureServer) start() error {
+	return startInteropSuiteFixtures(s.runtime, s.fixtures)
+}
+
+func (s *fixtureServer) stop() {
+	s.runtime.stopFixtures(s.fixtures)
+}
+
+// targetFor returns a lazy getter for the interopTarget for a given protocol.
+// The returned function is safe to call at spec registration time (expectPushSupported
+// is known; baseURL is resolved lazily when the function is actually called in BeforeAll).
+func (s *fixtureServer) targetFor(protocol transportProtocol) func() interopTarget {
+	return func() interopTarget {
+		return interopTarget{
+			baseURL:             s.runtime.fixtureURL(s.serverPrefix, protocol),
+			serverPrefix:        s.serverPrefix,
+			expectPushSupported: s.expectPushSupported,
+		}
 	}
 }
 

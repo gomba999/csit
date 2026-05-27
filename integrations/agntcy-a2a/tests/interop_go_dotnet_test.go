@@ -3,10 +3,12 @@
 
 package tests
 
-// This file is the Go/.NET suite wrapper. It keeps the client/server matrix local to the Go/C#
-// slice while reusing the shared behavior layer and the existing Go and .NET harnesses.
+// This file is the Go/.NET suite wrapper. Tests cover all four client/server
+// pairings of Go and .NET over the transports both SDKs support (JSON-RPC and REST).
 
 import (
+	"context"
+
 	ginkgo "github.com/onsi/ginkgo/v2"
 	"github.com/onsi/gomega"
 )
@@ -17,86 +19,93 @@ var _ = ginkgo.Describe("Go+.NET", ginkgo.Ordered, ginkgo.ContinueOnFailure, gin
 		dotNetAssets dotNetFixtureBinaries
 	)
 
-	runtime := newInteropSuiteRuntime()
-	protocols := []transportProtocol{transportJSONRPC, transportREST}
-	fixtures := []interopSuiteFixtureSpec{
-		{
-			label:    "go",
-			protocol: transportJSONRPC,
-			start: func() (*fixtureProcess, string, error) {
-				return startGoFixture(goAssets, findFreePort(), transportJSONRPC)
-			},
-		},
-		{
-			label:    "dotnet",
-			protocol: transportJSONRPC,
-			start: func() (*fixtureProcess, string, error) {
-				return startDotNetFixture(dotNetAssets, findFreePort(), transportJSONRPC)
-			},
-		},
-		{
-			label:    "go",
-			protocol: transportREST,
-			start: func() (*fixtureProcess, string, error) {
-				return startGoFixture(goAssets, findFreePort(), transportREST)
-			},
-		},
-		{
-			label:    "dotnet",
-			protocol: transportREST,
-			start: func() (*fixtureProcess, string, error) {
-				return startDotNetFixture(dotNetAssets, findFreePort(), transportREST)
-			},
-		},
-	}
-
-	dotNetPushUnsupported := newDotNetProbeHarness(
-		func() dotNetFixtureBinaries { return dotNetAssets },
-		dotNetProbeOptions{
-			expectPushUnsupported: true,
-			expectedPushErrorCode: dotNetPushUnsupportedCode,
-		},
-	)
-	dotNetPushSupported := newDotNetProbeHarness(
-		func() dotNetFixtureBinaries { return dotNetAssets },
-		dotNetProbeOptions{expectPushSupported: true},
-	)
-	clients := []interopClientMatrixSpec{
-		{label: "go", displayName: "Go", harness: goSDKHarness{}},
-		{label: "dotnet", displayName: ".NET", harness: dotNetPushUnsupported},
-	}
-	servers := []interopServerMatrixSpec{
-		newInteropServerSpec(runtime, "go", "Go", "go", true, protocols...),
-		newInteropServerSpec(runtime, "dotnet", ".NET", "dotnet", false, protocols...),
-	}
-	clientHarnessOverrides := map[string]interopHarness{
-		interopPairKey("dotnet", "go"): dotNetPushSupported,
-	}
-
 	ginkgo.BeforeAll(func() {
 		var err error
-
 		goAssets, err = buildGoFixtureBinaryOnly()
 		gomega.Expect(err).NotTo(gomega.HaveOccurred())
 
 		dotNetAssets, err = buildDotNetFixtureBinaryOnly()
 		gomega.Expect(err).NotTo(gomega.HaveOccurred())
-
-		err = startInteropSuiteFixtures(runtime, fixtures)
-		gomega.Expect(err).NotTo(gomega.HaveOccurred())
 	})
 
 	ginkgo.AfterAll(func() {
-		runtime.stopFixtures(fixtures)
-		removeTempDir(dotNetAssets.tempDir)
 		removeTempDir(goAssets.tempDir)
+		removeTempDir(dotNetAssets.tempDir)
 	})
 
-	registerInteropTransportMatrixWithOverrides(
-		protocols,
-		clients,
-		servers,
-		nil,
-		clientHarnessOverrides,
-	)
+	ginkgo.When("a Go client calls a Go server", ginkgo.Ordered, func() {
+		server := newGoServer(func() fixtureBinaries { return goAssets }, true,
+			transportJSONRPC, transportREST)
+
+		ginkgo.BeforeAll(func() { gomega.Expect(server.start()).NotTo(gomega.HaveOccurred()) })
+		ginkgo.AfterAll(func() { server.stop() })
+
+		goClient := func(ctx context.Context, url string) (probeClient, error) {
+			return newGoProbeClient(ctx, url)
+		}
+
+		ginkgo.Context("over JSON-RPC", ginkgo.Ordered, ginkgo.Label("jsonrpc", "go-go"), func() {
+			registerBehaviors(goClient, server.targetFor(transportJSONRPC))
+		})
+		ginkgo.Context("over REST", ginkgo.Ordered, ginkgo.Label("rest", "go-go"), func() {
+			registerBehaviors(goClient, server.targetFor(transportREST))
+		})
+	})
+
+	ginkgo.When("a Go client calls a .NET server", ginkgo.Ordered, func() {
+		server := newDotNetServer(func() dotNetFixtureBinaries { return dotNetAssets }, false,
+			transportJSONRPC, transportREST)
+
+		ginkgo.BeforeAll(func() { gomega.Expect(server.start()).NotTo(gomega.HaveOccurred()) })
+		ginkgo.AfterAll(func() { server.stop() })
+
+		goClient := func(ctx context.Context, url string) (probeClient, error) {
+			return newGoProbeClient(ctx, url)
+		}
+
+		ginkgo.Context("over JSON-RPC", ginkgo.Ordered, ginkgo.Label("jsonrpc", "go-dotnet"), func() {
+			registerBehaviors(goClient, server.targetFor(transportJSONRPC))
+		})
+		ginkgo.Context("over REST", ginkgo.Ordered, ginkgo.Label("rest", "go-dotnet"), func() {
+			registerBehaviors(goClient, server.targetFor(transportREST))
+		})
+	})
+
+	ginkgo.When("a .NET client calls a Go server", ginkgo.Ordered, func() {
+		server := newGoServer(func() fixtureBinaries { return goAssets }, true,
+			transportJSONRPC, transportREST)
+
+		ginkgo.BeforeAll(func() { gomega.Expect(server.start()).NotTo(gomega.HaveOccurred()) })
+		ginkgo.AfterAll(func() { server.stop() })
+
+		dotNetClient := func(ctx context.Context, url string) (probeClient, error) {
+			return newDotNetProbeClient(func() dotNetFixtureBinaries { return dotNetAssets }, url), nil
+		}
+
+		ginkgo.Context("over JSON-RPC", ginkgo.Ordered, ginkgo.Label("jsonrpc", "dotnet-go"), func() {
+			registerBehaviors(dotNetClient, server.targetFor(transportJSONRPC))
+		})
+		ginkgo.Context("over REST", ginkgo.Ordered, ginkgo.Label("rest", "dotnet-go"), func() {
+			registerBehaviors(dotNetClient, server.targetFor(transportREST))
+		})
+	})
+
+	ginkgo.When("a .NET client calls a .NET server", ginkgo.Ordered, func() {
+		server := newDotNetServer(func() dotNetFixtureBinaries { return dotNetAssets }, false,
+			transportJSONRPC, transportREST)
+
+		ginkgo.BeforeAll(func() { gomega.Expect(server.start()).NotTo(gomega.HaveOccurred()) })
+		ginkgo.AfterAll(func() { server.stop() })
+
+		dotNetClient := func(ctx context.Context, url string) (probeClient, error) {
+			return newDotNetProbeClient(func() dotNetFixtureBinaries { return dotNetAssets }, url), nil
+		}
+
+		ginkgo.Context("over JSON-RPC", ginkgo.Ordered, ginkgo.Label("jsonrpc", "dotnet-dotnet"), func() {
+			registerBehaviors(dotNetClient, server.targetFor(transportJSONRPC))
+		})
+		ginkgo.Context("over REST", ginkgo.Ordered, ginkgo.Label("rest", "dotnet-dotnet"), func() {
+			registerBehaviors(dotNetClient, server.targetFor(transportREST))
+		})
+	})
 })

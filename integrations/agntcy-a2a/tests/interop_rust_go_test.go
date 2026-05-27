@@ -3,13 +3,9 @@
 
 package tests
 
-// This file is the Rust/Go suite wrapper. It owns only the fixture lifecycle and the client/server
-// matrix for this suite, then delegates spec generation to the shared behavior layer.
-// To add a new Rust/Go leg, update the clients or servers declared here and let the shared matrix
-// registration create the specs. Do not add one-off It blocks unless the suite truly needs a
-// behavior that cannot be expressed through the shared harness model.
-
 import (
+	"context"
+
 	ginkgo "github.com/onsi/ginkgo/v2"
 	"github.com/onsi/gomega"
 )
@@ -17,88 +13,55 @@ import (
 var _ = ginkgo.Describe("Rust+Go", ginkgo.Ordered, ginkgo.ContinueOnFailure, ginkgo.Label("suite-rust-go"), func() {
 	var binaries fixtureBinaries
 
-	runtime := newInteropSuiteRuntime()
-	protocols := []transportProtocol{transportJSONRPC, transportREST, transportGRPC}
-	fixtures := []interopSuiteFixtureSpec{
-		{
-			label:    "go",
-			protocol: transportJSONRPC,
-			start: func() (*fixtureProcess, string, error) {
-				return startGoFixture(binaries, findFreePort(), transportJSONRPC)
-			},
-		},
-		{
-			label:    "rust",
-			protocol: transportJSONRPC,
-			start: func() (*fixtureProcess, string, error) {
-				return startRustFixture(binaries, findFreePort(), transportJSONRPC)
-			},
-		},
-		{
-			label:    "go",
-			protocol: transportREST,
-			start: func() (*fixtureProcess, string, error) {
-				return startGoFixture(binaries, findFreePort(), transportREST)
-			},
-		},
-		{
-			label:    "rust",
-			protocol: transportREST,
-			start: func() (*fixtureProcess, string, error) {
-				return startRustFixture(binaries, findFreePort(), transportREST)
-			},
-		},
-		{
-			label:    "go",
-			protocol: transportGRPC,
-			start: func() (*fixtureProcess, string, error) {
-				return startGoFixture(binaries, findFreePort(), transportGRPC)
-			},
-		},
-		{
-			label:    "rust",
-			protocol: transportGRPC,
-			start: func() (*fixtureProcess, string, error) {
-				return startRustFixture(binaries, findFreePort(), transportGRPC)
-			},
-		},
-	}
-
-	clients := []interopClientMatrixSpec{
-		{label: "go", displayName: "Go", harness: goSDKHarness{}},
-		{
-			label:       "rust",
-			displayName: "Rust",
-			harness: newRustProbeHarness(
-				func() fixtureBinaries { return binaries },
-				rustProbeOptions{expectPushSupported: true},
-			),
-		},
-	}
-	servers := []interopServerMatrixSpec{
-		newInteropServerSpec(runtime, "go", "Go", "go", true, protocols...),
-		newInteropServerSpec(runtime, "rust", "Rust", "rust", true, protocols...),
-	}
-
 	ginkgo.BeforeAll(func() {
 		var err error
-
 		binaries, err = buildFixtureBinaries()
 		gomega.Expect(err).NotTo(gomega.HaveOccurred())
-
-		err = startInteropSuiteFixtures(runtime, fixtures)
-		gomega.Expect(err).NotTo(gomega.HaveOccurred())
 	})
 
-	ginkgo.AfterAll(func() {
-		runtime.stopFixtures(fixtures)
-		removeTempDir(binaries.tempDir)
+	ginkgo.AfterAll(func() { removeTempDir(binaries.tempDir) })
+
+	ginkgo.When("a Go client calls a Rust server", ginkgo.Ordered, func() {
+		server := newRustServer(func() fixtureBinaries { return binaries }, true,
+			transportJSONRPC, transportREST, transportGRPC)
+
+		ginkgo.BeforeAll(func() { gomega.Expect(server.start()).NotTo(gomega.HaveOccurred()) })
+		ginkgo.AfterAll(func() { server.stop() })
+
+		goClient := func(ctx context.Context, url string) (probeClient, error) {
+			return newGoProbeClient(ctx, url)
+		}
+
+		ginkgo.Context("over JSON-RPC", ginkgo.Ordered, ginkgo.Label("jsonrpc", "go-rust"), func() {
+			registerBehaviors(goClient, server.targetFor(transportJSONRPC))
+		})
+		ginkgo.Context("over REST", ginkgo.Ordered, ginkgo.Label("rest", "go-rust"), func() {
+			registerBehaviors(goClient, server.targetFor(transportREST))
+		})
+		ginkgo.Context("over gRPC", ginkgo.Ordered, ginkgo.Label("grpc", "go-rust"), func() {
+			registerBehaviors(goClient, server.targetFor(transportGRPC))
+		})
 	})
 
-	registerInteropTransportMatrix(
-		protocols,
-		clients,
-		servers,
-		nil,
-	)
+	ginkgo.When("a Rust client calls a Go server", ginkgo.Ordered, func() {
+		server := newGoServer(func() fixtureBinaries { return binaries }, true,
+			transportJSONRPC, transportREST, transportGRPC)
+
+		ginkgo.BeforeAll(func() { gomega.Expect(server.start()).NotTo(gomega.HaveOccurred()) })
+		ginkgo.AfterAll(func() { server.stop() })
+
+		rustClient := func(ctx context.Context, url string) (probeClient, error) {
+			return newRustProbeClient(func() fixtureBinaries { return binaries }, url), nil
+		}
+
+		ginkgo.Context("over JSON-RPC", ginkgo.Ordered, ginkgo.Label("jsonrpc", "rust-go"), func() {
+			registerBehaviors(rustClient, server.targetFor(transportJSONRPC))
+		})
+		ginkgo.Context("over REST", ginkgo.Ordered, ginkgo.Label("rest", "rust-go"), func() {
+			registerBehaviors(rustClient, server.targetFor(transportREST))
+		})
+		ginkgo.Context("over gRPC", ginkgo.Ordered, ginkgo.Label("grpc", "rust-go"), func() {
+			registerBehaviors(rustClient, server.targetFor(transportGRPC))
+		})
+	})
 })

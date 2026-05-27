@@ -51,3 +51,23 @@ func buildGoFixtureBinaryOnly() (fixtureBinaries, error) {
 func startGoFixture(binaries fixtureBinaries, port int, protocol transportProtocol) (*fixtureProcess, string, error) {
 	return startNativeFixture(fmt.Sprintf("go-%s-server", protocol), binaries.goServer, port, protocol)
 }
+
+// newGoServer returns a fixtureServer that starts a Go server for each of the given protocols.
+func newGoServer(getBinaries func() fixtureBinaries, expectPushSupported bool, protocols ...transportProtocol) *fixtureServer {
+	s := &fixtureServer{
+		serverPrefix:        "go",
+		expectPushSupported: expectPushSupported,
+		runtime:             newInteropSuiteRuntime(),
+	}
+	for _, p := range protocols {
+		p := p
+		s.fixtures = append(s.fixtures, interopSuiteFixtureSpec{
+			label:    "go",
+			protocol: p,
+			start: func() (*fixtureProcess, string, error) {
+				return startGoFixture(getBinaries(), findFreePort(), p)
+			},
+		})
+	}
+	return s
+}

@@ -4,6 +4,8 @@
 package tests
 
 import (
+	"context"
+
 	ginkgo "github.com/onsi/ginkgo/v2"
 	"github.com/onsi/gomega"
 )
@@ -11,40 +13,33 @@ import (
 var _ = ginkgo.Describe("Go", ginkgo.Ordered, ginkgo.ContinueOnFailure, ginkgo.Label("suite-self-go"), func() {
 	var binaries fixtureBinaries
 
-	runtime := newInteropSuiteRuntime()
-	protocols := []transportProtocol{transportJSONRPC, transportREST, transportGRPC}
-	fixtures := []interopSuiteFixtureSpec{
-		{label: "go", protocol: transportJSONRPC, start: func() (*fixtureProcess, string, error) {
-			return startGoFixture(binaries, findFreePort(), transportJSONRPC)
-		}},
-		{label: "go", protocol: transportREST, start: func() (*fixtureProcess, string, error) {
-			return startGoFixture(binaries, findFreePort(), transportREST)
-		}},
-		{label: "go", protocol: transportGRPC, start: func() (*fixtureProcess, string, error) {
-			return startGoFixture(binaries, findFreePort(), transportGRPC)
-		}},
-	}
-
-	clients := []interopClientMatrixSpec{
-		{label: "go", displayName: "Go", harness: goSDKHarness{}},
-	}
-	servers := []interopServerMatrixSpec{
-		newInteropServerSpec(runtime, "go", "Go", "go", true, protocols...),
-	}
-
 	ginkgo.BeforeAll(func() {
 		var err error
 		binaries, err = buildGoFixtureBinaryOnly()
 		gomega.Expect(err).NotTo(gomega.HaveOccurred())
-
-		err = startInteropSuiteFixtures(runtime, fixtures)
-		gomega.Expect(err).NotTo(gomega.HaveOccurred())
 	})
 
-	ginkgo.AfterAll(func() {
-		runtime.stopFixtures(fixtures)
-		removeTempDir(binaries.tempDir)
-	})
+	ginkgo.AfterAll(func() { removeTempDir(binaries.tempDir) })
 
-	registerInteropSelfTestMatrix(protocols, clients, servers)
+	ginkgo.When("a Go client calls a Go server", ginkgo.Ordered, func() {
+		server := newGoServer(func() fixtureBinaries { return binaries }, true,
+			transportJSONRPC, transportREST, transportGRPC)
+
+		ginkgo.BeforeAll(func() { gomega.Expect(server.start()).NotTo(gomega.HaveOccurred()) })
+		ginkgo.AfterAll(func() { server.stop() })
+
+		goClient := func(ctx context.Context, url string) (probeClient, error) {
+			return newGoProbeClient(ctx, url)
+		}
+
+		ginkgo.Context("over JSON-RPC", ginkgo.Ordered, ginkgo.Label("jsonrpc", "go-go"), func() {
+			registerBehaviors(goClient, server.targetFor(transportJSONRPC))
+		})
+		ginkgo.Context("over REST", ginkgo.Ordered, ginkgo.Label("rest", "go-go"), func() {
+			registerBehaviors(goClient, server.targetFor(transportREST))
+		})
+		ginkgo.Context("over gRPC", ginkgo.Ordered, ginkgo.Label("grpc", "go-go"), func() {
+			registerBehaviors(goClient, server.targetFor(transportGRPC))
+		})
+	})
 })

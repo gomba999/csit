@@ -3,11 +3,10 @@
 
 package tests
 
-// This file builds non-Go fixture assets, launches shared transport processes, and runs the
-// Rust, .NET, and Python probe executables used by the shared Ginkgo behaviors.
+// This file builds non-Go fixture assets, launches shared transport processes,
+// and provides fixtureServer factory functions for Rust, .NET, and Python.
 // Extend this file for shared process orchestration and non-Go external runtime support.
-// The native Go fixture path lives in native_go_launchers_test.go so this layer stays focused
-// on generic launcher plumbing.
+// The native Go fixture path lives in native_go_launchers_test.go.
 
 import (
 	"context"
@@ -85,7 +84,6 @@ func buildFixtureBinaries() (fixtureBinaries, error) {
 
 	return binaries, nil
 }
-
 
 func resolveUvCommand() (string, error) {
 	if configured := os.Getenv("UV"); configured != "" {
@@ -368,100 +366,62 @@ func startPythonFixture(assets pythonFixtureAssets, port int, protocol transport
 	return process, baseURL, nil
 }
 
-func appendProbeOptions(args []string, options rustProbeOptions) []string {
-	if options.scenario != "" {
-		args = append(args, "--scenario", string(options.scenario))
+// newRustServer returns a fixtureServer that starts a Rust server for each of the given protocols.
+func newRustServer(getBinaries func() fixtureBinaries, expectPushSupported bool, protocols ...transportProtocol) *fixtureServer {
+	s := &fixtureServer{
+		serverPrefix:        "rust",
+		expectPushSupported: expectPushSupported,
+		runtime:             newInteropSuiteRuntime(),
 	}
-	if options.expectSubscribeUnsupported {
-		args = append(args, "--expect-subscribe-unsupported")
+	for _, p := range protocols {
+		p := p
+		s.fixtures = append(s.fixtures, interopSuiteFixtureSpec{
+			label:    "rust",
+			protocol: p,
+			start: func() (*fixtureProcess, string, error) {
+				return startRustFixture(getBinaries(), findFreePort(), p)
+			},
+		})
 	}
-	if options.expectPushSupported {
-		args = append(args, "--expect-push-supported")
-	}
-	if options.expectPushUnsupported {
-		args = append(args, "--expect-push-unsupported")
-		if options.expectedPushErrorCode != 0 {
-			args = append(args, "--expected-push-error-code", fmt.Sprintf("%d", options.expectedPushErrorCode))
-		}
-	}
-	if options.relaxedErrorChecks {
-		args = append(args, "--relaxed-error-checks")
-	}
-
-	return args
+	return s
 }
 
-func runRustProbe(
-	ctx context.Context,
-	binaries fixtureBinaries,
-	baseURL string,
-	serverPrefix string,
-	options rustProbeOptions,
-) (string, error) {
-	args := appendProbeOptions([]string{
-		"--card-url",
-		baseURL,
-		"--server-prefix",
-		serverPrefix,
-	}, options)
-
-	cmd := exec.CommandContext(ctx, binaries.rustProbe, args...)
-	cmd.Dir = componentRoot()
-
-	output, err := cmd.CombinedOutput()
-	if err != nil {
-		return string(output), fmt.Errorf("rust probe failed: %w\n%s", err, string(output))
+// newDotNetServer returns a fixtureServer that starts a .NET server for each of the given protocols.
+func newDotNetServer(getBinaries func() dotNetFixtureBinaries, expectPushSupported bool, protocols ...transportProtocol) *fixtureServer {
+	s := &fixtureServer{
+		serverPrefix:        "dotnet",
+		expectPushSupported: expectPushSupported,
+		runtime:             newInteropSuiteRuntime(),
 	}
-
-	return string(output), nil
+	for _, p := range protocols {
+		p := p
+		s.fixtures = append(s.fixtures, interopSuiteFixtureSpec{
+			label:    "dotnet",
+			protocol: p,
+			start: func() (*fixtureProcess, string, error) {
+				return startDotNetFixture(getBinaries(), findFreePort(), p)
+			},
+		})
+	}
+	return s
 }
 
-func runDotNetProbe(
-	ctx context.Context,
-	binaries dotNetFixtureBinaries,
-	baseURL string,
-	serverPrefix string,
-	options dotNetProbeOptions,
-) (string, error) {
-	args := append([]string{binaries.dotnetProbeDL}, appendProbeOptions([]string{
-		"--card-url",
-		baseURL,
-		"--server-prefix",
-		serverPrefix,
-	}, options)...)
-
-	cmd := exec.CommandContext(ctx, binaries.dotnetCommand, args...)
-	cmd.Dir = componentRoot()
-
-	output, err := cmd.CombinedOutput()
-	if err != nil {
-		return string(output), fmt.Errorf("dotnet probe failed: %w\n%s", err, string(output))
+// newPythonServer returns a fixtureServer that starts a Python server for each of the given protocols.
+func newPythonServer(getAssets func() pythonFixtureAssets, expectPushSupported bool, protocols ...transportProtocol) *fixtureServer {
+	s := &fixtureServer{
+		serverPrefix:        "python",
+		expectPushSupported: expectPushSupported,
+		runtime:             newInteropSuiteRuntime(),
 	}
-
-	return string(output), nil
-}
-
-func runPythonProbe(
-	ctx context.Context,
-	assets pythonFixtureAssets,
-	baseURL string,
-	serverPrefix string,
-	options rustProbeOptions,
-) (string, error) {
-	args := append([]string{"run", assets.probeScript}, appendProbeOptions([]string{
-		"--card-url",
-		baseURL,
-		"--server-prefix",
-		serverPrefix,
-	}, options)...)
-
-	cmd := exec.CommandContext(ctx, assets.uvCommand, args...)
-	cmd.Dir = assets.fixtureDir
-
-	output, err := cmd.CombinedOutput()
-	if err != nil {
-		return string(output), fmt.Errorf("python probe failed: %w\n%s", err, string(output))
+	for _, p := range protocols {
+		p := p
+		s.fixtures = append(s.fixtures, interopSuiteFixtureSpec{
+			label:    "python",
+			protocol: p,
+			start: func() (*fixtureProcess, string, error) {
+				return startPythonFixture(getAssets(), findFreePort(), p)
+			},
+		})
 	}
-
-	return string(output), nil
+	return s
 }

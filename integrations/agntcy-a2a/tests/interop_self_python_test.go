@@ -4,53 +4,40 @@
 package tests
 
 import (
+	"context"
+
 	ginkgo "github.com/onsi/ginkgo/v2"
 	"github.com/onsi/gomega"
 )
 
 var _ = ginkgo.Describe("Python", ginkgo.Ordered, ginkgo.ContinueOnFailure, ginkgo.Label("suite-self-python"), func() {
-	var pythonAssets pythonFixtureAssets
-
-	runtime := newInteropSuiteRuntime()
-	protocols := []transportProtocol{transportJSONRPC, transportREST, transportGRPC}
-	fixtures := []interopSuiteFixtureSpec{
-		{label: "python", protocol: transportJSONRPC, start: func() (*fixtureProcess, string, error) {
-			return startPythonFixture(pythonAssets, findFreePort(), transportJSONRPC)
-		}},
-		{label: "python", protocol: transportREST, start: func() (*fixtureProcess, string, error) {
-			return startPythonFixture(pythonAssets, findFreePort(), transportREST)
-		}},
-		{label: "python", protocol: transportGRPC, start: func() (*fixtureProcess, string, error) {
-			return startPythonFixture(pythonAssets, findFreePort(), transportGRPC)
-		}},
-	}
-
-	clients := []interopClientMatrixSpec{
-		{
-			label:       "python",
-			displayName: "Python",
-			harness: newPythonProbeHarness(
-				func() pythonFixtureAssets { return pythonAssets },
-				rustProbeOptions{expectPushSupported: true},
-			),
-		},
-	}
-	servers := []interopServerMatrixSpec{
-		newInteropServerSpec(runtime, "python", "Python", "python", true, protocols...),
-	}
+	var assets pythonFixtureAssets
 
 	ginkgo.BeforeAll(func() {
 		var err error
-		pythonAssets, err = buildPythonFixtureAssets()
-		gomega.Expect(err).NotTo(gomega.HaveOccurred())
-
-		err = startInteropSuiteFixtures(runtime, fixtures)
+		assets, err = buildPythonFixtureAssets()
 		gomega.Expect(err).NotTo(gomega.HaveOccurred())
 	})
 
-	ginkgo.AfterAll(func() {
-		runtime.stopFixtures(fixtures)
-	})
+	ginkgo.When("a Python client calls a Python server", ginkgo.Ordered, func() {
+		server := newPythonServer(func() pythonFixtureAssets { return assets }, true,
+			transportJSONRPC, transportREST, transportGRPC)
 
-	registerInteropSelfTestMatrix(protocols, clients, servers)
+		ginkgo.BeforeAll(func() { gomega.Expect(server.start()).NotTo(gomega.HaveOccurred()) })
+		ginkgo.AfterAll(func() { server.stop() })
+
+		pythonClient := func(ctx context.Context, url string) (probeClient, error) {
+			return newPythonProbeClient(func() pythonFixtureAssets { return assets }, url), nil
+		}
+
+		ginkgo.Context("over JSON-RPC", ginkgo.Ordered, ginkgo.Label("jsonrpc", "python-python"), func() {
+			registerBehaviors(pythonClient, server.targetFor(transportJSONRPC))
+		})
+		ginkgo.Context("over REST", ginkgo.Ordered, ginkgo.Label("rest", "python-python"), func() {
+			registerBehaviors(pythonClient, server.targetFor(transportREST))
+		})
+		ginkgo.Context("over gRPC", ginkgo.Ordered, ginkgo.Label("grpc", "python-python"), func() {
+			registerBehaviors(pythonClient, server.targetFor(transportGRPC))
+		})
+	})
 })

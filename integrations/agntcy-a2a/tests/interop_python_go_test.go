@@ -3,13 +3,12 @@
 
 package tests
 
-// This file is the Python/Go suite wrapper. It declares the Python v1.0 fixture environment,
-// the Go fixture binaries reused in this slice, and the client/server matrix for JSON-RPC and
-// HTTP+JSON coverage.
-// To expand Python coverage, change the matrix data here and keep the cross-SDK behavior logic in
-// interop_behaviors_test.go so the shared slices remain authored once.
+// This file is the Python/Go suite wrapper. Tests cover all four client/server
+// pairings of Python and Go over JSON-RPC, REST, and gRPC.
 
 import (
+	"context"
+
 	ginkgo "github.com/onsi/ginkgo/v2"
 	"github.com/onsi/gomega"
 )
@@ -20,91 +19,102 @@ var _ = ginkgo.Describe("Python+Go", ginkgo.Ordered, ginkgo.ContinueOnFailure, g
 		pythonAssets pythonFixtureAssets
 	)
 
-	runtime := newInteropSuiteRuntime()
-	protocols := []transportProtocol{transportJSONRPC, transportREST, transportGRPC}
-	fixtures := []interopSuiteFixtureSpec{
-		{
-			label:    "go",
-			protocol: transportJSONRPC,
-			start: func() (*fixtureProcess, string, error) {
-				return startGoFixture(goAssets, findFreePort(), transportJSONRPC)
-			},
-		},
-		{
-			label:    "python",
-			protocol: transportJSONRPC,
-			start: func() (*fixtureProcess, string, error) {
-				return startPythonFixture(pythonAssets, findFreePort(), transportJSONRPC)
-			},
-		},
-		{
-			label:    "go",
-			protocol: transportREST,
-			start: func() (*fixtureProcess, string, error) {
-				return startGoFixture(goAssets, findFreePort(), transportREST)
-			},
-		},
-		{
-			label:    "python",
-			protocol: transportREST,
-			start: func() (*fixtureProcess, string, error) {
-				return startPythonFixture(pythonAssets, findFreePort(), transportREST)
-			},
-		},
-		{
-			label:    "go",
-			protocol: transportGRPC,
-			start: func() (*fixtureProcess, string, error) {
-				return startGoFixture(goAssets, findFreePort(), transportGRPC)
-			},
-		},
-		{
-			label:    "python",
-			protocol: transportGRPC,
-			start: func() (*fixtureProcess, string, error) {
-				return startPythonFixture(pythonAssets, findFreePort(), transportGRPC)
-			},
-		},
-	}
-
-	clients := []interopClientMatrixSpec{
-		{label: "go", displayName: "Go", harness: goSDKHarness{}},
-		{
-			label:       "python",
-			displayName: "Python",
-			harness: newPythonProbeHarness(
-				func() pythonFixtureAssets { return pythonAssets },
-				rustProbeOptions{expectPushSupported: true},
-			),
-		},
-	}
-	servers := []interopServerMatrixSpec{
-		newInteropServerSpec(runtime, "go", "Go", "go", true, protocols...),
-		newInteropServerSpec(runtime, "python", "Python", "python", true, protocols...),
-	}
-
 	ginkgo.BeforeAll(func() {
 		var err error
-
 		goAssets, err = buildGoFixtureBinaryOnly()
 		gomega.Expect(err).NotTo(gomega.HaveOccurred())
 
 		pythonAssets, err = buildPythonFixtureAssets()
 		gomega.Expect(err).NotTo(gomega.HaveOccurred())
-
-		err = startInteropSuiteFixtures(runtime, fixtures)
-		gomega.Expect(err).NotTo(gomega.HaveOccurred())
 	})
 
-	ginkgo.AfterAll(func() {
-		runtime.stopFixtures(fixtures)
-		removeTempDir(goAssets.tempDir)
+	ginkgo.AfterAll(func() { removeTempDir(goAssets.tempDir) })
+
+	ginkgo.When("a Go client calls a Go server", ginkgo.Ordered, func() {
+		server := newGoServer(func() fixtureBinaries { return goAssets }, true,
+			transportJSONRPC, transportREST, transportGRPC)
+
+		ginkgo.BeforeAll(func() { gomega.Expect(server.start()).NotTo(gomega.HaveOccurred()) })
+		ginkgo.AfterAll(func() { server.stop() })
+
+		goClient := func(ctx context.Context, url string) (probeClient, error) {
+			return newGoProbeClient(ctx, url)
+		}
+
+		ginkgo.Context("over JSON-RPC", ginkgo.Ordered, ginkgo.Label("jsonrpc", "go-go"), func() {
+			registerBehaviors(goClient, server.targetFor(transportJSONRPC))
+		})
+		ginkgo.Context("over REST", ginkgo.Ordered, ginkgo.Label("rest", "go-go"), func() {
+			registerBehaviors(goClient, server.targetFor(transportREST))
+		})
+		ginkgo.Context("over gRPC", ginkgo.Ordered, ginkgo.Label("grpc", "go-go"), func() {
+			registerBehaviors(goClient, server.targetFor(transportGRPC))
+		})
 	})
 
-	registerInteropTransportMatrix(
-		protocols,
-		clients,
-		servers,
-		nil,
-	)
+	ginkgo.When("a Go client calls a Python server", ginkgo.Ordered, func() {
+		server := newPythonServer(func() pythonFixtureAssets { return pythonAssets }, true,
+			transportJSONRPC, transportREST, transportGRPC)
+
+		ginkgo.BeforeAll(func() { gomega.Expect(server.start()).NotTo(gomega.HaveOccurred()) })
+		ginkgo.AfterAll(func() { server.stop() })
+
+		goClient := func(ctx context.Context, url string) (probeClient, error) {
+			return newGoProbeClient(ctx, url)
+		}
+
+		ginkgo.Context("over JSON-RPC", ginkgo.Ordered, ginkgo.Label("jsonrpc", "go-python"), func() {
+			registerBehaviors(goClient, server.targetFor(transportJSONRPC))
+		})
+		ginkgo.Context("over REST", ginkgo.Ordered, ginkgo.Label("rest", "go-python"), func() {
+			registerBehaviors(goClient, server.targetFor(transportREST))
+		})
+		ginkgo.Context("over gRPC", ginkgo.Ordered, ginkgo.Label("grpc", "go-python"), func() {
+			registerBehaviors(goClient, server.targetFor(transportGRPC))
+		})
+	})
+
+	ginkgo.When("a Python client calls a Go server", ginkgo.Ordered, func() {
+		server := newGoServer(func() fixtureBinaries { return goAssets }, true,
+			transportJSONRPC, transportREST, transportGRPC)
+
+		ginkgo.BeforeAll(func() { gomega.Expect(server.start()).NotTo(gomega.HaveOccurred()) })
+		ginkgo.AfterAll(func() { server.stop() })
+
+		pythonClient := func(ctx context.Context, url string) (probeClient, error) {
+			return newPythonProbeClient(func() pythonFixtureAssets { return pythonAssets }, url), nil
+		}
+
+		ginkgo.Context("over JSON-RPC", ginkgo.Ordered, ginkgo.Label("jsonrpc", "python-go"), func() {
+			registerBehaviors(pythonClient, server.targetFor(transportJSONRPC))
+		})
+		ginkgo.Context("over REST", ginkgo.Ordered, ginkgo.Label("rest", "python-go"), func() {
+			registerBehaviors(pythonClient, server.targetFor(transportREST))
+		})
+		ginkgo.Context("over gRPC", ginkgo.Ordered, ginkgo.Label("grpc", "python-go"), func() {
+			registerBehaviors(pythonClient, server.targetFor(transportGRPC))
+		})
+	})
+
+	ginkgo.When("a Python client calls a Python server", ginkgo.Ordered, func() {
+		server := newPythonServer(func() pythonFixtureAssets { return pythonAssets }, true,
+			transportJSONRPC, transportREST, transportGRPC)
+
+		ginkgo.BeforeAll(func() { gomega.Expect(server.start()).NotTo(gomega.HaveOccurred()) })
+		ginkgo.AfterAll(func() { server.stop() })
+
+		pythonClient := func(ctx context.Context, url string) (probeClient, error) {
+			return newPythonProbeClient(func() pythonFixtureAssets { return pythonAssets }, url), nil
+		}
+
+		ginkgo.Context("over JSON-RPC", ginkgo.Ordered, ginkgo.Label("jsonrpc", "python-python"), func() {
+			registerBehaviors(pythonClient, server.targetFor(transportJSONRPC))
+		})
+		ginkgo.Context("over REST", ginkgo.Ordered, ginkgo.Label("rest", "python-python"), func() {
+			registerBehaviors(pythonClient, server.targetFor(transportREST))
+		})
+		ginkgo.Context("over gRPC", ginkgo.Ordered, ginkgo.Label("grpc", "python-python"), func() {
+			registerBehaviors(pythonClient, server.targetFor(transportGRPC))
+		})
+	})
 })
