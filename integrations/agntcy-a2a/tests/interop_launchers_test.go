@@ -128,10 +128,10 @@ func startNativeFixture(name string, port int, protocol transportProtocol, comma
 	return process, baseURL, nil
 }
 
-func startRustFixture(port int, protocol transportProtocol) (*fixtureProcess, string, error) {
+func startRustFixture(protocol transportProtocol) (*fixtureProcess, string, error) {
 	return startNativeFixture(
 		fmt.Sprintf("rust-%s-server", protocol),
-		port,
+		findFreePort(),
 		protocol,
 		"cargo", "run",
 		"--manifest-path", "fixtures/rust/Cargo.toml",
@@ -140,14 +140,14 @@ func startRustFixture(port int, protocol transportProtocol) (*fixtureProcess, st
 	)
 }
 
-func startDotNetFixture(port int, protocol transportProtocol) (*fixtureProcess, string, error) {
+func startDotNetFixture(protocol transportProtocol) (*fixtureProcess, string, error) {
 	dotnetCmd, err := resolveDotNetCommand()
 	if err != nil {
 		return nil, "", err
 	}
 	return startNativeFixture(
 		fmt.Sprintf("dotnet-%s-server", protocol),
-		port,
+		findFreePort(),
 		protocol,
 		dotnetCmd, "run",
 		"--project", "./fixtures/dotnet/InteropServer",
@@ -155,12 +155,13 @@ func startDotNetFixture(port int, protocol transportProtocol) (*fixtureProcess, 
 	)
 }
 
-func startPythonFixture(port int, protocol transportProtocol) (*fixtureProcess, string, error) {
+func startPythonFixture(protocol transportProtocol) (*fixtureProcess, string, error) {
 	uvCmd, err := resolveUvCommand()
 	if err != nil {
 		return nil, "", err
 	}
 
+	port := findFreePort()
 	fixtureDir := filepath.Join(componentRoot(), "fixtures", "python")
 	baseURL := fmt.Sprintf("http://127.0.0.1:%d", port)
 	args, grpcAddress := protocolFixtureArgs(port, protocol)
@@ -183,64 +184,4 @@ func startPythonFixture(port int, protocol transportProtocol) (*fixtureProcess, 
 	}
 
 	return process, baseURL, nil
-}
-
-// newRustServer returns a fixtureServer that starts a Rust server for each of the given protocols.
-func newRustServer(expectPushSupported bool, protocols ...transportProtocol) *fixtureServer {
-	s := &fixtureServer{
-		serverPrefix:        "rust",
-		expectPushSupported: expectPushSupported,
-		runtime:             newInteropSuiteRuntime(),
-	}
-	for _, p := range protocols {
-		p := p
-		s.fixtures = append(s.fixtures, interopSuiteFixtureSpec{
-			label:    "rust",
-			protocol: p,
-			start: func() (*fixtureProcess, string, error) {
-				return startRustFixture(findFreePort(), p)
-			},
-		})
-	}
-	return s
-}
-
-// newDotNetServer returns a fixtureServer that starts a .NET server for each of the given protocols.
-func newDotNetServer(expectPushSupported bool, protocols ...transportProtocol) *fixtureServer {
-	s := &fixtureServer{
-		serverPrefix:        "dotnet",
-		expectPushSupported: expectPushSupported,
-		runtime:             newInteropSuiteRuntime(),
-	}
-	for _, p := range protocols {
-		p := p
-		s.fixtures = append(s.fixtures, interopSuiteFixtureSpec{
-			label:    "dotnet",
-			protocol: p,
-			start: func() (*fixtureProcess, string, error) {
-				return startDotNetFixture(findFreePort(), p)
-			},
-		})
-	}
-	return s
-}
-
-// newPythonServer returns a fixtureServer that starts a Python server for each of the given protocols.
-func newPythonServer(expectPushSupported bool, protocols ...transportProtocol) *fixtureServer {
-	s := &fixtureServer{
-		serverPrefix:        "python",
-		expectPushSupported: expectPushSupported,
-		runtime:             newInteropSuiteRuntime(),
-	}
-	for _, p := range protocols {
-		p := p
-		s.fixtures = append(s.fixtures, interopSuiteFixtureSpec{
-			label:    "python",
-			protocol: p,
-			start: func() (*fixtureProcess, string, error) {
-				return startPythonFixture(findFreePort(), p)
-			},
-		})
-	}
-	return s
 }

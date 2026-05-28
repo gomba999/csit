@@ -4,11 +4,8 @@
 package tests
 
 // This file holds the reusable interop test primitives: shared constants, transport
-// enums, fixture process types, the interopSuiteRuntime, and the fixtureServer
-// abstraction that each suite wrapper uses to manage server lifecycle.
-// Add code here only when multiple suites or behaviors need the same low-level plumbing.
-// New behavior assertions belong in interop_behaviors_test.go, and suite-specific
-// wiring belongs in the suite wrapper files.
+// enums, fixture process management, and low-level helpers.
+// New behavior assertions belong in interop_behaviors_test.go.
 
 import (
 	"bytes"
@@ -197,96 +194,6 @@ func stopFixtureIfRunning(process *fixtureProcess) {
 	}
 
 	gomega.Expect(process.stop()).To(gomega.Succeed(), process.logs.String())
-}
-
-
-type interopSuiteFixtureSpec struct {
-	label    string
-	protocol transportProtocol
-	start    func() (*fixtureProcess, string, error)
-}
-
-type interopSuiteRuntime struct {
-	fixtures map[string]*fixtureProcess
-	urls     map[string]string
-}
-
-func newInteropSuiteRuntime() *interopSuiteRuntime {
-	return &interopSuiteRuntime{
-		fixtures: map[string]*fixtureProcess{},
-		urls:     map[string]string{},
-	}
-}
-
-func interopSuiteFixtureKey(label string, protocol transportProtocol) string {
-	return label + ":" + string(protocol)
-}
-
-func (runtime *interopSuiteRuntime) setFixture(
-	label string,
-	protocol transportProtocol,
-	process *fixtureProcess,
-	url string,
-) {
-	key := interopSuiteFixtureKey(label, protocol)
-	runtime.fixtures[key] = process
-	runtime.urls[key] = url
-}
-
-func (runtime *interopSuiteRuntime) fixtureURL(label string, protocol transportProtocol) string {
-	return runtime.urls[interopSuiteFixtureKey(label, protocol)]
-}
-
-func (runtime *interopSuiteRuntime) stopFixtures(fixtures []interopSuiteFixtureSpec) {
-	for index := len(fixtures) - 1; index >= 0; index-- {
-		fixture := fixtures[index]
-		stopFixtureIfRunning(runtime.fixtures[interopSuiteFixtureKey(fixture.label, fixture.protocol)])
-	}
-}
-
-func startInteropSuiteFixtures(runtime *interopSuiteRuntime, fixtures []interopSuiteFixtureSpec) error {
-	started := make([]interopSuiteFixtureSpec, 0, len(fixtures))
-	for _, fixture := range fixtures {
-		process, url, err := fixture.start()
-		if err != nil {
-			runtime.stopFixtures(started)
-			return err
-		}
-
-		runtime.setFixture(fixture.label, fixture.protocol, process, url)
-		started = append(started, fixture)
-	}
-
-	return nil
-}
-
-// fixtureServer manages the lifecycle of a server fixture for a single When block.
-type fixtureServer struct {
-	serverPrefix        string
-	expectPushSupported bool
-	runtime             *interopSuiteRuntime
-	fixtures            []interopSuiteFixtureSpec
-}
-
-func (s *fixtureServer) start() error {
-	return startInteropSuiteFixtures(s.runtime, s.fixtures)
-}
-
-func (s *fixtureServer) stop() {
-	s.runtime.stopFixtures(s.fixtures)
-}
-
-// targetFor returns a lazy getter for the interopTarget for a given protocol.
-// The returned function is safe to call at spec registration time (expectPushSupported
-// is known; baseURL is resolved lazily when the function is actually called in BeforeAll).
-func (s *fixtureServer) targetFor(protocol transportProtocol) func() interopTarget {
-	return func() interopTarget {
-		return interopTarget{
-			baseURL:             s.runtime.fixtureURL(s.serverPrefix, protocol),
-			serverPrefix:        s.serverPrefix,
-			expectPushSupported: s.expectPushSupported,
-		}
-	}
 }
 
 func expectedServerText(serverPrefix string, text string) string {
