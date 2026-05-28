@@ -19,7 +19,7 @@ import (
 	"time"
 
 	"github.com/a2aproject/a2a-go/v2/a2a"
-	ginkgo "github.com/onsi/ginkgo/v2"
+	. "github.com/onsi/ginkgo/v2"
 	"github.com/onsi/gomega"
 )
 
@@ -233,7 +233,7 @@ func waitForProbeTaskState(ctx context.Context, client probeClient, taskID a2a.T
 func registerBehaviors(newClient newClientFn, target func() interopTarget) {
 	var client probeClient
 
-	ginkgo.BeforeAll(func(ctx ginkgo.SpecContext) {
+	BeforeAll(func(ctx SpecContext) {
 		t := target()
 		var err error
 		client, err = newClient(ctx, t.baseURL)
@@ -242,11 +242,11 @@ func registerBehaviors(newClient newClientFn, target func() interopTarget) {
 
 	// ── send message (unary) ─────────────────────────────────────────────────
 
-	ginkgo.When("the client sends a message", ginkgo.Ordered, func() {
-		ginkgo.Context("with return_immediately=false", ginkgo.Ordered, func() {
+	When("the client sends a message", Ordered, func() {
+		Context("with return_immediately=false", Ordered, func() {
 			var task *a2a.Task
 
-			ginkgo.BeforeAll(func(ctx ginkgo.SpecContext) {
+			BeforeAll(func(ctx SpecContext) {
 				result, err := client.SendMessage(ctx, newInteropRequest(requestText, false))
 				gomega.Expect(err).NotTo(gomega.HaveOccurred())
 				var ok bool
@@ -254,15 +254,15 @@ func registerBehaviors(newClient newClientFn, target func() interopTarget) {
 				gomega.Expect(ok).To(gomega.BeTrue(), "expected Task result from SendMessage")
 			})
 
-			ginkgo.It("receives a completed Task", func() {
+			It("receives a completed Task", func() {
 				gomega.Expect(task.Status.State).To(gomega.Equal(a2a.TaskStateCompleted))
 			})
 
-			ginkgo.It("includes the request payload in task history", func() {
+			It("includes the request payload in task history", func() {
 				assertTaskHistoryPayload(task, requestText, "task history")
 			})
 
-			ginkgo.It("includes the response text from the server", func() {
+			It("includes the response text from the server", func() {
 				text, err := taskStatusText(task)
 				gomega.Expect(err).NotTo(gomega.HaveOccurred())
 				gomega.Expect(text).To(gomega.Equal(expectedServerText(target().serverPrefix, requestText)))
@@ -272,16 +272,16 @@ func registerBehaviors(newClient newClientFn, target func() interopTarget) {
 
 	// ── streaming send message ───────────────────────────────────────────────
 
-	ginkgo.When("the client streams a message", ginkgo.Ordered, func() {
+	When("the client streams a message", Ordered, func() {
 		var events []a2a.Event
 
-		ginkgo.BeforeAll(func(ctx ginkgo.SpecContext) {
+		BeforeAll(func(ctx SpecContext) {
 			var err error
 			events, err = client.SendStreamingMessage(ctx, newInteropRequest(requestText, false))
 			gomega.Expect(err).NotTo(gomega.HaveOccurred())
 		})
 
-		ginkgo.It("receives at least one event with the server response text", func() {
+		It("receives at least one event with the server response text", func() {
 			gomega.Expect(events).NotTo(gomega.BeEmpty())
 			var texts []string
 			for _, event := range events {
@@ -299,10 +299,10 @@ func registerBehaviors(newClient newClientFn, target func() interopTarget) {
 
 	// ── get task ─────────────────────────────────────────────────────────────
 
-	ginkgo.When("the client fetches a task by ID", ginkgo.Ordered, func() {
+	When("the client fetches a task by ID", Ordered, func() {
 		var completedTask, fetchedTask *a2a.Task
 
-		ginkgo.BeforeAll(func(ctx ginkgo.SpecContext) {
+		BeforeAll(func(ctx SpecContext) {
 			result, err := client.SendMessage(ctx, newInteropRequest(requestText, false))
 			gomega.Expect(err).NotTo(gomega.HaveOccurred())
 			var ok bool
@@ -313,28 +313,28 @@ func registerBehaviors(newClient newClientFn, target func() interopTarget) {
 			gomega.Expect(err).NotTo(gomega.HaveOccurred())
 		})
 
-		ginkgo.It("returns the task with completed state", func() {
+		It("returns the task with completed state", func() {
 			gomega.Expect(fetchedTask.Status.State).To(gomega.Equal(a2a.TaskStateCompleted))
 		})
 
-		ginkgo.It("returns the correct response text", func() {
+		It("returns the correct response text", func() {
 			text, err := taskStatusText(fetchedTask)
 			gomega.Expect(err).NotTo(gomega.HaveOccurred())
 			gomega.Expect(text).To(gomega.Equal(expectedServerText(target().serverPrefix, requestText)))
 		})
 
-		ginkgo.It("returns the history payload", func() {
+		It("returns the history payload", func() {
 			assertTaskHistoryPayload(fetchedTask, requestText, "fetched task history")
 		})
 	})
 
 	// ── list tasks ───────────────────────────────────────────────────────────
 
-	ginkgo.When("the client lists tasks by context ID", ginkgo.Ordered, func() {
+	When("the client lists tasks by context ID", Ordered, func() {
 		var completedTask *a2a.Task
 		var listedTasks *a2a.ListTasksResponse
 
-		ginkgo.BeforeAll(func(ctx ginkgo.SpecContext) {
+		BeforeAll(func(ctx SpecContext) {
 			result, err := client.SendMessage(ctx, newInteropRequest(requestText, false))
 			gomega.Expect(err).NotTo(gomega.HaveOccurred())
 			var ok bool
@@ -345,7 +345,7 @@ func registerBehaviors(newClient newClientFn, target func() interopTarget) {
 			gomega.Expect(err).NotTo(gomega.HaveOccurred())
 		})
 
-		ginkgo.It("includes the sent task in the list", func() {
+		It("includes the sent task in the list", func() {
 			gomega.Expect(listedTasks.Tasks).NotTo(gomega.BeEmpty())
 			gomega.Expect(listedTasks.Tasks).To(gomega.ContainElement(gomega.HaveField("ID", completedTask.ID)))
 		})
@@ -353,10 +353,10 @@ func registerBehaviors(newClient newClientFn, target func() interopTarget) {
 
 	// ── cancel task ──────────────────────────────────────────────────────────
 
-	ginkgo.When("the client cancels a working task", ginkgo.Ordered, func() {
+	When("the client cancels a working task", Ordered, func() {
 		var canceledTask, fetchedCanceledTask *a2a.Task
 
-		ginkgo.BeforeAll(func(ctx ginkgo.SpecContext) {
+		BeforeAll(func(ctx SpecContext) {
 			result, err := client.SendMessage(ctx, newInteropRequest(pendingRequestText, true))
 			gomega.Expect(err).NotTo(gomega.HaveOccurred())
 			workingTask, ok := result.(*a2a.Task)
@@ -370,25 +370,25 @@ func registerBehaviors(newClient newClientFn, target func() interopTarget) {
 			gomega.Expect(err).NotTo(gomega.HaveOccurred())
 		})
 
-		ginkgo.It("returns a canceled task", func() {
+		It("returns a canceled task", func() {
 			gomega.Expect(canceledTask.Status.State).To(gomega.Equal(a2a.TaskStateCanceled))
 		})
 
-		ginkgo.It("returns the cancel text in the task status", func() {
+		It("returns the cancel text in the task status", func() {
 			text, err := taskStatusText(canceledTask)
 			gomega.Expect(err).NotTo(gomega.HaveOccurred())
 			gomega.Expect(text).To(gomega.Equal(expectedCancelText(target().serverPrefix)))
 		})
 
-		ginkgo.It("the canceled state persists on fetch", func() {
+		It("the canceled state persists on fetch", func() {
 			gomega.Expect(fetchedCanceledTask.Status.State).To(gomega.Equal(a2a.TaskStateCanceled))
 		})
 	})
 
 	// ── missing task error ───────────────────────────────────────────────────
 
-	ginkgo.When("the client requests a task that does not exist", func() {
-		ginkgo.It("returns a not-found error", func(ctx ginkgo.SpecContext) {
+	When("the client requests a task that does not exist", func() {
+		It("returns a not-found error", func(ctx SpecContext) {
 			_, err := client.GetTask(ctx, &a2a.GetTaskRequest{ID: a2a.NewTaskID()})
 			assertTaskNotFoundError(err, "missing task")
 		})
@@ -396,10 +396,10 @@ func registerBehaviors(newClient newClientFn, target func() interopTarget) {
 
 	// ── cancel completed task error ──────────────────────────────────────────
 
-	ginkgo.When("the client attempts to cancel a completed task", ginkgo.Ordered, func() {
+	When("the client attempts to cancel a completed task", Ordered, func() {
 		var completedTask *a2a.Task
 
-		ginkgo.BeforeAll(func(ctx ginkgo.SpecContext) {
+		BeforeAll(func(ctx SpecContext) {
 			result, err := client.SendMessage(ctx, newInteropRequest(requestText, false))
 			gomega.Expect(err).NotTo(gomega.HaveOccurred())
 			var ok bool
@@ -407,7 +407,7 @@ func registerBehaviors(newClient newClientFn, target func() interopTarget) {
 			gomega.Expect(ok).To(gomega.BeTrue())
 		})
 
-		ginkgo.It("returns an error", func(ctx ginkgo.SpecContext) {
+		It("returns an error", func(ctx SpecContext) {
 			_, err := client.CancelTask(ctx, &a2a.CancelTaskRequest{ID: completedTask.ID})
 			assertTaskNotCancelableError(err, "canceling a terminal task should fail")
 		})
@@ -416,11 +416,11 @@ func registerBehaviors(newClient newClientFn, target func() interopTarget) {
 	// ── push notification config ─────────────────────────────────────────────
 
 	if target().expectPushSupported {
-		ginkgo.When("the client manages push notification config", ginkgo.Ordered, func() {
+		When("the client manages push notification config", Ordered, func() {
 			var completedTask *a2a.Task
 			var createdConfig *a2a.PushConfig
 
-			ginkgo.BeforeAll(func(ctx ginkgo.SpecContext) {
+			BeforeAll(func(ctx SpecContext) {
 				result, err := client.SendMessage(ctx, newInteropRequest(requestText, false))
 				gomega.Expect(err).NotTo(gomega.HaveOccurred())
 				var ok bool
@@ -434,11 +434,11 @@ func registerBehaviors(newClient newClientFn, target func() interopTarget) {
 				gomega.Expect(err).NotTo(gomega.HaveOccurred())
 			})
 
-			ginkgo.It("creates a push config with expected fields", func() {
+			It("creates a push config with expected fields", func() {
 				assertTaskPushConfig(createdConfig, completedTask.ID, newInteropPushConfig(), "created push config")
 			})
 
-			ginkgo.It("fetches the push config by ID", func(ctx ginkgo.SpecContext) {
+			It("fetches the push config by ID", func(ctx SpecContext) {
 				fetched, err := client.GetPushConfig(ctx, &a2a.GetTaskPushConfigRequest{
 					TaskID: completedTask.ID,
 					ID:     createdConfig.ID,
@@ -447,14 +447,14 @@ func registerBehaviors(newClient newClientFn, target func() interopTarget) {
 				assertTaskPushConfig(fetched, completedTask.ID, newInteropPushConfig(), "fetched push config")
 			})
 
-			ginkgo.It("lists exactly one push config for the task", func(ctx ginkgo.SpecContext) {
+			It("lists exactly one push config for the task", func(ctx SpecContext) {
 				listed, err := client.ListPushConfigs(ctx, &a2a.ListTaskPushConfigRequest{TaskID: completedTask.ID})
 				gomega.Expect(err).NotTo(gomega.HaveOccurred())
 				gomega.Expect(listed).To(gomega.HaveLen(1))
 				assertTaskPushConfig(listed[0], completedTask.ID, newInteropPushConfig(), "listed push config")
 			})
 
-			ginkgo.It("deletes the push config and the list is empty afterward", func(ctx ginkgo.SpecContext) {
+			It("deletes the push config and the list is empty afterward", func(ctx SpecContext) {
 				err := client.DeletePushConfig(ctx, &a2a.DeleteTaskPushConfigRequest{
 					TaskID: completedTask.ID,
 					ID:     createdConfig.ID,
@@ -467,10 +467,10 @@ func registerBehaviors(newClient newClientFn, target func() interopTarget) {
 			})
 		})
 	} else {
-		ginkgo.When("the server does not support push notifications", ginkgo.Ordered, func() {
+		When("the server does not support push notifications", Ordered, func() {
 			var completedTask *a2a.Task
 
-			ginkgo.BeforeAll(func(ctx ginkgo.SpecContext) {
+			BeforeAll(func(ctx SpecContext) {
 				result, err := client.SendMessage(ctx, newInteropRequest(requestText, false))
 				gomega.Expect(err).NotTo(gomega.HaveOccurred())
 				var ok bool
@@ -478,14 +478,14 @@ func registerBehaviors(newClient newClientFn, target func() interopTarget) {
 				gomega.Expect(ok).To(gomega.BeTrue())
 			})
 
-			ginkgo.It("returns an error for CreatePushConfig", func(ctx ginkgo.SpecContext) {
+			It("returns an error for CreatePushConfig", func(ctx SpecContext) {
 				cfg := newInteropPushConfig()
 				cfg.TaskID = completedTask.ID
 				_, err := client.CreatePushConfig(ctx, cfg)
 				assertPushUnsupportedError(err, "create push config unsupported")
 			})
 
-			ginkgo.It("returns an error for GetPushConfig", func(ctx ginkgo.SpecContext) {
+			It("returns an error for GetPushConfig", func(ctx SpecContext) {
 				_, err := client.GetPushConfig(ctx, &a2a.GetTaskPushConfigRequest{
 					TaskID: completedTask.ID,
 					ID:     "interop-config",
@@ -493,12 +493,12 @@ func registerBehaviors(newClient newClientFn, target func() interopTarget) {
 				assertPushUnsupportedError(err, "get push config unsupported")
 			})
 
-			ginkgo.It("returns an error for ListPushConfigs", func(ctx ginkgo.SpecContext) {
+			It("returns an error for ListPushConfigs", func(ctx SpecContext) {
 				_, err := client.ListPushConfigs(ctx, &a2a.ListTaskPushConfigRequest{TaskID: completedTask.ID})
 				assertPushUnsupportedError(err, "list push config unsupported")
 			})
 
-			ginkgo.It("returns an error for DeletePushConfig", func(ctx ginkgo.SpecContext) {
+			It("returns an error for DeletePushConfig", func(ctx SpecContext) {
 				err := client.DeletePushConfig(ctx, &a2a.DeleteTaskPushConfigRequest{
 					TaskID: completedTask.ID,
 					ID:     "interop-config",
@@ -510,8 +510,8 @@ func registerBehaviors(newClient newClientFn, target func() interopTarget) {
 
 	// ── scenario parity ──────────────────────────────────────────────────────
 
-	ginkgo.When("the server returns a message-only response", func() {
-		ginkgo.It("the client receives a Message result", func(ctx ginkgo.SpecContext) {
+	When("the server returns a message-only response", func() {
+		It("the client receives a Message result", func(ctx SpecContext) {
 			result, err := client.SendMessage(ctx, newInteropRequest(messageOnlyRequestText, false))
 			gomega.Expect(err).NotTo(gomega.HaveOccurred())
 			message, ok := result.(*a2a.Message)
@@ -522,8 +522,8 @@ func registerBehaviors(newClient newClientFn, target func() interopTarget) {
 		})
 	})
 
-	ginkgo.When("the server fails the task", func() {
-		ginkgo.It("the client receives a failed task", func(ctx ginkgo.SpecContext) {
+	When("the server fails the task", func() {
+		It("the client receives a failed task", func(ctx SpecContext) {
 			result, err := client.SendMessage(ctx, newInteropRequest(taskFailureRequestText, false))
 			gomega.Expect(err).NotTo(gomega.HaveOccurred())
 			task, ok := result.(*a2a.Task)
@@ -535,10 +535,10 @@ func registerBehaviors(newClient newClientFn, target func() interopTarget) {
 		})
 	})
 
-	ginkgo.When("the agent requires multi-turn input", ginkgo.Ordered, func() {
+	When("the agent requires multi-turn input", Ordered, func() {
 		var inputRequiredTask, continuedTask *a2a.Task
 
-		ginkgo.BeforeAll(func(ctx ginkgo.SpecContext) {
+		BeforeAll(func(ctx SpecContext) {
 			result, err := client.SendMessage(ctx, newInteropRequest(multiTurnStartRequestText, false))
 			gomega.Expect(err).NotTo(gomega.HaveOccurred())
 			var ok bool
@@ -555,14 +555,14 @@ func registerBehaviors(newClient newClientFn, target func() interopTarget) {
 			gomega.Expect(ok).To(gomega.BeTrue())
 		})
 
-		ginkgo.It("the first request returns input-required state", func() {
+		It("the first request returns input-required state", func() {
 			text, err := taskStatusText(inputRequiredTask)
 			gomega.Expect(err).NotTo(gomega.HaveOccurred())
 			gomega.Expect(text).To(gomega.Equal(fmt.Sprintf("%s server needs more input", target().serverPrefix)))
 			assertTaskHistoryPayload(inputRequiredTask, multiTurnStartRequestText, "multi-turn start")
 		})
 
-		ginkgo.It("the continued request completes the task", func() {
+		It("the continued request completes the task", func() {
 			gomega.Expect(continuedTask.Status.State).To(gomega.Equal(a2a.TaskStateCompleted))
 			text, err := taskStatusText(continuedTask)
 			gomega.Expect(err).NotTo(gomega.HaveOccurred())
@@ -574,16 +574,16 @@ func registerBehaviors(newClient newClientFn, target func() interopTarget) {
 		})
 	})
 
-	ginkgo.When("the server streams artifacts", ginkgo.Ordered, func() {
+	When("the server streams artifacts", Ordered, func() {
 		var streamingEvents []a2a.Event
 
-		ginkgo.BeforeAll(func(ctx ginkgo.SpecContext) {
+		BeforeAll(func(ctx SpecContext) {
 			var err error
 			streamingEvents, err = client.SendStreamingMessage(ctx, newInteropRequest(streamingRequestText, false))
 			gomega.Expect(err).NotTo(gomega.HaveOccurred())
 		})
 
-		ginkgo.It("emits a working task at the start", func() {
+		It("emits a working task at the start", func() {
 			sawStart := false
 			for _, event := range streamingEvents {
 				if task, ok := event.(*a2a.Task); ok {
@@ -598,7 +598,7 @@ func registerBehaviors(newClient newClientFn, target func() interopTarget) {
 			gomega.Expect(sawStart).To(gomega.BeTrue(), "expected a working Task streaming-start event")
 		})
 
-		ginkgo.It("emits artifact chunks in order with at least one append", func() {
+		It("emits artifact chunks in order with at least one append", func() {
 			var chunks []string
 			sawAppend := false
 			for _, event := range streamingEvents {
@@ -615,7 +615,7 @@ func registerBehaviors(newClient newClientFn, target func() interopTarget) {
 			gomega.Expect(chunks).To(gomega.Equal([]string{"streaming chunk 1", "streaming chunk 2"}))
 		})
 
-		ginkgo.It("emits a completed status update at the end", func() {
+		It("emits a completed status update at the end", func() {
 			sawComplete := false
 			for _, event := range streamingEvents {
 				if update, ok := event.(*a2a.TaskStatusUpdateEvent); ok {
@@ -630,10 +630,10 @@ func registerBehaviors(newClient newClientFn, target func() interopTarget) {
 		})
 	})
 
-	ginkgo.When("the server handles a long-running request", ginkgo.Ordered, func() {
+	When("the server handles a long-running request", Ordered, func() {
 		var completedTask *a2a.Task
 
-		ginkgo.BeforeAll(func(ctx ginkgo.SpecContext) {
+		BeforeAll(func(ctx SpecContext) {
 			result, err := client.SendMessage(ctx, newInteropRequest(longRunningRequestText, true))
 			gomega.Expect(err).NotTo(gomega.HaveOccurred())
 			task, ok := result.(*a2a.Task)
@@ -649,19 +649,19 @@ func registerBehaviors(newClient newClientFn, target func() interopTarget) {
 			case a2a.TaskStateCompleted:
 				completedTask = task
 			default:
-				ginkgo.Fail(fmt.Sprintf("unexpected long-running task initial state: %s", task.Status.State))
+				Fail(fmt.Sprintf("unexpected long-running task initial state: %s", task.Status.State))
 			}
 		})
 
-		ginkgo.It("completes with the expected text", func() {
+		It("completes with the expected text", func() {
 			text, err := taskStatusText(completedTask)
 			gomega.Expect(err).NotTo(gomega.HaveOccurred())
 			gomega.Expect(text).To(gomega.Equal(fmt.Sprintf("%s server long-running complete", target().serverPrefix)))
 		})
 	})
 
-	ginkgo.When("the server returns rich data types", func() {
-		ginkgo.It("the completed task includes structured artifact data", func(ctx ginkgo.SpecContext) {
+	When("the server returns rich data types", func() {
+		It("the completed task includes structured artifact data", func(ctx SpecContext) {
 			result, err := client.SendMessage(ctx, newInteropRequest(dataTypesRequestText, false))
 			gomega.Expect(err).NotTo(gomega.HaveOccurred())
 			task, ok := result.(*a2a.Task)
@@ -674,8 +674,8 @@ func registerBehaviors(newClient newClientFn, target func() interopTarget) {
 		})
 	})
 
-	ginkgo.When("the client fetches the extended agent card", func() {
-		ginkgo.It("returns a valid extended card", func(ctx ginkgo.SpecContext) {
+	When("the client fetches the extended agent card", func() {
+		It("returns a valid extended card", func(ctx SpecContext) {
 			card, err := client.GetExtendedCard(ctx, &a2a.GetExtendedAgentCardRequest{})
 			gomega.Expect(err).NotTo(gomega.HaveOccurred())
 			assertExtendedCardMetadata(card, "extended-card")

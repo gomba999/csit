@@ -31,7 +31,7 @@ import (
 	"context"
 	"sync"
 
-	ginkgo "github.com/onsi/ginkgo/v2"
+	. "github.com/onsi/ginkgo/v2"
 	"github.com/onsi/gomega"
 )
 
@@ -79,7 +79,7 @@ func getPythonAssets() pythonFixtureAssets {
 	return cachedPython
 }
 
-var _ = ginkgo.AfterSuite(func() {
+var _ = AfterSuite(func() {
 	removeTempDir(cachedGo.tempDir)
 	removeTempDir(cachedRust.tempDir)
 	removeTempDir(cachedDotNet.tempDir)
@@ -110,20 +110,20 @@ type serverMaker func(protocol transportProtocol) *fixtureServer
 
 // ── interoperability matrix ───────────────────────────────────────────────────
 
-var _ = ginkgo.DescribeTableSubtree(
+var _ = DescribeTableSubtree(
 	"A2A interoperability",
 	func(clientSDK string, newClient newClientFn, clientGRPC bool) {
-		ginkgo.DescribeTableSubtree("server",
+		DescribeTableSubtree("server",
 			func(serverSDK string, makeServer serverMaker, serverGRPC bool) {
 				label := clientSDK + "-" + serverSDK
 
 				// Build transport entries; gRPC is only added when both sides support it.
 				transportBodyFn := func(protocol transportProtocol) {
 					srv := makeServer(protocol)
-					ginkgo.BeforeAll(func() {
+					BeforeAll(func() {
 						gomega.Expect(srv.start()).NotTo(gomega.HaveOccurred())
 					})
-					ginkgo.AfterAll(func() { srv.stop() })
+					AfterAll(func() { srv.stop() })
 					registerBehaviors(newClient, srv.targetFor(protocol))
 				}
 
@@ -132,43 +132,43 @@ var _ = ginkgo.DescribeTableSubtree(
 				// and inherit ContinueOnFailure behaviour from them.
 				args := []interface{}{
 					transportBodyFn,
-					ginkgo.Entry("JSON-RPC",
-						ginkgo.Ordered, ginkgo.Label(label, "jsonrpc"),
+					Entry("JSON-RPC",
+						Ordered, Label(label, "jsonrpc"),
 						transportJSONRPC),
-					ginkgo.Entry("REST",
-						ginkgo.Ordered, ginkgo.Label(label, "rest"),
+					Entry("REST",
+						Ordered, Label(label, "rest"),
 						transportREST),
 				}
 				if clientGRPC && serverGRPC {
-					args = append(args, ginkgo.Entry("gRPC",
-						ginkgo.Ordered, ginkgo.Label(label, "grpc"),
+					args = append(args, Entry("gRPC",
+						Ordered, Label(label, "grpc"),
 						transportGRPC))
 				}
-				ginkgo.DescribeTableSubtree("transport", args...)
+				DescribeTableSubtree("transport", args...)
 			},
 			// ── server entries ────────────────────────────────────────────────
 			// ContinueOnFailure is inherited from the client entries (outermost Ordered).
-			ginkgo.Entry("go", ginkgo.Ordered,
+			Entry("go", Ordered,
 				"go", serverMaker(func(p transportProtocol) *fixtureServer {
 					return newGoServer(getGoBinaries, true, p)
 				}), true),
-			ginkgo.Entry("rust", ginkgo.Ordered,
+			Entry("rust", Ordered,
 				"rust", serverMaker(func(p transportProtocol) *fixtureServer {
 					return newRustServer(getRustBinaries, true, p)
 				}), true),
-			ginkgo.Entry("python", ginkgo.Ordered,
+			Entry("python", Ordered,
 				"python", serverMaker(func(p transportProtocol) *fixtureServer {
 					return newPythonServer(getPythonAssets, true, p)
 				}), true),
-			ginkgo.Entry("dotnet", ginkgo.Ordered,
+			Entry("dotnet", Ordered,
 				"dotnet", serverMaker(func(p transportProtocol) *fixtureServer {
 					return newDotNetServer(getDotNetBinaries, false, p)
 				}), false),
 		)
 	},
 	// ── client entries ────────────────────────────────────────────────────────
-	ginkgo.Entry("go", ginkgo.Ordered, ginkgo.ContinueOnFailure, "go", goClientFn, true),
-	ginkgo.Entry("rust", ginkgo.Ordered, ginkgo.ContinueOnFailure, "rust", rustClientFn, true),
-	ginkgo.Entry("python", ginkgo.Ordered, ginkgo.ContinueOnFailure, "python", pythonClientFn, true),
-	ginkgo.Entry("dotnet", ginkgo.Ordered, ginkgo.ContinueOnFailure, "dotnet", dotNetClientFn, false),
+	Entry("go", Ordered, ContinueOnFailure, "go", goClientFn, true),
+	Entry("rust", Ordered, ContinueOnFailure, "rust", rustClientFn, true),
+	Entry("python", Ordered, ContinueOnFailure, "python", pythonClientFn, true),
+	Entry("dotnet", Ordered, ContinueOnFailure, "dotnet", dotNetClientFn, false),
 )
