@@ -107,11 +107,26 @@ var (
 	}
 )
 
-// ── server factory type ───────────────────────────────────────────────────────
+// ── server factory type and factories ─────────────────────────────────────────
 
-// serverMaker creates a fresh fixtureServer configured for a single transport
-// protocol.  Called at tree-building time; the actual process is started in BeforeAll.
+// serverMaker creates a fresh fixtureServer for a single transport protocol.
+// Called in BeforeAll once the Skip check has passed.
 type serverMaker func(protocol transportProtocol) *fixtureServer
+
+var (
+	goServerMaker serverMaker = func(p transportProtocol) *fixtureServer {
+		return newGoServer(getGoBinaries, true, p)
+	}
+	rustServerMaker serverMaker = func(p transportProtocol) *fixtureServer {
+		return newRustServer(getRustBinaries, true, p)
+	}
+	pythonServerMaker serverMaker = func(p transportProtocol) *fixtureServer {
+		return newPythonServer(getPythonAssets, true, p)
+	}
+	dotNetServerMaker serverMaker = func(p transportProtocol) *fixtureServer {
+		return newDotNetServer(getDotNetBinaries, false, p)
+	}
+)
 
 // ── interoperability matrix ───────────────────────────────────────────────────
 
@@ -119,7 +134,7 @@ var _ = DescribeTableSubtree(
 	"A2A interoperability",
 	func(clientSDK string, newClient newClientFn, clientGRPC bool) {
 		DescribeTableSubtree("server",
-			func(serverSDK string, makeServer serverMaker, serverGRPC bool) {
+			func(serverSDK string, makeServer serverMaker, serverGRPC bool, expectPushSupported bool) {
 				label := clientSDK + "-" + serverSDK
 
 				// ContinueOnFailure is not set here: transport entries are nested
@@ -127,15 +142,22 @@ var _ = DescribeTableSubtree(
 				// and inherit ContinueOnFailure behaviour from them.
 				DescribeTableSubtree("transport",
 					func(protocol transportProtocol) {
-						srv := makeServer(protocol)
+						var srv *fixtureServer
 						BeforeAll(func() {
 							if protocol == transportGRPC && (!clientGRPC || !serverGRPC) {
 								Skip("gRPC transport is not supported by this client/server combination")
 							}
+							srv = makeServer(protocol)
 							gomega.Expect(srv.start()).NotTo(gomega.HaveOccurred())
 						})
-						AfterAll(func() { srv.stop() })
-						registerBehaviors(newClient, srv.targetFor(protocol))
+						AfterAll(func() {
+							if srv != nil {
+								srv.stop()
+							}
+						})
+						registerBehaviors(newClient, func() interopTarget {
+							return srv.targetFor(protocol)()
+						}, expectPushSupported)
 					},
 					Entry("JSON-RPC", Ordered, Label(label, "jsonrpc"), transportJSONRPC),
 					Entry("REST",     Ordered, Label(label, "rest"),    transportREST),
@@ -144,27 +166,15 @@ var _ = DescribeTableSubtree(
 			},
 			// ── server entries ────────────────────────────────────────────────
 			// ContinueOnFailure is inherited from the client entries (outermost Ordered).
-			Entry("go", Ordered,
-				"go", serverMaker(func(p transportProtocol) *fixtureServer {
-					return newGoServer(getGoBinaries, true, p)
-				}), true),
-			Entry("rust", Ordered,
-				"rust", serverMaker(func(p transportProtocol) *fixtureServer {
-					return newRustServer(getRustBinaries, true, p)
-				}), true),
-			Entry("python", Ordered,
-				"python", serverMaker(func(p transportProtocol) *fixtureServer {
-					return newPythonServer(getPythonAssets, true, p)
-				}), true),
-			Entry("dotnet", Ordered,
-				"dotnet", serverMaker(func(p transportProtocol) *fixtureServer {
-					return newDotNetServer(getDotNetBinaries, false, p)
-				}), false),
+			Entry("go",     Ordered, "go",     goServerMaker,     true,  true),
+			Entry("rust",   Ordered, "rust",   rustServerMaker,   true,  true),
+			Entry("python", Ordered, "python", pythonServerMaker, true,  true),
+			Entry("dotnet", Ordered, "dotnet", dotNetServerMaker, false, false),
 		)
 	},
 	// ── client entries ────────────────────────────────────────────────────────
-	Entry("go", Ordered, ContinueOnFailure, "go", goClientFn, true),
-	Entry("rust", Ordered, ContinueOnFailure, "rust", rustClientFn, true),
+	Entry("go",     Ordered, ContinueOnFailure, "go",     goClientFn,     true),
+	Entry("rust",   Ordered, ContinueOnFailure, "rust",   rustClientFn,   true),
 	Entry("python", Ordered, ContinueOnFailure, "python", pythonClientFn, true),
 	Entry("dotnet", Ordered, ContinueOnFailure, "dotnet", dotNetClientFn, false),
 )

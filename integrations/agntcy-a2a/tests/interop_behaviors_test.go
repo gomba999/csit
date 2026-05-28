@@ -230,7 +230,7 @@ func waitForProbeTaskState(ctx context.Context, client probeClient, taskID a2a.T
 // registerBehaviors registers the full interop spec tree against the given client factory
 // and server target. The containing Context MUST be Ordered so that the outer BeforeAll
 // (which creates the client) executes before any It block.
-func registerBehaviors(newClient newClientFn, target func() interopTarget) {
+func registerBehaviors(newClient newClientFn, target func() interopTarget, expectPushSupported bool) {
 	var client probeClient
 
 	BeforeAll(func(ctx SpecContext) {
@@ -415,7 +415,7 @@ func registerBehaviors(newClient newClientFn, target func() interopTarget) {
 
 	// ── push notification config ─────────────────────────────────────────────
 
-	if target().expectPushSupported {
+	if expectPushSupported {
 		When("the client manages push notification config", Ordered, func() {
 			var completedTask *a2a.Task
 			var createdConfig *a2a.PushConfig
