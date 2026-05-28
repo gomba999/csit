@@ -239,21 +239,23 @@ func registerBehaviors(
 	startServer  serverStarter,
 	protocol     transportProtocol,
 	serverPrefix string,
-	clientGRPC   bool,
-	serverGRPC   bool,
 ) {
 	var process *fixtureProcess
 	var client  probeClient
 
 	BeforeAll(func() {
-		if protocol == transportGRPC && (!clientGRPC || !serverGRPC) {
-			Skip("gRPC transport is not supported by this client/server combination")
-		}
 		var srvURL string
 		var err error
 		process, srvURL, err = startServer(protocol, false)
+		if errors.Is(err, ErrUnsupportedConfig) {
+			Skip("transport is not supported by this server")
+		}
 		gomega.Expect(err).NotTo(gomega.HaveOccurred())
-		client, err = newClient(srvURL)
+
+		client, err = newClient(srvURL, protocol)
+		if errors.Is(err, ErrUnsupportedConfig) {
+			Skip("transport is not supported by this client")
+		}
 		gomega.Expect(err).NotTo(gomega.HaveOccurred())
 	})
 	AfterAll(func() { stopFixtureIfRunning(process) })
@@ -261,26 +263,20 @@ func registerBehaviors(
 	// ── send message (unary) ─────────────────────────────────────────────────
 
 	When("the client sends a message", func() {
-		Context("and the server creates a task", Ordered, func() {
-			var task *a2a.Task
-
-			BeforeAll(func(ctx SpecContext) {
+		Context("and the server creates a task", func() {
+			It("receives the expected completed Task", func(ctx SpecContext) {
 				result, err := client.SendMessage(ctx, newInteropRequest(requestText, false))
 				gomega.Expect(err).NotTo(gomega.HaveOccurred())
-				var ok bool
-				task, ok = result.(*a2a.Task)
+				task, ok := result.(*a2a.Task)
 				gomega.Expect(ok).To(gomega.BeTrue(), "expected Task result from SendMessage")
-			})
 
-			It("receives a completed Task", func() {
+				By("task status is completed")
 				gomega.Expect(task.Status.State).To(gomega.Equal(a2a.TaskStateCompleted))
-			})
 
-			It("includes the request payload in task history", func() {
+				By("task history contains the request payload")
 				assertTaskHistoryPayload(task, requestText, "task history")
-			})
 
-			It("includes the response text from the server", func() {
+				By("task status message contains the server response text")
 				text, err := taskStatusText(task)
 				gomega.Expect(err).NotTo(gomega.HaveOccurred())
 				gomega.Expect(text).To(gomega.Equal(expectedServerText(serverPrefix, requestText)))
@@ -326,36 +322,29 @@ func registerBehaviors(
 			})
 		})
 
-		Context("and the agent requires multi-turn input", Ordered, func() {
-			var inputRequiredTask, continuedTask *a2a.Task
-
-			BeforeAll(func(ctx SpecContext) {
+		Context("and the agent requires multi-turn input", func() {
+			It("completes a multi-turn conversation", func(ctx SpecContext) {
+				By("first turn returns input-required state")
 				result, err := client.SendMessage(ctx, newInteropRequest(multiTurnStartRequestText, false))
 				gomega.Expect(err).NotTo(gomega.HaveOccurred())
-				var ok bool
-				inputRequiredTask, ok = result.(*a2a.Task)
+				inputRequiredTask, ok := result.(*a2a.Task)
 				gomega.Expect(ok).To(gomega.BeTrue())
 				gomega.Expect(inputRequiredTask.Status.State).To(gomega.Equal(a2a.TaskStateInputRequired))
+				text, err := taskStatusText(inputRequiredTask)
+				gomega.Expect(err).NotTo(gomega.HaveOccurred())
+				gomega.Expect(text).To(gomega.Equal(fmt.Sprintf("%s server needs more input", serverPrefix)))
+				assertTaskHistoryPayload(inputRequiredTask, multiTurnStartRequestText, "multi-turn start")
 
+				By("second turn completes the task")
 				continueResult, err := client.SendMessage(ctx, newInteropRequestWithIDs(
 					multiTurnContinueRequestText, false,
 					inputRequiredTask.ID, inputRequiredTask.ContextID,
 				))
 				gomega.Expect(err).NotTo(gomega.HaveOccurred())
-				continuedTask, ok = continueResult.(*a2a.Task)
+				continuedTask, ok := continueResult.(*a2a.Task)
 				gomega.Expect(ok).To(gomega.BeTrue())
-			})
-
-			It("the first request returns input-required state", func() {
-				text, err := taskStatusText(inputRequiredTask)
-				gomega.Expect(err).NotTo(gomega.HaveOccurred())
-				gomega.Expect(text).To(gomega.Equal(fmt.Sprintf("%s server needs more input", serverPrefix)))
-				assertTaskHistoryPayload(inputRequiredTask, multiTurnStartRequestText, "multi-turn start")
-			})
-
-			It("the continued request completes the task", func() {
 				gomega.Expect(continuedTask.Status.State).To(gomega.Equal(a2a.TaskStateCompleted))
-				text, err := taskStatusText(continuedTask)
+				text, err = taskStatusText(continuedTask)
 				gomega.Expect(err).NotTo(gomega.HaveOccurred())
 				gomega.Expect(text).To(gomega.Equal(fmt.Sprintf("%s server multi-turn completed", serverPrefix)))
 				assertTaskHistoryPayloads(continuedTask,
@@ -365,20 +354,20 @@ func registerBehaviors(
 			})
 		})
 
-		Context("and the server handles a long-running request", Ordered, func() {
-			var completedTask *a2a.Task
-
-			BeforeAll(func(ctx SpecContext) {
+		Context("and the server handles a long-running request", func() {
+			It("returns a completed long-running Task", func(ctx SpecContext) {
 				result, err := client.SendMessage(ctx, newInteropRequest(longRunningRequestText, true))
 				gomega.Expect(err).NotTo(gomega.HaveOccurred())
 				task, ok := result.(*a2a.Task)
 				gomega.Expect(ok).To(gomega.BeTrue())
 
+				var completedTask *a2a.Task
 				switch task.Status.State {
 				case a2a.TaskStateWorking:
-					text, textErr := taskStatusText(task)
-					gomega.Expect(textErr).NotTo(gomega.HaveOccurred())
-					gomega.Expect(text).To(gomega.Equal(fmt.Sprintf("%s server long-running started", serverPrefix)))
+					By("polling until the task reaches completed state")
+					startText, startTextErr := taskStatusText(task)
+					gomega.Expect(startTextErr).NotTo(gomega.HaveOccurred())
+					gomega.Expect(startText).To(gomega.Equal(fmt.Sprintf("%s server long-running started", serverPrefix)))
 					completedTask, err = waitForProbeTaskState(ctx, client, task.ID, a2a.TaskStateCompleted)
 					gomega.Expect(err).NotTo(gomega.HaveOccurred())
 				case a2a.TaskStateCompleted:
@@ -386,9 +375,7 @@ func registerBehaviors(
 				default:
 					Fail(fmt.Sprintf("unexpected long-running task initial state: %s", task.Status.State))
 				}
-			})
 
-			It("completes with the expected text", func() {
 				text, err := taskStatusText(completedTask)
 				gomega.Expect(err).NotTo(gomega.HaveOccurred())
 				gomega.Expect(text).To(gomega.Equal(fmt.Sprintf("%s server long-running complete", serverPrefix)))
@@ -399,16 +386,10 @@ func registerBehaviors(
 	// ── streaming send message ───────────────────────────────────────────────
 
 	When("the client streams a message", func() {
-		Context("and the server creates a task", Ordered, func() {
-			var events []a2a.Event
-
-			BeforeAll(func(ctx SpecContext) {
-				var err error
-				events, err = client.SendStreamingMessage(ctx, newInteropRequest(requestText, false))
+		Context("and the server creates a task", func() {
+			It("receives at least one event with the server response text", func(ctx SpecContext) {
+				events, err := client.SendStreamingMessage(ctx, newInteropRequest(requestText, false))
 				gomega.Expect(err).NotTo(gomega.HaveOccurred())
-			})
-
-			It("receives at least one event with the server response text", func() {
 				gomega.Expect(events).NotTo(gomega.BeEmpty())
 				var texts []string
 				for _, event := range events {
@@ -424,16 +405,12 @@ func registerBehaviors(
 			})
 		})
 
-		Context("and the server streams artifacts", Ordered, func() {
-			var streamingEvents []a2a.Event
-
-			BeforeAll(func(ctx SpecContext) {
-				var err error
-				streamingEvents, err = client.SendStreamingMessage(ctx, newInteropRequest(streamingRequestText, false))
+		Context("and the server streams artifacts", func() {
+			It("emits the complete streaming sequence", func(ctx SpecContext) {
+				streamingEvents, err := client.SendStreamingMessage(ctx, newInteropRequest(streamingRequestText, false))
 				gomega.Expect(err).NotTo(gomega.HaveOccurred())
-			})
 
-			It("emits a working task at the start", func() {
+				By("a working task event at the start")
 				sawStart := false
 				for _, event := range streamingEvents {
 					if task, ok := event.(*a2a.Task); ok {
@@ -446,9 +423,8 @@ func registerBehaviors(
 					}
 				}
 				gomega.Expect(sawStart).To(gomega.BeTrue(), "expected a working Task streaming-start event")
-			})
 
-			It("emits artifact chunks in order with at least one append", func() {
+				By("artifact chunks emitted in order with at least one append")
 				var chunks []string
 				sawAppend := false
 				for _, event := range streamingEvents {
@@ -463,9 +439,8 @@ func registerBehaviors(
 				}
 				gomega.Expect(sawAppend).To(gomega.BeTrue(), "expected an append artifact update")
 				gomega.Expect(chunks).To(gomega.Equal([]string{"streaming chunk 1", "streaming chunk 2"}))
-			})
 
-			It("emits a completed status update at the end", func() {
+				By("a completed status update at the end")
 				sawComplete := false
 				for _, event := range streamingEvents {
 					if update, ok := event.(*a2a.TaskStatusUpdateEvent); ok {
@@ -484,31 +459,25 @@ func registerBehaviors(
 	// ── get task ─────────────────────────────────────────────────────────────
 
 	When("the client gets a task by ID", func() {
-		Context("and the task exists", Ordered, func() {
-			var completedTask, fetchedTask *a2a.Task
-
-			BeforeAll(func(ctx SpecContext) {
+		Context("and the task exists", func() {
+			It("returns the completed task with full response details", func(ctx SpecContext) {
 				result, err := client.SendMessage(ctx, newInteropRequest(requestText, false))
 				gomega.Expect(err).NotTo(gomega.HaveOccurred())
-				var ok bool
-				completedTask, ok = result.(*a2a.Task)
+				completedTask, ok := result.(*a2a.Task)
 				gomega.Expect(ok).To(gomega.BeTrue())
 
-				fetchedTask, err = client.GetTask(ctx, &a2a.GetTaskRequest{ID: completedTask.ID})
+				fetchedTask, err := client.GetTask(ctx, &a2a.GetTaskRequest{ID: completedTask.ID})
 				gomega.Expect(err).NotTo(gomega.HaveOccurred())
-			})
 
-			It("returns the task with completed state", func() {
+				By("task status is completed")
 				gomega.Expect(fetchedTask.Status.State).To(gomega.Equal(a2a.TaskStateCompleted))
-			})
 
-			It("returns the correct response text", func() {
+				By("response text matches the server echo")
 				text, err := taskStatusText(fetchedTask)
 				gomega.Expect(err).NotTo(gomega.HaveOccurred())
 				gomega.Expect(text).To(gomega.Equal(expectedServerText(serverPrefix, requestText)))
-			})
 
-			It("returns the history payload", func() {
+				By("history contains the request payload")
 				assertTaskHistoryPayload(fetchedTask, requestText, "fetched task history")
 			})
 		})
@@ -523,22 +492,15 @@ func registerBehaviors(
 
 	// ── list tasks ───────────────────────────────────────────────────────────
 
-	When("the client lists tasks by context ID", Ordered, func() {
-		var completedTask *a2a.Task
-		var listedTasks *a2a.ListTasksResponse
-
-		BeforeAll(func(ctx SpecContext) {
+	When("the client lists tasks by context ID", func() {
+		It("includes the sent task in the list", func(ctx SpecContext) {
 			result, err := client.SendMessage(ctx, newInteropRequest(requestText, false))
 			gomega.Expect(err).NotTo(gomega.HaveOccurred())
-			var ok bool
-			completedTask, ok = result.(*a2a.Task)
+			completedTask, ok := result.(*a2a.Task)
 			gomega.Expect(ok).To(gomega.BeTrue())
 
-			listedTasks, err = client.ListTasks(ctx, &a2a.ListTasksRequest{ContextID: completedTask.ContextID})
+			listedTasks, err := client.ListTasks(ctx, &a2a.ListTasksRequest{ContextID: completedTask.ContextID})
 			gomega.Expect(err).NotTo(gomega.HaveOccurred())
-		})
-
-		It("includes the sent task in the list", func() {
 			gomega.Expect(listedTasks.Tasks).NotTo(gomega.BeEmpty())
 			gomega.Expect(listedTasks.Tasks).To(gomega.ContainElement(gomega.HaveField("ID", completedTask.ID)))
 		})
@@ -547,51 +509,41 @@ func registerBehaviors(
 	// ── cancel task ──────────────────────────────────────────────────────────
 
 	When("the client cancels a task", func() {
-		Context("and the task is working", Ordered, func() {
-			var canceledTask, fetchedCanceledTask *a2a.Task
-
-			BeforeAll(func(ctx SpecContext) {
+		Context("and the task is working", func() {
+			It("cancels the working task and the canceled state persists", func(ctx SpecContext) {
 				result, err := client.SendMessage(ctx, newInteropRequest(pendingRequestText, true))
 				gomega.Expect(err).NotTo(gomega.HaveOccurred())
 				workingTask, ok := result.(*a2a.Task)
 				gomega.Expect(ok).To(gomega.BeTrue())
 				gomega.Expect(workingTask.Status.State).To(gomega.Equal(a2a.TaskStateWorking))
 
-				canceledTask, err = client.CancelTask(ctx, &a2a.CancelTaskRequest{ID: workingTask.ID})
+				canceledTask, err := client.CancelTask(ctx, &a2a.CancelTaskRequest{ID: workingTask.ID})
 				gomega.Expect(err).NotTo(gomega.HaveOccurred())
 
-				fetchedCanceledTask, err = client.GetTask(ctx, &a2a.GetTaskRequest{ID: workingTask.ID})
+				fetchedCanceledTask, err := client.GetTask(ctx, &a2a.GetTaskRequest{ID: workingTask.ID})
 				gomega.Expect(err).NotTo(gomega.HaveOccurred())
-			})
 
-			It("returns a canceled task", func() {
+				By("cancel response returns a canceled task")
 				gomega.Expect(canceledTask.Status.State).To(gomega.Equal(a2a.TaskStateCanceled))
-			})
 
-			It("returns the cancel text in the task status", func() {
+				By("cancel response includes the server cancel text")
 				text, err := taskStatusText(canceledTask)
 				gomega.Expect(err).NotTo(gomega.HaveOccurred())
 				gomega.Expect(text).To(gomega.Equal(expectedCancelText(serverPrefix)))
-			})
 
-			It("the canceled state persists on fetch", func() {
+				By("fetched task confirms the canceled state persists")
 				gomega.Expect(fetchedCanceledTask.Status.State).To(gomega.Equal(a2a.TaskStateCanceled))
 			})
 		})
 
-		Context("and the task is already completed", Ordered, func() {
-			var completedTask *a2a.Task
-
-			BeforeAll(func(ctx SpecContext) {
+		Context("and the task is already completed", func() {
+			It("returns an error when canceling a completed task", func(ctx SpecContext) {
 				result, err := client.SendMessage(ctx, newInteropRequest(requestText, false))
 				gomega.Expect(err).NotTo(gomega.HaveOccurred())
-				var ok bool
-				completedTask, ok = result.(*a2a.Task)
+				completedTask, ok := result.(*a2a.Task)
 				gomega.Expect(ok).To(gomega.BeTrue())
-			})
 
-			It("returns an error", func(ctx SpecContext) {
-				_, err := client.CancelTask(ctx, &a2a.CancelTaskRequest{ID: completedTask.ID})
+				_, err = client.CancelTask(ctx, &a2a.CancelTaskRequest{ID: completedTask.ID})
 				assertTaskNotCancelableError(err, "canceling a terminal task should fail")
 			})
 		})
@@ -602,104 +554,85 @@ func registerBehaviors(
 	When("the client manages push notification config", func() {
 		// Push-enabled context: starts a dedicated push-enabled server.
 		// If startServer returns ErrUnsupportedConfig (e.g. .NET), the context is skipped.
-		Context("and the server supports push notifications", Ordered, func() {
-			var pushProcess *fixtureProcess
-			var pushClient  probeClient
-			var completedTask *a2a.Task
-			var createdConfig *a2a.PushConfig
-
-			BeforeAll(func(ctx SpecContext) {
-				var srvURL string
-				var err error
-				pushProcess, srvURL, err = startServer(protocol, true)
+		Context("and the server supports push notifications", func() {
+			It("manages the push config lifecycle", func(ctx SpecContext) {
+				pushProcess, srvURL, err := startServer(protocol, true)
 				if errors.Is(err, ErrUnsupportedConfig) {
 					Skip("server does not support push notifications")
 				}
 				gomega.Expect(err).NotTo(gomega.HaveOccurred())
-				pushClient, err = newClient(srvURL)
+				DeferCleanup(func() { stopFixtureIfRunning(pushProcess) })
+
+				pushClient, err := newClient(srvURL, protocol)
 				gomega.Expect(err).NotTo(gomega.HaveOccurred())
 
 				result, err := pushClient.SendMessage(ctx, newInteropRequest(requestText, false))
 				gomega.Expect(err).NotTo(gomega.HaveOccurred())
-				var ok bool
-				completedTask, ok = result.(*a2a.Task)
+				completedTask, ok := result.(*a2a.Task)
 				gomega.Expect(ok).To(gomega.BeTrue())
 				gomega.Expect(completedTask.Status.State).To(gomega.Equal(a2a.TaskStateCompleted))
 
 				cfg := newInteropPushConfig()
 				cfg.TaskID = completedTask.ID
-				createdConfig, err = pushClient.CreatePushConfig(ctx, cfg)
+
+				By("creating a push config")
+				createdConfig, err := pushClient.CreatePushConfig(ctx, cfg)
 				gomega.Expect(err).NotTo(gomega.HaveOccurred())
-			})
-			AfterAll(func() { stopFixtureIfRunning(pushProcess) })
-
-			It("creates a push config with expected fields", func() {
 				assertTaskPushConfig(createdConfig, completedTask.ID, newInteropPushConfig(), "created push config")
-			})
 
-			It("fetches the push config by ID", func(ctx SpecContext) {
+				By("fetching the push config by ID")
 				fetched, err := pushClient.GetPushConfig(ctx, &a2a.GetTaskPushConfigRequest{
 					TaskID: completedTask.ID,
 					ID:     createdConfig.ID,
 				})
 				gomega.Expect(err).NotTo(gomega.HaveOccurred())
 				assertTaskPushConfig(fetched, completedTask.ID, newInteropPushConfig(), "fetched push config")
-			})
 
-			It("lists exactly one push config for the task", func(ctx SpecContext) {
+				By("listing exactly one push config for the task")
 				listed, err := pushClient.ListPushConfigs(ctx, &a2a.ListTaskPushConfigRequest{TaskID: completedTask.ID})
 				gomega.Expect(err).NotTo(gomega.HaveOccurred())
 				gomega.Expect(listed).To(gomega.HaveLen(1))
 				assertTaskPushConfig(listed[0], completedTask.ID, newInteropPushConfig(), "listed push config")
-			})
 
-			It("deletes the push config and the list is empty afterward", func(ctx SpecContext) {
-				err := pushClient.DeletePushConfig(ctx, &a2a.DeleteTaskPushConfigRequest{
+				By("deleting the push config and confirming the list is empty")
+				err = pushClient.DeletePushConfig(ctx, &a2a.DeleteTaskPushConfigRequest{
 					TaskID: completedTask.ID,
 					ID:     createdConfig.ID,
 				})
 				gomega.Expect(err).NotTo(gomega.HaveOccurred())
-
-				listed, err := pushClient.ListPushConfigs(ctx, &a2a.ListTaskPushConfigRequest{TaskID: completedTask.ID})
+				listed, err = pushClient.ListPushConfigs(ctx, &a2a.ListTaskPushConfigRequest{TaskID: completedTask.ID})
 				gomega.Expect(err).NotTo(gomega.HaveOccurred())
 				gomega.Expect(listed).To(gomega.BeEmpty())
 			})
 		})
 
 		// Push-disabled context: reuses the outer push-disabled client (works for all 4 languages).
-		Context("and the server does not support push notifications", Ordered, func() {
-			var completedTask *a2a.Task
-
-			BeforeAll(func(ctx SpecContext) {
+		Context("and the server does not support push notifications", func() {
+			It("rejects all push config operations", func(ctx SpecContext) {
 				result, err := client.SendMessage(ctx, newInteropRequest(requestText, false))
 				gomega.Expect(err).NotTo(gomega.HaveOccurred())
-				var ok bool
-				completedTask, ok = result.(*a2a.Task)
+				completedTask, ok := result.(*a2a.Task)
 				gomega.Expect(ok).To(gomega.BeTrue())
-			})
 
-			It("returns an error for CreatePushConfig", func(ctx SpecContext) {
+				By("CreatePushConfig returns an unsupported error")
 				cfg := newInteropPushConfig()
 				cfg.TaskID = completedTask.ID
-				_, err := client.CreatePushConfig(ctx, cfg)
+				_, err = client.CreatePushConfig(ctx, cfg)
 				assertPushUnsupportedError(err, "create push config unsupported")
-			})
 
-			It("returns an error for GetPushConfig", func(ctx SpecContext) {
-				_, err := client.GetPushConfig(ctx, &a2a.GetTaskPushConfigRequest{
+				By("GetPushConfig returns an unsupported error")
+				_, err = client.GetPushConfig(ctx, &a2a.GetTaskPushConfigRequest{
 					TaskID: completedTask.ID,
 					ID:     "interop-config",
 				})
 				assertPushUnsupportedError(err, "get push config unsupported")
-			})
 
-			It("returns an error for ListPushConfigs", func(ctx SpecContext) {
-				_, err := client.ListPushConfigs(ctx, &a2a.ListTaskPushConfigRequest{TaskID: completedTask.ID})
+				By("ListPushConfigs returns an unsupported error")
+				_, err = client.ListPushConfigs(ctx, &a2a.ListTaskPushConfigRequest{TaskID: completedTask.ID})
 				assertPushUnsupportedError(err, "list push config unsupported")
-			})
 
-			It("returns an error for DeletePushConfig", func(ctx SpecContext) {
-				err := client.DeletePushConfig(ctx, &a2a.DeleteTaskPushConfigRequest{
+				By("DeletePushConfig returns an unsupported error")
+				err = client.DeletePushConfig(ctx, &a2a.DeleteTaskPushConfigRequest{
 					TaskID: completedTask.ID,
 					ID:     "interop-config",
 				})
