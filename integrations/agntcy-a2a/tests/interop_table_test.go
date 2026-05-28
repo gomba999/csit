@@ -14,15 +14,20 @@ package tests
 //         transport gRPC
 //       server rust
 //         ...
-//       server dotnet      (JSON-RPC + REST only — no gRPC)
+//       server dotnet
+//         transport JSON-RPC
+//         transport REST
+//         transport gRPC       ← skipped: dotnet server does not support gRPC
 //       ...
 //     rust (client)
 //       ...
-//     dotnet (client)     (JSON-RPC + REST only — no gRPC for any server)
+//     dotnet (client)
+//       ...
+//         transport gRPC       ← skipped: dotnet client does not support gRPC
 //
-// Server entries and transport entries are defined once; the body functions close
-// over the outer-level variables.  gRPC transport entries are injected dynamically
-// when both the client and server SDKs support it.
+// All three transports are always present in the tree.  When either the client
+// or the server SDK does not support gRPC, the gRPC BeforeAll calls Skip() so
+// that the specs appear as skipped in the report rather than being absent.
 //
 // Each SDK's fixture assets are built at most once per test run via package-level
 // sync.Once caches. An AfterSuite handler removes the temp directories.
@@ -117,34 +122,25 @@ var _ = DescribeTableSubtree(
 			func(serverSDK string, makeServer serverMaker, serverGRPC bool) {
 				label := clientSDK + "-" + serverSDK
 
-				// Build transport entries; gRPC is only added when both sides support it.
-				transportBodyFn := func(protocol transportProtocol) {
-					srv := makeServer(protocol)
-					BeforeAll(func() {
-						gomega.Expect(srv.start()).NotTo(gomega.HaveOccurred())
-					})
-					AfterAll(func() { srv.stop() })
-					registerBehaviors(newClient, srv.targetFor(protocol))
-				}
-
 				// ContinueOnFailure is not set here: transport entries are nested
 				// inside client entries (which are the outermost Ordered containers)
 				// and inherit ContinueOnFailure behaviour from them.
-				args := []interface{}{
-					transportBodyFn,
-					Entry("JSON-RPC",
-						Ordered, Label(label, "jsonrpc"),
-						transportJSONRPC),
-					Entry("REST",
-						Ordered, Label(label, "rest"),
-						transportREST),
-				}
-				if clientGRPC && serverGRPC {
-					args = append(args, Entry("gRPC",
-						Ordered, Label(label, "grpc"),
-						transportGRPC))
-				}
-				DescribeTableSubtree("transport", args...)
+				DescribeTableSubtree("transport",
+					func(protocol transportProtocol) {
+						srv := makeServer(protocol)
+						BeforeAll(func() {
+							if protocol == transportGRPC && (!clientGRPC || !serverGRPC) {
+								Skip("gRPC transport is not supported by this client/server combination")
+							}
+							gomega.Expect(srv.start()).NotTo(gomega.HaveOccurred())
+						})
+						AfterAll(func() { srv.stop() })
+						registerBehaviors(newClient, srv.targetFor(protocol))
+					},
+					Entry("JSON-RPC", Ordered, Label(label, "jsonrpc"), transportJSONRPC),
+					Entry("REST",     Ordered, Label(label, "rest"),    transportREST),
+					Entry("gRPC",     Ordered, Label(label, "grpc"),    transportGRPC),
+				)
 			},
 			// ── server entries ────────────────────────────────────────────────
 			// ContinueOnFailure is inherited from the client entries (outermost Ordered).
