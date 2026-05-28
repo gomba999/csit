@@ -3,10 +3,9 @@
 
 package tests
 
-// This file launches shared transport processes and provides fixtureServer factory
-// functions for Rust, .NET, and Python. All fixtures use their toolchain's run
-// command (go run / cargo run / uv run / dotnet run) so no explicit build step
-// is required. The native Go fixture path lives in native_go_launchers_test.go.
+// This file launches fixture server processes for all four SDKs (Go, Rust, Python,
+// .NET). All fixtures use their toolchain's run command (go run / cargo run /
+// uv run / dotnet run) so no explicit build step is required.
 
 import (
 	"context"
@@ -126,6 +125,15 @@ func startNativeFixture(name string, port int, protocol transportProtocol, comma
 	}
 
 	return process, baseURL, nil
+}
+
+func startGoFixture(protocol transportProtocol) (*fixtureProcess, string, error) {
+	return startNativeFixture(
+		fmt.Sprintf("go-%s-server", protocol),
+		findFreePort(),
+		protocol,
+		"go", "run", "./fixtures/go-jsonrpc-server",
+	)
 }
 
 func startRustFixture(protocol transportProtocol) (*fixtureProcess, string, error) {
