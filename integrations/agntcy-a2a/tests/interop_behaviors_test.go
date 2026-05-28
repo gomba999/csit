@@ -271,122 +271,136 @@ func registerBehaviors(
 	// ── send message (unary) ─────────────────────────────────────────────────
 
 	When("the client sends a message", func() {
-		Context("and the server creates a task", func() {
-			It("receives the expected completed Task", func(ctx SpecContext) {
-				result, err := client.SendMessage(ctx, newInteropRequest(requestText, false))
-				gomega.Expect(err).NotTo(gomega.HaveOccurred())
-				task, ok := result.(*a2a.Task)
-				gomega.Expect(ok).To(gomega.BeTrue(), "expected Task result from SendMessage")
-
-				By("task status is completed")
-				gomega.Expect(task.Status.State).To(gomega.Equal(a2a.TaskStateCompleted))
-
-				By("task history contains the request payload")
-				assertTaskHistoryPayload(task, requestText, "task history")
-
-				By("task status message contains the server response text")
-				text, err := taskStatusText(task)
-				gomega.Expect(err).NotTo(gomega.HaveOccurred())
-				gomega.Expect(text).To(gomega.Equal(expectedServerText(serverPrefix, requestText)))
-			})
-		})
-
-		Context("and the server returns a message-only response", func() {
-			It("the client receives a Message result", func(ctx SpecContext) {
-				result, err := client.SendMessage(ctx, newInteropRequest(messageOnlyRequestText, false))
-				gomega.Expect(err).NotTo(gomega.HaveOccurred())
-				message, ok := result.(*a2a.Message)
-				gomega.Expect(ok).To(gomega.BeTrue(), "expected Message result from SendMessage")
-				text, err := firstMessageText(message)
-				gomega.Expect(err).NotTo(gomega.HaveOccurred())
-				gomega.Expect(text).To(gomega.Equal(fmt.Sprintf("%s server message-only response", serverPrefix)))
-			})
-		})
-
-		Context("and the server fails the task", func() {
-			It("the client receives a failed task", func(ctx SpecContext) {
-				result, err := client.SendMessage(ctx, newInteropRequest(taskFailureRequestText, false))
-				gomega.Expect(err).NotTo(gomega.HaveOccurred())
-				task, ok := result.(*a2a.Task)
-				gomega.Expect(ok).To(gomega.BeTrue())
-				gomega.Expect(task.Status.State).To(gomega.Equal(a2a.TaskStateFailed))
-				text, err := taskStatusText(task)
-				gomega.Expect(err).NotTo(gomega.HaveOccurred())
-				gomega.Expect(text).To(gomega.Equal(fmt.Sprintf("%s server failed task", serverPrefix)))
-			})
-		})
-
-		Context("and the server returns rich data types", func() {
-			It("the completed task includes structured artifact data", func(ctx SpecContext) {
-				result, err := client.SendMessage(ctx, newInteropRequest(dataTypesRequestText, false))
-				gomega.Expect(err).NotTo(gomega.HaveOccurred())
-				task, ok := result.(*a2a.Task)
-				gomega.Expect(ok).To(gomega.BeTrue())
-				gomega.Expect(task.Status.State).To(gomega.Equal(a2a.TaskStateCompleted))
-				text, err := taskStatusText(task)
-				gomega.Expect(err).NotTo(gomega.HaveOccurred())
-				gomega.Expect(text).To(gomega.Equal(fmt.Sprintf("%s server data-types ready", serverPrefix)))
-				assertDataTypesTask(task, "data-types")
-			})
-		})
-
-		Context("and the agent requires multi-turn input", func() {
-			It("completes a multi-turn conversation", func(ctx SpecContext) {
-				By("first turn returns input-required state")
-				result, err := client.SendMessage(ctx, newInteropRequest(multiTurnStartRequestText, false))
-				gomega.Expect(err).NotTo(gomega.HaveOccurred())
-				inputRequiredTask, ok := result.(*a2a.Task)
-				gomega.Expect(ok).To(gomega.BeTrue())
-				gomega.Expect(inputRequiredTask.Status.State).To(gomega.Equal(a2a.TaskStateInputRequired))
-				text, err := taskStatusText(inputRequiredTask)
-				gomega.Expect(err).NotTo(gomega.HaveOccurred())
-				gomega.Expect(text).To(gomega.Equal(fmt.Sprintf("%s server needs more input", serverPrefix)))
-				assertTaskHistoryPayload(inputRequiredTask, multiTurnStartRequestText, "multi-turn start")
-
-				By("second turn completes the task")
-				continueResult, err := client.SendMessage(ctx, newInteropRequestWithIDs(
-					multiTurnContinueRequestText, false,
-					inputRequiredTask.ID, inputRequiredTask.ContextID,
-				))
-				gomega.Expect(err).NotTo(gomega.HaveOccurred())
-				continuedTask, ok := continueResult.(*a2a.Task)
-				gomega.Expect(ok).To(gomega.BeTrue())
-				gomega.Expect(continuedTask.Status.State).To(gomega.Equal(a2a.TaskStateCompleted))
-				text, err = taskStatusText(continuedTask)
-				gomega.Expect(err).NotTo(gomega.HaveOccurred())
-				gomega.Expect(text).To(gomega.Equal(fmt.Sprintf("%s server multi-turn completed", serverPrefix)))
-				assertTaskHistoryPayloads(continuedTask,
-					[]string{multiTurnStartRequestText, multiTurnContinueRequestText},
-					"multi-turn continuation",
-				)
-			})
-		})
-
-		Context("and the server handles a long-running request", func() {
-			It("returns a completed long-running Task", func(ctx SpecContext) {
-				result, err := client.SendMessage(ctx, newInteropRequest(longRunningRequestText, true))
-				gomega.Expect(err).NotTo(gomega.HaveOccurred())
-				task, ok := result.(*a2a.Task)
-				gomega.Expect(ok).To(gomega.BeTrue())
-
-				var completedTask *a2a.Task
-				switch task.Status.State {
-				case a2a.TaskStateWorking:
-					By("polling until the task reaches completed state")
-					startText, startTextErr := taskStatusText(task)
-					gomega.Expect(startTextErr).NotTo(gomega.HaveOccurred())
-					gomega.Expect(startText).To(gomega.Equal(fmt.Sprintf("%s server long-running started", serverPrefix)))
-					completedTask, err = waitForProbeTaskState(ctx, client, task.ID, a2a.TaskStateCompleted)
+		Context("and returnImmediately=false", func() {
+			Context("and the server creates a task", func() {
+				It("receives the expected completed Task", func(ctx SpecContext) {
+					result, err := client.SendMessage(ctx, newInteropRequest(requestText, false))
 					gomega.Expect(err).NotTo(gomega.HaveOccurred())
-				case a2a.TaskStateCompleted:
-					completedTask = task
-				default:
-					Fail(fmt.Sprintf("unexpected long-running task initial state: %s", task.Status.State))
-				}
+					task, ok := result.(*a2a.Task)
+					gomega.Expect(ok).To(gomega.BeTrue(), "expected Task result from SendMessage")
 
-				text, err := taskStatusText(completedTask)
-				gomega.Expect(err).NotTo(gomega.HaveOccurred())
-				gomega.Expect(text).To(gomega.Equal(fmt.Sprintf("%s server long-running complete", serverPrefix)))
+					By("task status is completed")
+					gomega.Expect(task.Status.State).To(gomega.Equal(a2a.TaskStateCompleted))
+
+					By("task history contains the request payload")
+					assertTaskHistoryPayload(task, requestText, "task history")
+
+					By("task status message contains the server response text")
+					text, err := taskStatusText(task)
+					gomega.Expect(err).NotTo(gomega.HaveOccurred())
+					gomega.Expect(text).To(gomega.Equal(expectedServerText(serverPrefix, requestText)))
+				})
+			})
+
+			Context("and the server returns a message-only response", func() {
+				It("the client receives a Message result", func(ctx SpecContext) {
+					result, err := client.SendMessage(ctx, newInteropRequest(messageOnlyRequestText, false))
+					gomega.Expect(err).NotTo(gomega.HaveOccurred())
+					message, ok := result.(*a2a.Message)
+					gomega.Expect(ok).To(gomega.BeTrue(), "expected Message result from SendMessage")
+					text, err := firstMessageText(message)
+					gomega.Expect(err).NotTo(gomega.HaveOccurred())
+					gomega.Expect(text).To(gomega.Equal(fmt.Sprintf("%s server message-only response", serverPrefix)))
+				})
+			})
+
+			Context("and the server fails the task", func() {
+				It("the client receives a failed task", func(ctx SpecContext) {
+					result, err := client.SendMessage(ctx, newInteropRequest(taskFailureRequestText, false))
+					gomega.Expect(err).NotTo(gomega.HaveOccurred())
+					task, ok := result.(*a2a.Task)
+					gomega.Expect(ok).To(gomega.BeTrue())
+					gomega.Expect(task.Status.State).To(gomega.Equal(a2a.TaskStateFailed))
+					text, err := taskStatusText(task)
+					gomega.Expect(err).NotTo(gomega.HaveOccurred())
+					gomega.Expect(text).To(gomega.Equal(fmt.Sprintf("%s server failed task", serverPrefix)))
+				})
+			})
+
+			Context("and the server returns rich data types", func() {
+				It("the completed task includes structured artifact data", func(ctx SpecContext) {
+					result, err := client.SendMessage(ctx, newInteropRequest(dataTypesRequestText, false))
+					gomega.Expect(err).NotTo(gomega.HaveOccurred())
+					task, ok := result.(*a2a.Task)
+					gomega.Expect(ok).To(gomega.BeTrue())
+					gomega.Expect(task.Status.State).To(gomega.Equal(a2a.TaskStateCompleted))
+					text, err := taskStatusText(task)
+					gomega.Expect(err).NotTo(gomega.HaveOccurred())
+					gomega.Expect(text).To(gomega.Equal(fmt.Sprintf("%s server data-types ready", serverPrefix)))
+					assertDataTypesTask(task, "data-types")
+				})
+			})
+
+			Context("and the agent requires multi-turn input", func() {
+				It("completes a multi-turn conversation", func(ctx SpecContext) {
+					By("first turn returns input-required state")
+					result, err := client.SendMessage(ctx, newInteropRequest(multiTurnStartRequestText, false))
+					gomega.Expect(err).NotTo(gomega.HaveOccurred())
+					inputRequiredTask, ok := result.(*a2a.Task)
+					gomega.Expect(ok).To(gomega.BeTrue())
+					gomega.Expect(inputRequiredTask.Status.State).To(gomega.Equal(a2a.TaskStateInputRequired))
+					text, err := taskStatusText(inputRequiredTask)
+					gomega.Expect(err).NotTo(gomega.HaveOccurred())
+					gomega.Expect(text).To(gomega.Equal(fmt.Sprintf("%s server needs more input", serverPrefix)))
+					assertTaskHistoryPayload(inputRequiredTask, multiTurnStartRequestText, "multi-turn start")
+
+					By("second turn completes the task")
+					continueResult, err := client.SendMessage(ctx, newInteropRequestWithIDs(
+						multiTurnContinueRequestText, false,
+						inputRequiredTask.ID, inputRequiredTask.ContextID,
+					))
+					gomega.Expect(err).NotTo(gomega.HaveOccurred())
+					continuedTask, ok := continueResult.(*a2a.Task)
+					gomega.Expect(ok).To(gomega.BeTrue())
+					gomega.Expect(continuedTask.Status.State).To(gomega.Equal(a2a.TaskStateCompleted))
+					text, err = taskStatusText(continuedTask)
+					gomega.Expect(err).NotTo(gomega.HaveOccurred())
+					gomega.Expect(text).To(gomega.Equal(fmt.Sprintf("%s server multi-turn completed", serverPrefix)))
+					assertTaskHistoryPayloads(continuedTask,
+						[]string{multiTurnStartRequestText, multiTurnContinueRequestText},
+						"multi-turn continuation",
+					)
+				})
+			})
+		})
+
+		Context("and returnImmediately=true", func() {
+			Context("and the server creates a task", func() {
+				It("receives a working task", func(ctx SpecContext) {
+					result, err := client.SendMessage(ctx, newInteropRequest(pendingRequestText, true))
+					gomega.Expect(err).NotTo(gomega.HaveOccurred())
+					task, ok := result.(*a2a.Task)
+					gomega.Expect(ok).To(gomega.BeTrue(), "expected Task result from SendMessage")
+					gomega.Expect(task.Status.State).To(gomega.Equal(a2a.TaskStateWorking))
+				})
+			})
+
+			Context("and the server handles a long-running request", func() {
+				It("returns a completed long-running Task", func(ctx SpecContext) {
+					result, err := client.SendMessage(ctx, newInteropRequest(longRunningRequestText, true))
+					gomega.Expect(err).NotTo(gomega.HaveOccurred())
+					task, ok := result.(*a2a.Task)
+					gomega.Expect(ok).To(gomega.BeTrue())
+
+					var completedTask *a2a.Task
+					switch task.Status.State {
+					case a2a.TaskStateWorking:
+						By("polling until the task reaches completed state")
+						startText, startTextErr := taskStatusText(task)
+						gomega.Expect(startTextErr).NotTo(gomega.HaveOccurred())
+						gomega.Expect(startText).To(gomega.Equal(fmt.Sprintf("%s server long-running started", serverPrefix)))
+						completedTask, err = waitForProbeTaskState(ctx, client, task.ID, a2a.TaskStateCompleted)
+						gomega.Expect(err).NotTo(gomega.HaveOccurred())
+					case a2a.TaskStateCompleted:
+						completedTask = task
+					default:
+						Fail(fmt.Sprintf("unexpected long-running task initial state: %s", task.Status.State))
+					}
+
+					text, err := taskStatusText(completedTask)
+					gomega.Expect(err).NotTo(gomega.HaveOccurred())
+					gomega.Expect(text).To(gomega.Equal(fmt.Sprintf("%s server long-running complete", serverPrefix)))
+				})
 			})
 		})
 	})
