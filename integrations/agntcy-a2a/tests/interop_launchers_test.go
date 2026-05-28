@@ -127,28 +127,36 @@ func startNativeFixture(name string, port int, protocol transportProtocol, comma
 	return process, baseURL, nil
 }
 
-func startGoFixture(protocol transportProtocol) (*fixtureProcess, string, error) {
+func startGoFixture(protocol transportProtocol, pushEnabled bool) (*fixtureProcess, string, error) {
+	args := []string{"run", "./fixtures/go-jsonrpc-server"}
+	if !pushEnabled {
+		args = append(args, "--disable-push")
+	}
 	return startNativeFixture(
 		fmt.Sprintf("go-%s-server", protocol),
 		findFreePort(),
 		protocol,
-		"go", "run", "./fixtures/go-jsonrpc-server",
+		"go", args...,
 	)
 }
 
-func startRustFixture(protocol transportProtocol) (*fixtureProcess, string, error) {
+func startRustFixture(protocol transportProtocol, pushEnabled bool) (*fixtureProcess, string, error) {
+	args := []string{"run", "--manifest-path", "fixtures/rust/Cargo.toml", "--bin", "interop-rust-server", "--"}
+	if !pushEnabled {
+		args = append(args, "--disable-push")
+	}
 	return startNativeFixture(
 		fmt.Sprintf("rust-%s-server", protocol),
 		findFreePort(),
 		protocol,
-		"cargo", "run",
-		"--manifest-path", "fixtures/rust/Cargo.toml",
-		"--bin", "interop-rust-server",
-		"--",
+		"cargo", args...,
 	)
 }
 
-func startDotNetFixture(protocol transportProtocol) (*fixtureProcess, string, error) {
+func startDotNetFixture(protocol transportProtocol, pushEnabled bool) (*fixtureProcess, string, error) {
+	if pushEnabled {
+		return nil, "", ErrUnsupportedConfig
+	}
 	dotnetCmd, err := resolveDotNetCommand()
 	if err != nil {
 		return nil, "", err
@@ -163,7 +171,7 @@ func startDotNetFixture(protocol transportProtocol) (*fixtureProcess, string, er
 	)
 }
 
-func startPythonFixture(protocol transportProtocol) (*fixtureProcess, string, error) {
+func startPythonFixture(protocol transportProtocol, pushEnabled bool) (*fixtureProcess, string, error) {
 	uvCmd, err := resolveUvCommand()
 	if err != nil {
 		return nil, "", err
@@ -173,6 +181,9 @@ func startPythonFixture(protocol transportProtocol) (*fixtureProcess, string, er
 	fixtureDir := filepath.Join(componentRoot(), "fixtures", "python")
 	baseURL := fmt.Sprintf("http://127.0.0.1:%d", port)
 	args, grpcAddress := protocolFixtureArgs(port, protocol)
+	if !pushEnabled {
+		args = append(args, "--disable-push")
+	}
 
 	process, err := startFixtureProcess(
 		fmt.Sprintf("python-%s-server", protocol),

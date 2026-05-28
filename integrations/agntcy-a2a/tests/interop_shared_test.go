@@ -55,12 +55,15 @@ const (
 	transportGRPC    transportProtocol = "grpc"
 )
 
-type interopTarget struct {
-	baseURL             string
-	serverPrefix        string
-	expectPushSupported bool
-}
+// ErrUnsupportedConfig is returned by a serverStarter when the requested
+// configuration (e.g. push-enabled mode) is not supported by that server.
+var ErrUnsupportedConfig = errors.New("unsupported server configuration")
 
+// serverStarter starts a fresh fixture process for a single (protocol, pushEnabled) pair.
+// It returns the process handle, the server base URL, and any startup error.
+// Implementations may return ErrUnsupportedConfig when the requested combination
+// is not available (e.g. .NET with pushEnabled=true).
+type serverStarter func(protocol transportProtocol, pushEnabled bool) (*fixtureProcess, string, error)
 
 type lockedBuffer struct {
 	mu  sync.Mutex
