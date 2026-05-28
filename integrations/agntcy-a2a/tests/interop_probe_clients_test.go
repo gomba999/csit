@@ -3,7 +3,8 @@
 
 package tests
 
-// This file implements the external language probe clients: Go, Rust, Python, and .NET.
+// This file defines the probeClient interface, the newClientFn type, and the
+// external language probe client implementations for Go, Rust, Python, and .NET.
 // Each client stores a basecmd (the command needed to invoke the probe binary) and a
 // baseURL. The call() method appends --card-url <url> and the per-operation args, then
 // runs the command and returns stdout/stderr. All probe CLIs share the same subcommand
@@ -21,6 +22,24 @@ import (
 
 	"github.com/a2aproject/a2a-go/v2/a2a"
 )
+
+// probeClient is the unified A2A client interface used by all behavior specs.
+// Both the native Go SDK and external language probes implement this.
+type probeClient interface {
+	SendMessage(ctx context.Context, req *a2a.SendMessageRequest) (a2a.SendMessageResult, error)
+	SendStreamingMessage(ctx context.Context, req *a2a.SendMessageRequest) ([]a2a.Event, error)
+	GetTask(ctx context.Context, req *a2a.GetTaskRequest) (*a2a.Task, error)
+	CancelTask(ctx context.Context, req *a2a.CancelTaskRequest) (*a2a.Task, error)
+	ListTasks(ctx context.Context, req *a2a.ListTasksRequest) (*a2a.ListTasksResponse, error)
+	CreatePushConfig(ctx context.Context, cfg *a2a.PushConfig) (*a2a.PushConfig, error)
+	GetPushConfig(ctx context.Context, req *a2a.GetTaskPushConfigRequest) (*a2a.PushConfig, error)
+	ListPushConfigs(ctx context.Context, req *a2a.ListTaskPushConfigRequest) ([]*a2a.PushConfig, error)
+	DeletePushConfig(ctx context.Context, req *a2a.DeleteTaskPushConfigRequest) error
+	GetExtendedCard(ctx context.Context, req *a2a.GetExtendedAgentCardRequest) (*a2a.AgentCard, error)
+}
+
+// newClientFn creates a probeClient bound to a specific baseURL.
+type newClientFn func(baseURL string) (probeClient, error)
 
 // probeError is returned when an external probe exits with code 1.
 type probeError struct {
