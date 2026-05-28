@@ -228,25 +228,32 @@ func waitForProbeTaskState(ctx context.Context, client probeClient, taskID a2a.T
 // ─── registerBehaviors ───────────────────────────────────────────────────────
 
 // registerBehaviors registers the full interop spec tree against the given client factory
-// and server starter. It starts the main server (push-disabled) in the outer BeforeAll and
-// stops it in AfterAll. The containing Context MUST be Ordered.
+// and server starter. A fresh server and client are created for every spec via
+// JustBeforeEach and torn down in AfterEach, preventing any state crosstalk between specs.
 //
-// The push notification When block always registers both a push-enabled context (which
-// starts a dedicated push-enabled server and skips via ErrUnsupportedConfig if unavailable)
-// and a push-disabled context (which reuses the outer client).
+// enablePushSupport defaults to false in the outer BeforeEach; the push-enabled
+// Context overrides it to true in its own BeforeEach so that JustBeforeEach
+// starts the server with push support enabled for those specs.
 func registerBehaviors(
 	newClient    newClientFn,
 	startServer  serverStarter,
 	protocol     transportProtocol,
 	serverPrefix string,
 ) {
-	var process *fixtureProcess
-	var client  probeClient
+	var (
+		process           *fixtureProcess
+		client            probeClient
+		enablePushSupport bool
+	)
 
-	BeforeAll(func() {
+	BeforeEach(func() {
+		enablePushSupport = false
+	})
+
+	JustBeforeEach(func() {
 		var srvURL string
 		var err error
-		process, srvURL, err = startServer(protocol, false)
+		process, srvURL, err = startServer(protocol, enablePushSupport)
 		if errors.Is(err, ErrUnsupportedConfig) {
 			Skip("transport is not supported by this server")
 		}
@@ -258,7 +265,8 @@ func registerBehaviors(
 		}
 		gomega.Expect(err).NotTo(gomega.HaveOccurred())
 	})
-	AfterAll(func() { stopFixtureIfRunning(process) })
+
+	AfterEach(func() { stopFixtureIfRunning(process) })
 
 	// ── send message (unary) ─────────────────────────────────────────────────
 
@@ -552,21 +560,15 @@ func registerBehaviors(
 	// ── push notification config ─────────────────────────────────────────────
 
 	When("the client manages push notification config", func() {
-		// Push-enabled context: starts a dedicated push-enabled server.
-		// If startServer returns ErrUnsupportedConfig (e.g. .NET), the context is skipped.
+		// Push-enabled context: JustBeforeEach starts the server with push enabled.
+		// If startServer returns ErrUnsupportedConfig (e.g. .NET), the spec is skipped.
 		Context("and the server supports push notifications", func() {
+			BeforeEach(func() {
+				enablePushSupport = true
+			})
+
 			It("manages the push config lifecycle", func(ctx SpecContext) {
-				pushProcess, srvURL, err := startServer(protocol, true)
-				if errors.Is(err, ErrUnsupportedConfig) {
-					Skip("server does not support push notifications")
-				}
-				gomega.Expect(err).NotTo(gomega.HaveOccurred())
-				DeferCleanup(func() { stopFixtureIfRunning(pushProcess) })
-
-				pushClient, err := newClient(srvURL, protocol)
-				gomega.Expect(err).NotTo(gomega.HaveOccurred())
-
-				result, err := pushClient.SendMessage(ctx, newInteropRequest(requestText, false))
+				result, err := client.SendMessage(ctx, newInteropRequest(requestText, false))
 				gomega.Expect(err).NotTo(gomega.HaveOccurred())
 				completedTask, ok := result.(*a2a.Task)
 				gomega.Expect(ok).To(gomega.BeTrue())
@@ -576,12 +578,12 @@ func registerBehaviors(
 				cfg.TaskID = completedTask.ID
 
 				By("creating a push config")
-				createdConfig, err := pushClient.CreatePushConfig(ctx, cfg)
+				createdConfig, err := client.CreatePushConfig(ctx, cfg)
 				gomega.Expect(err).NotTo(gomega.HaveOccurred())
 				assertTaskPushConfig(createdConfig, completedTask.ID, newInteropPushConfig(), "created push config")
 
 				By("fetching the push config by ID")
-				fetched, err := pushClient.GetPushConfig(ctx, &a2a.GetTaskPushConfigRequest{
+				fetched, err := client.GetPushConfig(ctx, &a2a.GetTaskPushConfigRequest{
 					TaskID: completedTask.ID,
 					ID:     createdConfig.ID,
 				})
@@ -589,25 +591,29 @@ func registerBehaviors(
 				assertTaskPushConfig(fetched, completedTask.ID, newInteropPushConfig(), "fetched push config")
 
 				By("listing exactly one push config for the task")
-				listed, err := pushClient.ListPushConfigs(ctx, &a2a.ListTaskPushConfigRequest{TaskID: completedTask.ID})
+				listed, err := client.ListPushConfigs(ctx, &a2a.ListTaskPushConfigRequest{TaskID: completedTask.ID})
 				gomega.Expect(err).NotTo(gomega.HaveOccurred())
 				gomega.Expect(listed).To(gomega.HaveLen(1))
 				assertTaskPushConfig(listed[0], completedTask.ID, newInteropPushConfig(), "listed push config")
 
 				By("deleting the push config and confirming the list is empty")
-				err = pushClient.DeletePushConfig(ctx, &a2a.DeleteTaskPushConfigRequest{
+				err = client.DeletePushConfig(ctx, &a2a.DeleteTaskPushConfigRequest{
 					TaskID: completedTask.ID,
 					ID:     createdConfig.ID,
 				})
 				gomega.Expect(err).NotTo(gomega.HaveOccurred())
-				listed, err = pushClient.ListPushConfigs(ctx, &a2a.ListTaskPushConfigRequest{TaskID: completedTask.ID})
+				listed, err = client.ListPushConfigs(ctx, &a2a.ListTaskPushConfigRequest{TaskID: completedTask.ID})
 				gomega.Expect(err).NotTo(gomega.HaveOccurred())
 				gomega.Expect(listed).To(gomega.BeEmpty())
 			})
 		})
 
-		// Push-disabled context: reuses the outer push-disabled client (works for all 4 languages).
+		// Push-disabled context: server started without push support (works for all 4 languages).
 		Context("and the server does not support push notifications", func() {
+			BeforeEach(func() {
+				enablePushSupport = false
+			})
+
 			It("rejects all push config operations", func(ctx SpecContext) {
 				result, err := client.SendMessage(ctx, newInteropRequest(requestText, false))
 				gomega.Expect(err).NotTo(gomega.HaveOccurred())
