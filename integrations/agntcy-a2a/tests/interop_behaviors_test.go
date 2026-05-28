@@ -236,7 +236,7 @@ func registerBehaviors(newClient newClientFn, target func() interopTarget, expec
 	BeforeAll(func(ctx SpecContext) {
 		t := target()
 		var err error
-		client, err = newClient(ctx, t.baseURL)
+		client, err = newClient(t.baseURL)
 		gomega.Expect(err).NotTo(gomega.HaveOccurred())
 	})
 

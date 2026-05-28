@@ -39,28 +39,10 @@ package tests
 // dotnet run) so no pre-build step or asset cache is needed.
 
 import (
-	"context"
 	"fmt"
 
 	. "github.com/onsi/ginkgo/v2"
 	"github.com/onsi/gomega"
-)
-
-// ── client factories ──────────────────────────────────────────────────────────
-
-var (
-	goClientFn newClientFn = func(_ context.Context, url string) (probeClient, error) {
-		return newGoProbeClient(url), nil
-	}
-	rustClientFn newClientFn = func(_ context.Context, url string) (probeClient, error) {
-		return newRustProbeClient(url), nil
-	}
-	dotNetClientFn newClientFn = func(_ context.Context, url string) (probeClient, error) {
-		return newDotNetProbeClient(url)
-	}
-	pythonClientFn newClientFn = func(_ context.Context, url string) (probeClient, error) {
-		return newPythonProbeClient(url)
-	}
 )
 
 // ── server starter type ───────────────────────────────────────────────────────
@@ -116,8 +98,8 @@ var _ = DescribeTableSubtree(
 		)
 	},
 	// ── client entries ────────────────────────────────────────────────────────
-	Entry("go",     Ordered, ContinueOnFailure, Label("CLIENT:go"),     goClientFn,     true),
-	Entry("rust",   Ordered, ContinueOnFailure, Label("CLIENT:rust"),   rustClientFn,   true),
-	Entry("python", Ordered, ContinueOnFailure, Label("CLIENT:python"), pythonClientFn, true),
-	Entry("dotnet", Ordered, ContinueOnFailure, Label("CLIENT:dotnet"), dotNetClientFn, false),
+	Entry("go",     Ordered, ContinueOnFailure, Label("CLIENT:go"),     newGoProbeClient,     true),
+	Entry("rust",   Ordered, ContinueOnFailure, Label("CLIENT:rust"),   newRustProbeClient,   true),
+	Entry("python", Ordered, ContinueOnFailure, Label("CLIENT:python"), newPythonProbeClient, true),
+	Entry("dotnet", Ordered, ContinueOnFailure, Label("CLIENT:dotnet"), newDotNetProbeClient, false),
 )

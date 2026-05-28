@@ -30,4 +30,4 @@ type probeClient interface {
 }
 
 // newClientFn creates a probeClient bound to a specific baseURL.
-type newClientFn func(ctx context.Context, baseURL string) (probeClient, error)
+type newClientFn func(baseURL string) (probeClient, error)

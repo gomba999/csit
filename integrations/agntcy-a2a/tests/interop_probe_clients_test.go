@@ -295,14 +295,14 @@ func (c *externalProbeClient) GetExtendedCard(ctx context.Context, req *a2a.GetE
 	return &card, nil
 }
 
-func newGoProbeClient(baseURL string) probeClient {
+func newGoProbeClient(baseURL string) (probeClient, error) {
 	return &externalProbeClient{
 		basecmd: []string{"go", "run", "./fixtures/go-probe"},
 		baseURL: baseURL,
-	}
+	}, nil
 }
 
-func newRustProbeClient(baseURL string) probeClient {
+func newRustProbeClient(baseURL string) (probeClient, error) {
 	return &externalProbeClient{
 		basecmd: []string{
 			"cargo", "run",
@@ -311,7 +311,7 @@ func newRustProbeClient(baseURL string) probeClient {
 			"--",
 		},
 		baseURL: baseURL,
-	}
+	}, nil
 }
 
 func newPythonProbeClient(baseURL string) (probeClient, error) {
