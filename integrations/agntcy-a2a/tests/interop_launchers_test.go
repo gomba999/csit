@@ -70,10 +70,11 @@ func buildFixtureBinaries() (fixtureBinaries, error) {
 	binaries := fixtureBinaries{
 		tempDir:    tempDir,
 		goServer:   filepath.Join(tempDir, executableName("go-jsonrpc-server")),
+		goProbe:    filepath.Join(tempDir, executableName("go-probe")),
 		rustServer: filepath.Join(tempDir, "cargo-target", "debug", executableName("interop-rust-server")),
 		rustProbe:  filepath.Join(tempDir, "cargo-target", "debug", executableName("interop-rust-probe")),
 	}
-	if err := buildGoFixture(root, binaries.goServer); err != nil {
+	if err := buildGoFixture(root, binaries.goServer, binaries.goProbe); err != nil {
 		_ = os.RemoveAll(tempDir)
 		return fixtureBinaries{}, err
 	}

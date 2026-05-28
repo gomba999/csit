@@ -70,6 +70,7 @@ type interopTarget struct {
 type fixtureBinaries struct {
 	tempDir    string
 	goServer   string
+	goProbe    string
 	rustServer string
 	rustProbe  string
 }

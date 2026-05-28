@@ -15,14 +15,20 @@ import (
 	"path/filepath"
 )
 
-func buildGoFixture(root string, outputPath string) error {
+func buildGoFixture(root string, serverPath string, probePath string) error {
 	buildCtx, cancel := context.WithTimeout(context.Background(), buildTimeout)
 	defer cancel()
 
-	goBuild := exec.CommandContext(buildCtx, "go", "build", "-o", outputPath, "./fixtures/go-jsonrpc-server")
-	goBuild.Dir = root
-	if output, err := goBuild.CombinedOutput(); err != nil {
-		return fmt.Errorf("build go fixture: %w\n%s", err, string(output))
+	goBuildServer := exec.CommandContext(buildCtx, "go", "build", "-o", serverPath, "./fixtures/go-jsonrpc-server")
+	goBuildServer.Dir = root
+	if output, err := goBuildServer.CombinedOutput(); err != nil {
+		return fmt.Errorf("build go server fixture: %w\n%s", err, string(output))
+	}
+
+	goBuildProbe := exec.CommandContext(buildCtx, "go", "build", "-o", probePath, "./fixtures/go-probe")
+	goBuildProbe.Dir = root
+	if output, err := goBuildProbe.CombinedOutput(); err != nil {
+		return fmt.Errorf("build go probe fixture: %w\n%s", err, string(output))
 	}
 
 	return nil
@@ -38,9 +44,10 @@ func buildGoFixtureBinaryOnly() (fixtureBinaries, error) {
 	binaries := fixtureBinaries{
 		tempDir:  tempDir,
 		goServer: filepath.Join(tempDir, executableName("go-jsonrpc-server")),
+		goProbe:  filepath.Join(tempDir, executableName("go-probe")),
 	}
 
-	if err := buildGoFixture(root, binaries.goServer); err != nil {
+	if err := buildGoFixture(root, binaries.goServer, binaries.goProbe); err != nil {
 		_ = os.RemoveAll(tempDir)
 		return fixtureBinaries{}, err
 	}

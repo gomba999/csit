@@ -286,6 +286,16 @@ func makeProbeInvoker(binary string, globalArgs ...string) probeInvoker {
 	}
 }
 
+func newGoProbeClient(getBinaries func() fixtureBinaries, baseURL string) probeClient {
+	return &externalProbeClient{
+		baseURL: baseURL,
+		invoke: func(ctx context.Context, args ...string) ([]byte, []byte, error) {
+			invoke := makeProbeInvoker(getBinaries().goProbe, "--card-url", baseURL)
+			return invoke(ctx, args...)
+		},
+	}
+}
+
 func newRustProbeClient(getBinaries func() fixtureBinaries, baseURL string) probeClient {
 	return &externalProbeClient{
 		baseURL: baseURL,

@@ -99,8 +99,8 @@ var _ = AfterSuite(func() {
 // ── client factories ──────────────────────────────────────────────────────────
 
 var (
-	goClientFn newClientFn = func(ctx context.Context, url string) (probeClient, error) {
-		return newGoProbeClient(ctx, url)
+	goClientFn newClientFn = func(_ context.Context, url string) (probeClient, error) {
+		return newGoProbeClient(getGoBinaries, url), nil
 	}
 	rustClientFn newClientFn = func(_ context.Context, url string) (probeClient, error) {
 		return newRustProbeClient(getRustBinaries, url), nil
