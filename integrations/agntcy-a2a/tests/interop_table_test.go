@@ -35,81 +35,30 @@ package tests
 // When either the client or the server SDK does not support gRPC, the gRPC
 // BeforeAll calls Skip() so the specs appear as skipped rather than absent.
 //
-// Each SDK's fixture assets are built at most once per test run via package-level
-// sync.Once caches. An AfterSuite handler removes the temp directories.
+// All fixtures use their toolchain's run command (go run / cargo run / uv run /
+// dotnet run) so no pre-build step or asset cache is needed.
 
 import (
 	"context"
-	"sync"
 
 	. "github.com/onsi/ginkgo/v2"
 	"github.com/onsi/gomega"
 )
 
-// ── per-SDK asset caches ──────────────────────────────────────────────────────
-
-var (
-	onceGo   sync.Once
-	cachedGo fixtureBinaries
-	errGo    error
-
-	onceRust   sync.Once
-	cachedRust fixtureBinaries
-	errRust    error
-
-	onceDotNet   sync.Once
-	cachedDotNet dotNetFixtureBinaries
-	errDotNet    error
-
-	oncePython   sync.Once
-	cachedPython pythonFixtureAssets
-	errPython    error
-)
-
-func getGoBinaries() fixtureBinaries {
-	onceGo.Do(func() { cachedGo, errGo = buildGoFixtureBinaryOnly() })
-	gomega.Expect(errGo).NotTo(gomega.HaveOccurred(), "build Go fixtures")
-	return cachedGo
-}
-
-func getRustBinaries() fixtureBinaries {
-	onceRust.Do(func() { cachedRust, errRust = buildRustFixtureBinaryOnly() })
-	gomega.Expect(errRust).NotTo(gomega.HaveOccurred(), "build Rust fixtures")
-	return cachedRust
-}
-
-func getDotNetBinaries() dotNetFixtureBinaries {
-	onceDotNet.Do(func() { cachedDotNet, errDotNet = buildDotNetFixtureBinaryOnly() })
-	gomega.Expect(errDotNet).NotTo(gomega.HaveOccurred(), "build .NET fixtures")
-	return cachedDotNet
-}
-
-func getPythonAssets() pythonFixtureAssets {
-	oncePython.Do(func() { cachedPython, errPython = buildPythonFixtureAssets() })
-	gomega.Expect(errPython).NotTo(gomega.HaveOccurred(), "build Python fixtures")
-	return cachedPython
-}
-
-var _ = AfterSuite(func() {
-	removeTempDir(cachedGo.tempDir)
-	removeTempDir(cachedRust.tempDir)
-	removeTempDir(cachedDotNet.tempDir)
-})
-
 // ── client factories ──────────────────────────────────────────────────────────
 
 var (
 	goClientFn newClientFn = func(_ context.Context, url string) (probeClient, error) {
-		return newGoProbeClient(getGoBinaries, url), nil
+		return newGoProbeClient(url), nil
 	}
 	rustClientFn newClientFn = func(_ context.Context, url string) (probeClient, error) {
-		return newRustProbeClient(getRustBinaries, url), nil
+		return newRustProbeClient(url), nil
 	}
 	dotNetClientFn newClientFn = func(_ context.Context, url string) (probeClient, error) {
-		return newDotNetProbeClient(getDotNetBinaries, url), nil
+		return newDotNetProbeClient(url)
 	}
 	pythonClientFn newClientFn = func(_ context.Context, url string) (probeClient, error) {
-		return newPythonProbeClient(getPythonAssets, url), nil
+		return newPythonProbeClient(url)
 	}
 )
 
@@ -121,16 +70,16 @@ type serverMaker func(protocol transportProtocol) *fixtureServer
 
 var (
 	goServerMaker serverMaker = func(p transportProtocol) *fixtureServer {
-		return newGoServer(getGoBinaries, true, p)
+		return newGoServer(true, p)
 	}
 	rustServerMaker serverMaker = func(p transportProtocol) *fixtureServer {
-		return newRustServer(getRustBinaries, true, p)
+		return newRustServer(true, p)
 	}
 	pythonServerMaker serverMaker = func(p transportProtocol) *fixtureServer {
-		return newPythonServer(getPythonAssets, true, p)
+		return newPythonServer(true, p)
 	}
 	dotNetServerMaker serverMaker = func(p transportProtocol) *fixtureServer {
-		return newDotNetServer(getDotNetBinaries, false, p)
+		return newDotNetServer(false, p)
 	}
 )
 

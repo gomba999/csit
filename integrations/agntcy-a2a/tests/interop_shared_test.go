@@ -17,7 +17,6 @@ import (
 	"fmt"
 	"net"
 	"net/http"
-	"os"
 	"os/exec"
 	"path/filepath"
 	"runtime"
@@ -30,8 +29,6 @@ import (
 
 const (
 	fixtureReadyTimeout          = 20 * time.Second
-	probeTimeout                 = 2 * time.Minute
-	buildTimeout                 = 3 * time.Minute
 	stopTimeout                  = 5 * time.Second
 	requestText                  = "ping"
 	pendingRequestText           = "pending"
@@ -67,45 +64,6 @@ type interopTarget struct {
 	expectPushSupported bool
 }
 
-type fixtureBinaries struct {
-	tempDir    string
-	goServer   string
-	goProbe    string
-	rustServer string
-	rustProbe  string
-}
-
-type dotNetFixtureBinaries struct {
-	tempDir        string
-	dotnetCommand  string
-	dotnetServerDL string
-	dotnetProbeDL  string
-}
-
-type rustDotNetFixtureBinaries struct {
-	dotNetFixtureBinaries
-	rustServer string
-	rustProbe  string
-}
-
-type pythonFixtureAssets struct {
-	uvCommand    string
-	fixtureDir   string
-	serverScript string
-	probeScript  string
-}
-
-func (binaries rustDotNetFixtureBinaries) dotNetAssets() dotNetFixtureBinaries {
-	return binaries.dotNetFixtureBinaries
-}
-
-func (binaries rustDotNetFixtureBinaries) rustAssets() fixtureBinaries {
-	return fixtureBinaries{
-		tempDir:    binaries.tempDir,
-		rustServer: binaries.rustServer,
-		rustProbe:  binaries.rustProbe,
-	}
-}
 
 type lockedBuffer struct {
 	mu  sync.Mutex
@@ -241,13 +199,6 @@ func stopFixtureIfRunning(process *fixtureProcess) {
 	gomega.Expect(process.stop()).To(gomega.Succeed(), process.logs.String())
 }
 
-func removeTempDir(path string) {
-	if path == "" {
-		return
-	}
-
-	gomega.Expect(os.RemoveAll(path)).To(gomega.Succeed())
-}
 
 type interopSuiteFixtureSpec struct {
 	label    string

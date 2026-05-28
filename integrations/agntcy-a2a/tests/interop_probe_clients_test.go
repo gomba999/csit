@@ -3,10 +3,11 @@
 
 package tests
 
-// This file implements the external language probe clients: Rust, Python, and .NET.
-// Each client invokes the corresponding probe binary as a subprocess with the new
-// subcommand CLI, deserializes the JSON response from stdout, and converts stderr
-// error JSON to a Go error on non-zero exit.
+// This file implements the external language probe clients: Go, Rust, Python, and .NET.
+// Each client stores a basecmd (the command needed to invoke the probe binary) and a
+// baseURL. The call() method appends --card-url <url> and the per-operation args, then
+// runs the command and returns stdout/stderr. All probe CLIs share the same subcommand
+// interface, so no per-language serialization logic is needed beyond what call() does.
 
 import (
 	"bufio"
@@ -15,6 +16,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os/exec"
+	"path/filepath"
 	"strings"
 
 	"github.com/a2aproject/a2a-go/v2/a2a"
@@ -41,13 +43,35 @@ func parseProbeError(stderr []byte) error {
 	return fmt.Errorf("probe exited with non-zero status")
 }
 
-// probeInvoker is a function that runs the probe binary and returns its stdout/stderr.
-type probeInvoker func(ctx context.Context, args ...string) (stdout []byte, stderr []byte, err error)
-
-// externalProbeClient dispatches A2A operations to an external language probe binary.
+// externalProbeClient dispatches A2A operations to an external language probe.
+// basecmd is the full command prefix to invoke the probe binary
+// (e.g., ["go", "run", "./fixtures/go-probe"]).
+// call() appends "--card-url <baseURL>" and the subcommand args before executing.
 type externalProbeClient struct {
+	basecmd []string
 	baseURL string
-	invoke  probeInvoker
+	dir     string // working directory; empty means componentRoot()
+}
+
+func (c *externalProbeClient) call(ctx context.Context, args ...string) (stdout []byte, stderr []byte, err error) {
+	cmdArgs := make([]string, 0, len(c.basecmd)+2+len(args))
+	cmdArgs = append(cmdArgs, c.basecmd[1:]...)
+	cmdArgs = append(cmdArgs, "--card-url", c.baseURL)
+	cmdArgs = append(cmdArgs, args...)
+
+	cmd := exec.CommandContext(ctx, c.basecmd[0], cmdArgs...)
+	dir := c.dir
+	if dir == "" {
+		dir = componentRoot()
+	}
+	cmd.Dir = dir
+
+	var stdoutBuf, stderrBuf bytes.Buffer
+	cmd.Stdout = &stdoutBuf
+	cmd.Stderr = &stderrBuf
+
+	err = cmd.Run()
+	return stdoutBuf.Bytes(), stderrBuf.Bytes(), err
 }
 
 // probeMsgEnvelope wraps a send-message result from the probe.
@@ -65,7 +89,7 @@ func (c *externalProbeClient) SendMessage(ctx context.Context, req *a2a.SendMess
 		return nil, fmt.Errorf("marshal send-message request: %w", err)
 	}
 
-	stdout, stderr, err := c.invoke(ctx, "send-message", "--message-json", string(reqJSON))
+	stdout, stderr, err := c.call(ctx, "send-message", "--message-json", string(reqJSON))
 	if err != nil {
 		return nil, parseProbeError(stderr)
 	}
@@ -99,7 +123,7 @@ func (c *externalProbeClient) SendStreamingMessage(ctx context.Context, req *a2a
 		return nil, fmt.Errorf("marshal send-streaming-message request: %w", err)
 	}
 
-	stdout, stderr, err := c.invoke(ctx, "send-streaming-message", "--message-json", string(reqJSON))
+	stdout, stderr, err := c.call(ctx, "send-streaming-message", "--message-json", string(reqJSON))
 	if err != nil {
 		return nil, parseProbeError(stderr)
 	}
@@ -162,7 +186,7 @@ func parseStreamEvent(env probeEventEnvelope) (a2a.Event, error) {
 }
 
 func (c *externalProbeClient) GetTask(ctx context.Context, req *a2a.GetTaskRequest) (*a2a.Task, error) {
-	stdout, stderr, err := c.invoke(ctx, "get-task", "--task-id", string(req.ID))
+	stdout, stderr, err := c.call(ctx, "get-task", "--task-id", string(req.ID))
 	if err != nil {
 		return nil, parseProbeError(stderr)
 	}
@@ -175,7 +199,7 @@ func (c *externalProbeClient) GetTask(ctx context.Context, req *a2a.GetTaskReque
 }
 
 func (c *externalProbeClient) CancelTask(ctx context.Context, req *a2a.CancelTaskRequest) (*a2a.Task, error) {
-	stdout, stderr, err := c.invoke(ctx, "cancel-task", "--task-id", string(req.ID))
+	stdout, stderr, err := c.call(ctx, "cancel-task", "--task-id", string(req.ID))
 	if err != nil {
 		return nil, parseProbeError(stderr)
 	}
@@ -188,7 +212,7 @@ func (c *externalProbeClient) CancelTask(ctx context.Context, req *a2a.CancelTas
 }
 
 func (c *externalProbeClient) ListTasks(ctx context.Context, req *a2a.ListTasksRequest) (*a2a.ListTasksResponse, error) {
-	stdout, stderr, err := c.invoke(ctx, "list-tasks", "--context-id", req.ContextID)
+	stdout, stderr, err := c.call(ctx, "list-tasks", "--context-id", req.ContextID)
 	if err != nil {
 		return nil, parseProbeError(stderr)
 	}
@@ -206,7 +230,7 @@ func (c *externalProbeClient) CreatePushConfig(ctx context.Context, cfg *a2a.Pus
 		return nil, fmt.Errorf("marshal push config: %w", err)
 	}
 
-	stdout, stderr, err := c.invoke(ctx, "create-push-config", "--config-json", string(cfgJSON))
+	stdout, stderr, err := c.call(ctx, "create-push-config", "--config-json", string(cfgJSON))
 	if err != nil {
 		return nil, parseProbeError(stderr)
 	}
@@ -219,7 +243,7 @@ func (c *externalProbeClient) CreatePushConfig(ctx context.Context, cfg *a2a.Pus
 }
 
 func (c *externalProbeClient) GetPushConfig(ctx context.Context, req *a2a.GetTaskPushConfigRequest) (*a2a.PushConfig, error) {
-	stdout, stderr, err := c.invoke(ctx, "get-push-config",
+	stdout, stderr, err := c.call(ctx, "get-push-config",
 		"--task-id", string(req.TaskID),
 		"--config-id", req.ID,
 	)
@@ -235,7 +259,7 @@ func (c *externalProbeClient) GetPushConfig(ctx context.Context, req *a2a.GetTas
 }
 
 func (c *externalProbeClient) ListPushConfigs(ctx context.Context, req *a2a.ListTaskPushConfigRequest) ([]*a2a.PushConfig, error) {
-	stdout, stderr, err := c.invoke(ctx, "list-push-configs", "--task-id", string(req.TaskID))
+	stdout, stderr, err := c.call(ctx, "list-push-configs", "--task-id", string(req.TaskID))
 	if err != nil {
 		return nil, parseProbeError(stderr)
 	}
@@ -248,7 +272,7 @@ func (c *externalProbeClient) ListPushConfigs(ctx context.Context, req *a2a.List
 }
 
 func (c *externalProbeClient) DeletePushConfig(ctx context.Context, req *a2a.DeleteTaskPushConfigRequest) error {
-	_, stderr, err := c.invoke(ctx, "delete-push-config",
+	_, stderr, err := c.call(ctx, "delete-push-config",
 		"--task-id", string(req.TaskID),
 		"--config-id", req.ID,
 	)
@@ -259,7 +283,7 @@ func (c *externalProbeClient) DeletePushConfig(ctx context.Context, req *a2a.Del
 }
 
 func (c *externalProbeClient) GetExtendedCard(ctx context.Context, req *a2a.GetExtendedAgentCardRequest) (*a2a.AgentCard, error) {
-	stdout, stderr, err := c.invoke(ctx, "get-extended-card")
+	stdout, stderr, err := c.call(ctx, "get-extended-card")
 	if err != nil {
 		return nil, parseProbeError(stderr)
 	}
@@ -271,75 +295,48 @@ func (c *externalProbeClient) GetExtendedCard(ctx context.Context, req *a2a.GetE
 	return &card, nil
 }
 
-func makeProbeInvoker(binary string, globalArgs ...string) probeInvoker {
-	return func(ctx context.Context, args ...string) ([]byte, []byte, error) {
-		allArgs := append(globalArgs, args...)
-		cmd := exec.CommandContext(ctx, binary, allArgs...)
-		cmd.Dir = componentRoot()
-
-		var stdoutBuf, stderrBuf bytes.Buffer
-		cmd.Stdout = &stdoutBuf
-		cmd.Stderr = &stderrBuf
-
-		err := cmd.Run()
-		return stdoutBuf.Bytes(), stderrBuf.Bytes(), err
+func newGoProbeClient(baseURL string) probeClient {
+	return &externalProbeClient{
+		basecmd: []string{"go", "run", "./fixtures/go-probe"},
+		baseURL: baseURL,
 	}
 }
 
-func newGoProbeClient(getBinaries func() fixtureBinaries, baseURL string) probeClient {
+func newRustProbeClient(baseURL string) probeClient {
 	return &externalProbeClient{
-		baseURL: baseURL,
-		invoke: func(ctx context.Context, args ...string) ([]byte, []byte, error) {
-			invoke := makeProbeInvoker(getBinaries().goProbe, "--card-url", baseURL)
-			return invoke(ctx, args...)
+		basecmd: []string{
+			"cargo", "run",
+			"--manifest-path", "fixtures/rust/Cargo.toml",
+			"--bin", "interop-rust-probe",
+			"--",
 		},
+		baseURL: baseURL,
 	}
 }
 
-func newRustProbeClient(getBinaries func() fixtureBinaries, baseURL string) probeClient {
-	return &externalProbeClient{
-		baseURL: baseURL,
-		invoke: func(ctx context.Context, args ...string) ([]byte, []byte, error) {
-			invoke := makeProbeInvoker(getBinaries().rustProbe, "--card-url", baseURL)
-			return invoke(ctx, args...)
-		},
+func newPythonProbeClient(baseURL string) (probeClient, error) {
+	uvCmd, err := resolveUvCommand()
+	if err != nil {
+		return nil, err
 	}
+	return &externalProbeClient{
+		basecmd: []string{uvCmd, "run", "interop_python_probe.py"},
+		baseURL: baseURL,
+		dir:     filepath.Join(componentRoot(), "fixtures", "python"),
+	}, nil
 }
 
-func newPythonProbeClient(getAssets func() pythonFixtureAssets, baseURL string) probeClient {
-	return &externalProbeClient{
-		baseURL: baseURL,
-		invoke: func(ctx context.Context, args ...string) ([]byte, []byte, error) {
-			assets := getAssets()
-			allArgs := append([]string{"run", assets.probeScript, "--card-url", baseURL}, args...)
-			cmd := exec.CommandContext(ctx, assets.uvCommand, allArgs...)
-			cmd.Dir = assets.fixtureDir
-
-			var stdoutBuf, stderrBuf bytes.Buffer
-			cmd.Stdout = &stdoutBuf
-			cmd.Stderr = &stderrBuf
-
-			err := cmd.Run()
-			return stdoutBuf.Bytes(), stderrBuf.Bytes(), err
-		},
+func newDotNetProbeClient(baseURL string) (probeClient, error) {
+	dotnetCmd, err := resolveDotNetCommand()
+	if err != nil {
+		return nil, err
 	}
-}
-
-func newDotNetProbeClient(getBinaries func() dotNetFixtureBinaries, baseURL string) probeClient {
 	return &externalProbeClient{
-		baseURL: baseURL,
-		invoke: func(ctx context.Context, args ...string) ([]byte, []byte, error) {
-			binaries := getBinaries()
-			allArgs := append([]string{binaries.dotnetProbeDL, "--card-url", baseURL}, args...)
-			cmd := exec.CommandContext(ctx, binaries.dotnetCommand, allArgs...)
-			cmd.Dir = componentRoot()
-
-			var stdoutBuf, stderrBuf bytes.Buffer
-			cmd.Stdout = &stdoutBuf
-			cmd.Stderr = &stderrBuf
-
-			err := cmd.Run()
-			return stdoutBuf.Bytes(), stderrBuf.Bytes(), err
+		basecmd: []string{
+			dotnetCmd, "run",
+			"--project", "./fixtures/dotnet/InteropProbe",
+			"--",
 		},
-	}
+		baseURL: baseURL,
+	}, nil
 }
