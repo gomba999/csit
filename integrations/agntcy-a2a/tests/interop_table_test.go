@@ -7,27 +7,33 @@ package tests
 // interop matrix with minimal repetition:
 //
 //   A2A interoperability
-//     go (client)
-//       server go
-//         transport JSON-RPC  →  BeforeAll/registerBehaviors/AfterAll
-//         transport REST
-//         transport gRPC
-//       server rust
+//     go (client)                              [CLIENT:go]
+//       server go                              [SERVER:go]
+//         transport JSON-RPC                   [TRANSPORT:jsonrpc]
+//         transport REST                       [TRANSPORT:rest]
+//         transport gRPC                       [TRANSPORT:grpc]
+//       server rust                            [SERVER:rust]
 //         ...
-//       server dotnet
+//       server dotnet                          [SERVER:dotnet]
 //         transport JSON-RPC
 //         transport REST
-//         transport gRPC       ← skipped: dotnet server does not support gRPC
+//         transport gRPC                       ← skipped: dotnet does not support gRPC
 //       ...
-//     rust (client)
+//     rust (client)                            [CLIENT:rust]
 //       ...
-//     dotnet (client)
+//     dotnet (client)                          [CLIENT:dotnet]
 //       ...
-//         transport gRPC       ← skipped: dotnet client does not support gRPC
+//         transport gRPC                       ← skipped: dotnet does not support gRPC
 //
-// All three transports are always present in the tree.  When either the client
-// or the server SDK does not support gRPC, the gRPC BeforeAll calls Skip() so
-// that the specs appear as skipped in the report rather than being absent.
+// Each spec inherits all three category labels from its ancestor entries, enabling
+// set-based label filtering:
+//
+//   --ginkgo.label-filter='CLIENT: consistsOf {go}'
+//   --ginkgo.label-filter='CLIENT: containsAny {rust, go} && SERVER: consistsOf {dotnet}'
+//   --ginkgo.label-filter='TRANSPORT: containsAny {grpc}'
+//
+// When either the client or the server SDK does not support gRPC, the gRPC
+// BeforeAll calls Skip() so the specs appear as skipped rather than absent.
 //
 // Each SDK's fixture assets are built at most once per test run via package-level
 // sync.Once caches. An AfterSuite handler removes the temp directories.
@@ -132,11 +138,9 @@ var (
 
 var _ = DescribeTableSubtree(
 	"A2A interoperability",
-	func(clientSDK string, newClient newClientFn, clientGRPC bool) {
+	func(newClient newClientFn, clientGRPC bool) {
 		DescribeTableSubtree("server",
-			func(serverSDK string, makeServer serverMaker, serverGRPC bool, expectPushSupported bool) {
-				label := clientSDK + "-" + serverSDK
-
+			func(makeServer serverMaker, serverGRPC bool, expectPushSupported bool) {
 				// ContinueOnFailure is not set here: transport entries are nested
 				// inside client entries (which are the outermost Ordered containers)
 				// and inherit ContinueOnFailure behaviour from them.
@@ -159,22 +163,22 @@ var _ = DescribeTableSubtree(
 							return srv.targetFor(protocol)()
 						}, expectPushSupported)
 					},
-					Entry("JSON-RPC", Ordered, Label(label, "jsonrpc"), transportJSONRPC),
-					Entry("REST",     Ordered, Label(label, "rest"),    transportREST),
-					Entry("gRPC",     Ordered, Label(label, "grpc"),    transportGRPC),
+					Entry("JSON-RPC", Ordered, Label("TRANSPORT:jsonrpc"), transportJSONRPC),
+					Entry("REST",     Ordered, Label("TRANSPORT:rest"),    transportREST),
+					Entry("gRPC",     Ordered, Label("TRANSPORT:grpc"),    transportGRPC),
 				)
 			},
 			// ── server entries ────────────────────────────────────────────────
 			// ContinueOnFailure is inherited from the client entries (outermost Ordered).
-			Entry("go",     Ordered, "go",     goServerMaker,     true,  true),
-			Entry("rust",   Ordered, "rust",   rustServerMaker,   true,  true),
-			Entry("python", Ordered, "python", pythonServerMaker, true,  true),
-			Entry("dotnet", Ordered, "dotnet", dotNetServerMaker, false, false),
+			Entry("go",     Ordered, Label("SERVER:go"),     goServerMaker,     true,  true),
+			Entry("rust",   Ordered, Label("SERVER:rust"),   rustServerMaker,   true,  true),
+			Entry("python", Ordered, Label("SERVER:python"), pythonServerMaker, true,  true),
+			Entry("dotnet", Ordered, Label("SERVER:dotnet"), dotNetServerMaker, false, false),
 		)
 	},
 	// ── client entries ────────────────────────────────────────────────────────
-	Entry("go",     Ordered, ContinueOnFailure, "go",     goClientFn,     true),
-	Entry("rust",   Ordered, ContinueOnFailure, "rust",   rustClientFn,   true),
-	Entry("python", Ordered, ContinueOnFailure, "python", pythonClientFn, true),
-	Entry("dotnet", Ordered, ContinueOnFailure, "dotnet", dotNetClientFn, false),
+	Entry("go",     Ordered, ContinueOnFailure, Label("CLIENT:go"),     goClientFn,     true),
+	Entry("rust",   Ordered, ContinueOnFailure, Label("CLIENT:rust"),   rustClientFn,   true),
+	Entry("python", Ordered, ContinueOnFailure, Label("CLIENT:python"), pythonClientFn, true),
+	Entry("dotnet", Ordered, ContinueOnFailure, Label("CLIENT:dotnet"), dotNetClientFn, false),
 )
