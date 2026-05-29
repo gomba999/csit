@@ -22,7 +22,10 @@ RUN apt-get update && \
     apt-get install -y --no-install-recommends \
     build-essential \
     ca-certificates \
+    clang \
+    cmake \
     curl \
+    libclang-dev \
     pkg-config \
     libssl-dev && \
     rm -rf /var/lib/apt/lists/*

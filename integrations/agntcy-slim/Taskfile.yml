@@ -158,22 +158,6 @@ tasks:
       - test-env:generate:cluster-configs
     cmd: |
       #!/bin/sh
-      cleanup_watch() {
-        if [ -n "${KUBE_WATCH_PID:-}" ]; then
-          kill "$KUBE_WATCH_PID" 2>/dev/null || true
-          wait "$KUBE_WATCH_PID" 2>/dev/null || true
-        fi
-      }
-      trap cleanup_watch EXIT
-
-      # Watch workload resources cluster-wide for up to 10m while Helm --wait runs (multi-namespace deploy).
-      if command -v timeout >/dev/null 2>&1; then
-        timeout 600s kubectl get pods -A -o wide -w &
-      else
-        kubectl get pods -A -o wide -w &
-      fi
-      KUBE_WATCH_PID=$!
-
       REPO='{{ .SLIM_REPO_PATH }}'
       if [ -n "$REPO" ] && [ ! -d "$REPO/charts/slim" ]; then
         echo "SLIM_REPO_PATH is set but charts/slim not found under: $REPO" >&2
