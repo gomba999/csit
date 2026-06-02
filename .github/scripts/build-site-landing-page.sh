@@ -101,6 +101,13 @@ cat > "$OUTPUT" <<'HTML'
     }
     .report-card h2 { margin: 0 0 10px; font-size: 1.55rem; }
     .report-card span { color: var(--accent-strong); font-weight: 600; }
+    .secondary-link {
+      display: inline-block;
+      margin-left: 10px;
+      color: var(--muted);
+      font-size: 0.92rem;
+      text-decoration: underline;
+    }
     footer { margin-top: 32px; font-size: 0.95rem; color: var(--muted); }
     @media (max-width: 640px) {
       body { padding: 20px 14px; }
@@ -112,7 +119,7 @@ cat > "$OUTPUT" <<'HTML'
   <main>
     <div class="eyebrow">GitHub Pages</div>
     <h1>CSIT Test Reports</h1>
-    <p>Static report outputs from CI — A2A interoperability results and SLIM data-plane benchmark dashboards.</p>
+    <p>Static report outputs from CI — A2A interoperability, SLIM use-case evidence, and performance benchmark dashboards.</p>
     <div class="card-grid">
 HTML
 
@@ -128,11 +135,14 @@ fi
 
 if [[ "$HAS_BENCHMARKS" == "true" ]]; then
   cat >> "$OUTPUT" <<'HTML'
-      <a class="report-card" href="./benchmarks/slim/">
-        <h2>SLIM benchmarks</h2>
-        <p>Throughput and latency benchmark dashboards across modes, payload sizes, and sender counts.</p>
-        <span>Open report</span>
-      </a>
+      <div class="report-card">
+        <a href="./benchmarks/slim/evidence/" style="text-decoration:none;color:inherit;">
+          <h2>SLIM evidence + benchmarks</h2>
+          <p>C1 use-case evidence dashboard beside throughput and latency benchmark reports.</p>
+          <span>Open evidence dashboard</span>
+        </a>
+        <a class="secondary-link" href="./benchmarks/slim/">Performance dashboard</a>
+      </div>
 HTML
 fi
 

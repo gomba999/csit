@@ -91,6 +91,21 @@ The GitHub Actions workflow uploads a single Markdown artifact per job so the re
 - smoke job artifact: `ci-smoke-report.md`
 - capacity job artifact: `ci-capacity-report.md`
 
+### Dashboards
+
+Render the dashboards from existing report artifacts:
+
+```bash
+task benchmarks:slim:reports:dashboard \
+  SMOKE_DIR="benchmarks/agntcy-slim/reports" \
+  CAPACITY_DIR="benchmarks/agntcy-slim/reports"
+```
+
+This command now generates two HTML outputs:
+
+- `benchmarks/agntcy-slim/reports/index.html` (performance dashboard)
+- `benchmarks/agntcy-slim/reports/evidence/index.html` (C1 use-case evidence dashboard from issue #200)
+
 For CI runners that do not already provide `slimctl`, install it first with:
 
 ```bash

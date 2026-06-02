@@ -1,0 +1,673 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SLIM use-case evidence — C1 slice (mockup)</title>
+  <!-- Reference mockup for planning. Generated template now lives at benchmarks/agntcy-slim/templates/evidence_dashboard.html -->
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f3eee4;
+      --panel: rgba(255, 252, 246, 0.94);
+      --panel-strong: rgba(255, 255, 255, 0.92);
+      --text: #1d2731;
+      --muted: #5b6773;
+      --accent: #0f766e;
+      --accent-strong: #134e4a;
+      --warm: #b45309;
+      --border: rgba(15, 118, 110, 0.18);
+      --shadow: 0 28px 70px rgba(29, 39, 49, 0.12);
+      --code: #f3f6f8;
+      --status-verified-bg: rgba(15, 118, 110, 0.12);
+      --status-verified-fg: #0f766e;
+      --status-unknown-bg: rgba(91, 103, 115, 0.12);
+      --status-unknown-fg: #5b6773;
+      --status-planned-bg: rgba(180, 83, 9, 0.12);
+      --status-planned-fg: #b45309;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Iowan Old Style", "Palatino Linotype", "Book Antiqua", Georgia, serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at top left, rgba(15, 118, 110, 0.15), transparent 28%),
+        radial-gradient(circle at bottom right, rgba(180, 83, 9, 0.14), transparent 22%),
+        linear-gradient(180deg, #faf7f2 0%, var(--bg) 100%);
+      padding: 40px 18px 56px;
+    }
+    main {
+      max-width: 1180px;
+      margin: 0 auto;
+      display: grid;
+      gap: 24px;
+    }
+    .hero, .section {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 28px;
+      box-shadow: var(--shadow);
+      padding: 32px;
+    }
+    .hero h1 {
+      margin: 0 0 12px;
+      font-size: clamp(2.2rem, 4vw, 3.6rem);
+      line-height: 0.95;
+      letter-spacing: -0.05em;
+      max-width: 16ch;
+    }
+    .eyebrow {
+      display: inline-block;
+      text-transform: uppercase;
+      letter-spacing: 0.16em;
+      font-size: 0.78rem;
+      color: var(--accent);
+      margin-bottom: 14px;
+    }
+    .badge-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin: 16px 0 0;
+    }
+    .badge {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-size: 0.78rem;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      border: 1px solid rgba(15, 118, 110, 0.2);
+      background: rgba(15, 118, 110, 0.08);
+      color: var(--accent-strong);
+    }
+    .badge-warn {
+      border-color: rgba(180, 83, 9, 0.25);
+      background: var(--status-planned-bg);
+      color: var(--status-planned-fg);
+    }
+    .mock-banner {
+      margin-top: 18px;
+      padding: 12px 16px;
+      border-radius: 14px;
+      background: rgba(180, 83, 9, 0.08);
+      border: 1px dashed rgba(180, 83, 9, 0.35);
+      color: var(--warm);
+      font-size: 0.92rem;
+      line-height: 1.55;
+    }
+    .lead {
+      font-size: 1.08rem;
+      line-height: 1.75;
+      color: var(--muted);
+      max-width: 72ch;
+      margin: 0;
+    }
+    .nav {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 24px;
+    }
+    .nav a, .artifact-list a, .evidence-links a {
+      color: var(--accent-strong);
+      text-decoration: none;
+    }
+    .nav a {
+      padding: 10px 14px;
+      border-radius: 999px;
+      background: rgba(15, 118, 110, 0.08);
+      border: 1px solid rgba(15, 118, 110, 0.14);
+      font-size: 0.95rem;
+    }
+    .meta {
+      margin-top: 18px;
+      color: var(--muted);
+      font-size: 0.94rem;
+      line-height: 1.6;
+    }
+    .meta a { color: var(--accent-strong); }
+    .section-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      align-items: flex-start;
+      margin-bottom: 18px;
+    }
+    .section h2 {
+      margin: 0 0 8px;
+      font-size: clamp(1.7rem, 2.2vw, 2.4rem);
+      letter-spacing: -0.04em;
+    }
+    .section p {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.7;
+    }
+    .class-chip {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 6px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      background: rgba(15, 118, 110, 0.1);
+      color: var(--accent-strong);
+      vertical-align: middle;
+      margin-right: 6px;
+    }
+    .status-pill {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      text-transform: capitalize;
+    }
+    .status-verified {
+      background: var(--status-verified-bg);
+      color: var(--status-verified-fg);
+    }
+    .status-unknown {
+      background: var(--status-unknown-bg);
+      color: var(--status-unknown-fg);
+    }
+    .status-planned {
+      background: var(--status-planned-bg);
+      color: var(--status-planned-fg);
+    }
+    .table-panel {
+      background: rgba(255, 255, 255, 0.74);
+      border: 1px solid rgba(15, 118, 110, 0.12);
+      border-radius: 22px;
+      overflow: hidden;
+    }
+    .table-wrap {
+      overflow-x: auto;
+      padding: 14px 18px 18px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.95rem;
+    }
+    th, td {
+      text-align: left;
+      padding: 12px 10px;
+      border-bottom: 1px solid rgba(15, 118, 110, 0.1);
+      vertical-align: top;
+    }
+    th {
+      color: var(--accent-strong);
+      font-size: 0.84rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+    tr:last-child td { border-bottom: none; }
+    .evidence-links {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      font-size: 0.92rem;
+    }
+    .evidence-links .fallback {
+      color: var(--muted);
+      font-size: 0.88rem;
+    }
+    .card-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 14px;
+      margin: 20px 0 24px;
+    }
+    .card {
+      background: var(--panel-strong);
+      border: 1px solid rgba(15, 118, 110, 0.12);
+      border-radius: 22px;
+      padding: 18px;
+    }
+    .card .label {
+      color: var(--muted);
+      font-size: 0.92rem;
+      display: block;
+      margin-bottom: 8px;
+    }
+    .card .value {
+      display: block;
+      font-size: 1.35rem;
+      font-weight: 700;
+      letter-spacing: -0.03em;
+      margin-bottom: 8px;
+    }
+    .card .detail {
+      color: var(--muted);
+      font-size: 0.92rem;
+      line-height: 1.55;
+    }
+    .topology {
+      margin: 16px 0;
+      padding: 16px 18px;
+      border-radius: 16px;
+      background: #15212b;
+      color: #e8eef2;
+      font-family: ui-monospace, "Cascadia Code", "Source Code Pro", Menlo, monospace;
+      font-size: 0.85rem;
+      line-height: 1.5;
+      overflow-x: auto;
+      white-space: pre;
+    }
+    pre.rerun {
+      margin: 12px 0 0;
+      padding: 16px;
+      border-radius: 16px;
+      background: #15212b;
+      color: #f2f5f7;
+      overflow-x: auto;
+      font-size: 0.88rem;
+      line-height: 1.55;
+    }
+    pre.rerun code { font-family: ui-monospace, "Cascadia Code", Menlo, monospace; }
+    .artifact-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 14px;
+    }
+    .artifact-list a {
+      padding: 8px 12px;
+      background: rgba(15, 118, 110, 0.08);
+      border-radius: 999px;
+      border: 1px solid rgba(15, 118, 110, 0.14);
+      font-size: 0.92rem;
+    }
+    .planned-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 16px;
+      margin-top: 8px;
+    }
+    .planned-panel {
+      background: rgba(255, 255, 255, 0.6);
+      border: 1px dashed rgba(180, 83, 9, 0.3);
+      border-radius: 22px;
+      padding: 20px;
+    }
+    .planned-panel h3 {
+      margin: 0 0 8px;
+      font-size: 1.15rem;
+      letter-spacing: -0.02em;
+    }
+    .planned-panel p {
+      margin: 0;
+      font-size: 0.94rem;
+      line-height: 1.65;
+    }
+    details {
+      background: rgba(255, 255, 255, 0.76);
+      border: 1px solid rgba(15, 118, 110, 0.12);
+      border-radius: 22px;
+      padding: 0 18px 18px;
+    }
+    details.section-details {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 28px;
+      box-shadow: var(--shadow);
+      padding: 0 32px 32px;
+    }
+    summary {
+      cursor: pointer;
+      list-style: none;
+      padding: 18px 0;
+      font-weight: 700;
+      color: var(--accent-strong);
+      font-size: 1.1rem;
+    }
+    summary::-webkit-details-marker { display: none; }
+    .appendix-note {
+      color: var(--muted);
+      line-height: 1.7;
+      margin: 0 0 16px;
+      max-width: 70ch;
+    }
+    @media (max-width: 720px) {
+      body { padding: 18px 12px 30px; }
+      .hero, .section { padding: 22px 18px; border-radius: 24px; }
+      details.section-details { padding: 0 18px 18px; border-radius: 24px; }
+      .section-head { display: block; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header class="hero" id="context">
+      <div class="eyebrow">SLIM dashboard · slice 1</div>
+      <h1>Use-case evidence for centralized agentic systems.</h1>
+      <p class="lead" id="scope-lead">
+        This page answers whether CSIT demonstrates SLIM for <strong>centralized (C1)</strong> agentic systems:
+        a single authority owns routing and agents connect through it. Slice 1 covers three proven messaging
+        modes on a local smoke suite. Decentralized (C2) and distributed (C3) evidence is planned for later slices.
+      </p>
+      <div class="badge-row">
+        <span class="badge" id="taxonomy-badge">Taxonomy v0.2 draft</span>
+        <span class="badge">Primary class: C1</span>
+        <span class="badge badge-warn" id="mock-badge">Stub data — pending Lane A contract</span>
+      </div>
+      <div class="mock-banner" id="mock-banner">
+        Status, run IDs, and evidence URLs below are placeholders until the C1 evidence contract (Lane A)
+        and Pages link mapping (Lane C) land. Rerun commands match the agreed CSIT runbook.
+      </div>
+      <nav class="nav" aria-label="Page sections">
+        <a href="#c1-evidence">C1 evidence</a>
+        <a href="#c1-scenario-local-smoke">C1 scenario</a>
+        <a href="#planned-c2">C2 planned</a>
+        <a href="#planned-c3">C3 planned</a>
+        <a href="#performance-appendix">Performance appendix</a>
+      </nav>
+      <div class="meta" id="meta-block">
+        <div>Last updated: <span id="last-updated">—</span></div>
+        <div>
+          Epic: <a href="https://github.com/agntcy/csit/issues/200">csit#200</a> ·
+          Discussion: <a href="https://github.com/agntcy/csit/discussions/195">#195</a> ·
+          CI workflow: <a id="workflow-link" href="https://github.com/agntcy/csit/actions/workflows/test-benchmarks-slim.yaml">test-benchmarks-slim</a> ·
+          Last run: <a id="last-run-link" href="#">—</a>
+        </div>
+      </div>
+    </header>
+
+    <section class="section" id="c1-evidence">
+      <div class="section-head">
+        <div>
+          <h2>C1 evidence grid</h2>
+          <p>Primary block for slice 1. Each row maps to one rerunnable smoke mode and one evidence target.</p>
+        </div>
+      </div>
+      <div class="table-panel">
+        <div class="table-wrap">
+          <table id="c1-evidence-table">
+            <thead>
+              <tr>
+                <th scope="col">Use case</th>
+                <th scope="col">SLIM fit</th>
+                <th scope="col">Status</th>
+                <th scope="col">Evidence</th>
+              </tr>
+            </thead>
+            <tbody id="c1-evidence-body">
+              <!-- rendered from contract -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="c1-scenario-local-smoke">
+      <div class="section-head">
+        <div>
+          <h2>C1 scenario: local messaging smoke</h2>
+          <p id="scenario-description">Single-node CSIT smoke suite exercising request-reply, fire-and-forget, and write workloads.</p>
+        </div>
+        <span class="status-pill status-verified" id="scenario-status">verified</span>
+      </div>
+      <div class="card-grid">
+        <article class="card">
+          <span class="label">Classes served</span>
+          <span class="value">C1</span>
+          <span class="detail">Centralized — one slimctl node, hub-and-spoke messaging.</span>
+        </article>
+        <article class="card">
+          <span class="label">Use cases proved</span>
+          <span class="value">3 modes</span>
+          <span class="detail">request-reply, fire-and-forget, write</span>
+        </article>
+        <article class="card">
+          <span class="label">CSIT anchor</span>
+          <span class="value">Smoke suite</span>
+          <span class="detail"><code>benchmarks/agntcy-slim/</code></span>
+        </article>
+      </div>
+      <h3 style="margin: 0 0 8px; font-size: 1.1rem;">Topology (single node)</h3>
+      <div class="topology" id="scenario-topology" aria-label="Topology diagram">  [Agent clients]
+        |
+        v
+  +------------------+
+  |  slimctl (local) |
+  |  smoke matrix    |
+  +------------------+
+        |
+   request-reply | fire-and-forget | write</div>
+      <h3 style="margin: 20px 0 8px; font-size: 1.1rem;">Rerun (CI-equivalent)</h3>
+      <pre class="rerun"><code id="scenario-rerun"></code></pre>
+      <h3 style="margin: 20px 0 8px; font-size: 1.1rem;">Artifact bundle</h3>
+      <div class="artifact-list" id="scenario-artifacts">
+        <!-- rendered from contract -->
+      </div>
+    </section>
+
+    <section class="section" id="planned-classes">
+      <div class="section-head">
+        <div>
+          <h2>Planned next blocks</h2>
+          <p>C2 and C3 are placeholders only — not proven evidence in slice 1.</p>
+        </div>
+      </div>
+      <div class="planned-grid">
+        <article class="planned-panel" id="planned-c2">
+          <h3><span class="class-chip">C2</span> Decentralized</h3>
+          <p><span class="status-pill status-planned">planned</span></p>
+          <p style="margin-top: 10px;">
+            Workflow managers and declared route graphs (e.g. TopologyTest Alice/Bob multi-hop).
+            Target CSIT: <code>integrations/agntcy-slim/TopologyTest.md</code>. August candidate if not July B2.
+          </p>
+        </article>
+        <article class="planned-panel" id="planned-c3">
+          <h3><span class="class-chip">C3</span> Distributed</h3>
+          <p><span class="status-pill status-planned">planned</span></p>
+          <p style="margin-top: 10px;">
+            Fully autonomous peers across clusters — node Connected, link APPLIED, control-plane survival.
+            Target CSIT: <code>kind-slim-multi-host/</code>, <code>integrations/kind-slim-multicluster/</code>.
+          </p>
+        </article>
+      </div>
+    </section>
+
+    <details class="section-details" id="performance-appendix">
+      <summary>Performance appendix (collapsed — supporting detail only)</summary>
+      <p class="appendix-note">
+        Throughput tables, latency percentiles, and capacity sweeps support capacity planning.
+        They are <strong>not</strong> the primary rationale for class-level SLIM adoption on this dashboard.
+        See the generated benchmark report for full numbers.
+      </p>
+      <div class="artifact-list">
+        <a href="../../../site/benchmarks/slim/index.html">Published benchmark dashboard</a>
+        <a href="../../../site/benchmarks/slim/smoke/index.html">Smoke report (when published)</a>
+        <a href="../../../benchmarks/agntcy-slim/reports/index.html">Local smoke dashboard</a>
+      </div>
+      <p class="appendix-note" style="margin-top: 16px; font-size: 0.9rem;">
+        Generated by <code>task benchmarks:slim:reports:dashboard</code> / <code>report_dashboard.go</code>.
+      </p>
+    </details>
+  </main>
+
+  <script type="application/json" id="slim-dashboard-contract">
+  {
+    "taxonomy_version": "v0.2-draft",
+    "slice": "c1",
+    "mock_data": true,
+    "meta": {
+      "last_updated": "2026-05-29T00:00:00Z",
+      "discussion_url": "https://github.com/agntcy/csit/discussions/195",
+      "epic_url": "https://github.com/agntcy/csit/issues/200",
+      "workflow_url": "https://github.com/agntcy/csit/actions/workflows/test-benchmarks-slim.yaml",
+      "last_run_id": "00000000000",
+      "last_run_url": "https://github.com/agntcy/csit/actions/runs/00000000000"
+    },
+    "rows": [
+      {
+        "id": "request-reply",
+        "class": "C1",
+        "use_case": "Agent A calls B and waits for reply",
+        "slim_fit": "request-reply mode on named endpoints",
+        "status": "unknown",
+        "last_run": "00000000000",
+        "evidence_url": "../../../site/benchmarks/slim/index.html#smoke-suite",
+        "evidence_label": "Published smoke dashboard",
+        "artifact_url": "../../../benchmarks/agntcy-slim/reports/ci-smoke-report.md",
+        "artifact_label": "ci-smoke-report.md (local)",
+        "rerun_cmd": "task benchmarks:slim:benchmark:ci:suite-smoke"
+      },
+      {
+        "id": "fire-and-forget",
+        "class": "C1",
+        "use_case": "Agent fires event; consumer handles async",
+        "slim_fit": "fire-and-forget one-way delivery",
+        "status": "unknown",
+        "last_run": "00000000000",
+        "evidence_url": "../../../site/benchmarks/slim/index.html#smoke-suite",
+        "evidence_label": "Published smoke dashboard",
+        "artifact_url": "../../../benchmarks/agntcy-slim/reports/technical_report.md",
+        "artifact_label": "technical_report.md (local)",
+        "rerun_cmd": "task benchmarks:slim:benchmark:ci:suite-smoke"
+      },
+      {
+        "id": "write",
+        "class": "C1",
+        "use_case": "Publish into mesh without paired responder",
+        "slim_fit": "write ingress / publish pattern",
+        "status": "unknown",
+        "last_run": "00000000000",
+        "evidence_url": "../../../site/benchmarks/slim/index.html#smoke-suite",
+        "evidence_label": "Published smoke dashboard",
+        "artifact_url": "../../../benchmarks/agntcy-slim/reports/suite_summary.md",
+        "artifact_label": "suite_summary.md (local)",
+        "rerun_cmd": "task benchmarks:slim:benchmark:ci:suite-smoke"
+      }
+    ],
+    "scenario": {
+      "id": "local-messaging-smoke",
+      "title": "Local messaging smoke",
+      "classes_served": ["C1"],
+      "status": "unknown",
+      "description": "Single-node CSIT smoke suite exercising request-reply, fire-and-forget, and write workloads.",
+      "rerun_cmd": "task benchmarks:slim:deps:slimctl-download SLIMCTL_PATH=\"$HOME/.local/bin/slimctl\"\nexport PATH=\"$HOME/.local/bin:$PATH\"\ntask benchmarks:slim:benchmark:ci:suite-smoke",
+      "artifacts": [
+        { "file": "index.html", "path": "../../../benchmarks/agntcy-slim/reports/index.html" },
+        { "file": "ci-smoke-report.md", "path": "../../../benchmarks/agntcy-slim/reports/ci-smoke-report.md" },
+        { "file": "suite_summary.md", "path": "../../../benchmarks/agntcy-slim/reports/suite_summary.md" },
+        { "file": "technical_report.md", "path": "../../../benchmarks/agntcy-slim/reports/technical_report.md" },
+        { "file": "ci-smoke.log", "path": "../../../benchmarks/agntcy-slim/reports/ci-smoke.log" },
+        { "file": "results.tsv", "path": "../../../benchmarks/agntcy-slim/reports/results.tsv" }
+      ]
+    }
+  }
+  </script>
+
+  <script>
+    (function () {
+      var contractEl = document.getElementById("slim-dashboard-contract");
+      if (!contractEl) return;
+
+      var data;
+      try {
+        data = JSON.parse(contractEl.textContent);
+      } catch (e) {
+        console.error("Invalid slim-dashboard-contract JSON", e);
+        return;
+      }
+
+      function statusClass(status) {
+        if (status === "verified" || status === "proven") return "status-verified";
+        if (status === "planned" || status === "gap") return "status-planned";
+        return "status-unknown";
+      }
+
+      function escapeHtml(text) {
+        var div = document.createElement("div");
+        div.textContent = text;
+        return div.innerHTML;
+      }
+
+      // Meta
+      if (data.meta) {
+        var lastUpdated = document.getElementById("last-updated");
+        if (lastUpdated && data.meta.last_updated) {
+          try {
+            lastUpdated.textContent = new Date(data.meta.last_updated).toLocaleString(undefined, {
+              dateStyle: "medium",
+              timeStyle: "short"
+            });
+          } catch (_) {
+            lastUpdated.textContent = data.meta.last_updated;
+          }
+        }
+        var taxonomyBadge = document.getElementById("taxonomy-badge");
+        if (taxonomyBadge && data.taxonomy_version) {
+          taxonomyBadge.textContent = "Taxonomy " + data.taxonomy_version;
+        }
+        var workflowLink = document.getElementById("workflow-link");
+        if (workflowLink && data.meta.workflow_url) {
+          workflowLink.href = data.meta.workflow_url;
+        }
+        var lastRunLink = document.getElementById("last-run-link");
+        if (lastRunLink && data.meta.last_run_url) {
+          lastRunLink.href = data.meta.last_run_url;
+          lastRunLink.textContent = data.meta.last_run_id || "latest run";
+        }
+        var mockBanner = document.getElementById("mock-banner");
+        var mockBadge = document.getElementById("mock-badge");
+        if (!data.mock_data) {
+          if (mockBanner) mockBanner.hidden = true;
+          if (mockBadge) mockBadge.hidden = true;
+        }
+      }
+
+      // C1 evidence grid
+      var tbody = document.getElementById("c1-evidence-body");
+      if (tbody && Array.isArray(data.rows)) {
+        tbody.innerHTML = data.rows.map(function (row) {
+          return (
+            "<tr data-row-id=\"" + escapeHtml(row.id) + "\">" +
+            "<td><span class=\"class-chip\">" + escapeHtml(row.class || "C1") + "</span>" +
+            escapeHtml(row.use_case) + "</td>" +
+            "<td><code>" + escapeHtml(row.slim_fit) + "</code></td>" +
+            "<td><span class=\"status-pill " + statusClass(row.status) + "\">" +
+            escapeHtml(row.status || "unknown") + "</span></td>" +
+            "<td><div class=\"evidence-links\">" +
+            "<a href=\"" + escapeHtml(row.evidence_url) + "\">" +
+            escapeHtml(row.evidence_label || "Published report") + "</a>" +
+            "<span class=\"fallback\"><a href=\"" + escapeHtml(row.artifact_url) + "\">" +
+            escapeHtml(row.artifact_label || "Artifact fallback") + "</a></span>" +
+            "</div></td>" +
+            "</tr>"
+          );
+        }).join("");
+      }
+
+      // Scenario card
+      var scenario = data.scenario;
+      if (scenario) {
+        var scenarioDesc = document.getElementById("scenario-description");
+        if (scenarioDesc && scenario.description) scenarioDesc.textContent = scenario.description;
+
+        var scenarioStatus = document.getElementById("scenario-status");
+        if (scenarioStatus && scenario.status) {
+          scenarioStatus.textContent = scenario.status;
+          scenarioStatus.className = "status-pill " + statusClass(scenario.status);
+        }
+
+        var rerunEl = document.getElementById("scenario-rerun");
+        if (rerunEl && scenario.rerun_cmd) rerunEl.textContent = scenario.rerun_cmd;
+
+        var artifactsEl = document.getElementById("scenario-artifacts");
+        if (artifactsEl && Array.isArray(scenario.artifacts)) {
+          artifactsEl.innerHTML = scenario.artifacts.map(function (a) {
+            return "<a href=\"" + escapeHtml(a.path) + "\">" + escapeHtml(a.file) + "</a>";
+          }).join("");
+        }
+      }
+    })();
+  </script>
+</body>
+</html>

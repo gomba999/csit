@@ -123,7 +123,10 @@ jobs:
           task benchmarks:slim:reports:dashboard \
             SMOKE_DIR="$PUBLISH_DIR" \
             CAPACITY_DIR="$PUBLISH_DIR" \
-            OUTPUT_FILE="$PUBLISH_DIR/index.html"
+            PERF_OUTPUT_FILE="$PUBLISH_DIR/index.html" \
+            EVIDENCE_OUTPUT_FILE="$PUBLISH_DIR/evidence/index.html" \
+            GITHUB_RUN_ID="${{ github.run_id }}" \
+            GITHUB_RUN_URL="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
 
       - name: Print smoke markdown report
         if: always()
@@ -293,7 +296,10 @@ jobs:
           task benchmarks:slim:reports:dashboard \
             SMOKE_DIR="$PUBLISH_DIR" \
             CAPACITY_DIR="$PUBLISH_DIR" \
-            OUTPUT_FILE="$PUBLISH_DIR/index.html"
+            PERF_OUTPUT_FILE="$PUBLISH_DIR/index.html" \
+            EVIDENCE_OUTPUT_FILE="$PUBLISH_DIR/evidence/index.html" \
+            GITHUB_RUN_ID="${{ github.run_id }}" \
+            GITHUB_RUN_URL="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
 
       - name: Print capacity markdown report
         if: always()
@@ -568,6 +574,20 @@ jobs:
             args+=(--basic-csv ../site/benchmarks/slim/basic/basic-benchmark-results.csv)
           fi
           "${args[@]}"
+
+      - name: Rebuild SLIM evidence dashboard
+        working-directory: ./benchmarks
+        shell: bash
+        run: |
+          set -euo pipefail
+          go run ./agntcy-slim/tools/report_evidence_dashboard/main.go \
+            --smoke-dir ../site/benchmarks/slim/smoke \
+            --output ../site/benchmarks/slim/evidence/index.html \
+            --template ./agntcy-slim/templates/evidence_dashboard.html \
+            --perf-url ../index.html \
+            --run-id "${{ github.run_id }}" \
+            --run-url "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}" \
+            --workflow-url "https://github.com/agntcy/csit/actions/workflows/test-benchmarks-slim.yaml"
 
       - name: Build site landing page
         shell: bash

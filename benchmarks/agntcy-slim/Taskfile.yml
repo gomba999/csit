@@ -152,17 +152,20 @@ tasks:
       - go test ./tests -v -failfast -test.v -test.paniconexit0 -ginkgo.timeout 30m -timeout 30m -ginkgo.v --ginkgo.json-report=../../reports/test-report-agntcy-slim.json --ginkgo.junit-report=../../reports/test-report-agntcy-slim.xml
 
   reports:dashboard:
-    desc: Render the SLIM benchmark HTML dashboard from the available report artifacts and optional agntcy/slim CSV
+    desc: Render the SLIM performance and C1 evidence HTML dashboards from benchmark artifacts
     dir: .
     vars:
       SMOKE_DIR: '{{ .SMOKE_DIR | default "./reports" }}'
       CAPACITY_DIR: '{{ .CAPACITY_DIR | default "./reports" }}'
       SLIM_REPO_CSV: '{{ .SLIM_REPO_CSV | default "./reports/external/benchmark-results.csv" }}'
-      OUTPUT_FILE: '{{ .OUTPUT_FILE | default "./reports/index.html" }}'
+      PERF_OUTPUT_FILE: '{{ .PERF_OUTPUT_FILE | default (.OUTPUT_FILE | default "./reports/index.html") }}'
+      EVIDENCE_OUTPUT_FILE: '{{ .EVIDENCE_OUTPUT_FILE | default "./reports/evidence/index.html" }}'
+      PERF_URL: '{{ .PERF_URL | default "../index.html" }}'
+      WORKFLOW_URL: '{{ .WORKFLOW_URL | default "https://github.com/agntcy/csit/actions/workflows/test-benchmarks-slim.yaml" }}'
     cmds:
       - |
         set -euo pipefail
-        cmd=(go run ./tools/report_dashboard.go --smoke-dir '{{ .SMOKE_DIR }}' --capacity-dir '{{ .CAPACITY_DIR }}' --min-ci-runs '{{ .MIN_CONFIDENCE_INTERVAL_RUNS }}' --output '{{ .OUTPUT_FILE }}')
+        cmd=(go run ./tools/report_dashboard.go --smoke-dir '{{ .SMOKE_DIR }}' --capacity-dir '{{ .CAPACITY_DIR }}' --min-ci-runs '{{ .MIN_CONFIDENCE_INTERVAL_RUNS }}' --output '{{ .PERF_OUTPUT_FILE }}')
         if [ -n '{{ .SLIM_REPO_CSV }}' ]; then
           cmd+=(--slim-csv '{{ .SLIM_REPO_CSV }}')
         fi
@@ -170,6 +173,16 @@ tasks:
           cmd+=(--basic-csv '{{ .BASIC_BENCH_CSV }}')
         fi
         "${cmd[@]}"
+      - |
+        set -euo pipefail
+        args=(go run ./tools/report_evidence_dashboard/main.go --smoke-dir '{{ .SMOKE_DIR }}' --output '{{ .EVIDENCE_OUTPUT_FILE }}' --perf-url '{{ .PERF_URL }}' --workflow-url '{{ .WORKFLOW_URL }}')
+        if [ -n '{{ .GITHUB_RUN_ID }}' ]; then
+          args+=(--run-id '{{ .GITHUB_RUN_ID }}')
+        fi
+        if [ -n '{{ .GITHUB_RUN_URL }}' ]; then
+          args+=(--run-url '{{ .GITHUB_RUN_URL }}')
+        fi
+        "${args[@]}"
 
   benchmark:report:
     desc: Run the local SLIM benchmark suite and render the HTML dashboard from the generated report artifacts and optional agntcy/slim CSV

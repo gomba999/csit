@@ -308,6 +308,26 @@ jobs:
           fi
           "${args[@]}"
 
+      - name: Rebuild merged SLIM evidence dashboard
+        if: ${{ steps.resolve.outputs.has-benchmark-smoke == 'true' }}
+        working-directory: ./benchmarks
+        shell: bash
+        run: |
+          set -euo pipefail
+          benchmark_run_id='${{ steps.resolve.outputs.benchmark-run-id }}'
+          run_url=""
+          if [[ -n "$benchmark_run_id" ]]; then
+            run_url="https://github.com/${GITHUB_REPOSITORY}/actions/runs/${benchmark_run_id}"
+          fi
+          go run ./agntcy-slim/tools/report_evidence_dashboard/main.go \
+            --smoke-dir ../site/benchmarks/slim/smoke \
+            --output ../site/benchmarks/slim/evidence/index.html \
+            --template ./agntcy-slim/templates/evidence_dashboard.html \
+            --perf-url ../index.html \
+            --run-id "$benchmark_run_id" \
+            --run-url "$run_url" \
+            --workflow-url "https://github.com/agntcy/csit/actions/workflows/test-benchmarks-slim.yaml"
+
       - name: Build site landing page
         env:
           INTEGRATIONS_RUN_ID: ${{ steps.resolve.outputs.integrations-run-id }}
