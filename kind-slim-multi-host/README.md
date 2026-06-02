@@ -32,6 +32,7 @@ KinD clusters **csit-a** / **csit-b**; **ingress-nginx** runs on **A** only. **[
 | **`task ingress:install:a`** | Helm **ingress-nginx** on cluster **A** |
 | **`task ingress:a:wait-lb-ip`** | Wait for LB IP → **`.gen/ingress-a.env`** |
 | **`task apps:install:cluster-a`** / **`apps:install:cluster-b`** | Slim / controller Helm (order matters; use **`stack:install`** for the full sequence) |
+| **`task test:integrations:kind-slim-multicluster`** | Ginkgo suite: downstream slim registers, link **APPLIED** (B→A), stable link ID after controller restart — needs **`stack:up`** (default northbound PF on **51551**; override with **`SLIMCTL_PF_LOCAL_PORT`** / **`SLIM_CONTROLLER_HTTP_URL`**) |
 
 **Typical sequence inside `stack:install`:** `prereq:stack` → `kind:cloud-provider-kind:up` → `ingress:install:a` → `apps:install:cluster-a` → `ingress:a:wait-lb-ip` → `coredns:apply:cluster-b:ingress-alias` → `apps:install:cluster-b` → `compose:dns:up` → **`compose:dns:verify`**.
 
@@ -90,6 +91,12 @@ Use when **`control.nb.cluster-a.csit.test`** resolves to the cluster **A** ingr
 cd kind-slim-multi-host
 task prereq
 task stack:up
+```
+
+Multicluster Ginkgo suite (downstream slim → controller link, rollout restart). Uses its own port-forward on **51551** by default so it does not collide with a separate `kubectl port-forward … 50051:50051` session. The task sets **`GOMODCACHE`** / **`GOCACHE`** under **`kind-slim-multi-host/.cache/`** so `go test` does not need write access to your global Go module cache (avoids `permission denied` under some **asdf** Go installs).
+
+```bash
+task test:integrations:kind-slim-multicluster
 ```
 
 Tear down:

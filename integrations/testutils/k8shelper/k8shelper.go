@@ -12,6 +12,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 )
 
@@ -103,9 +104,34 @@ func (k *k8sHelper) WithVolumes(volumes []corev1.Volume) *k8sHelper {
 	return k
 }
 
+func kubeConfigPath() string {
+	return filepath.Join(os.Getenv("HOME"), ".kube", "config")
+}
+
+// BuildRESTConfig returns a client config for the kubeconfig at ~/.kube/config.
+// If kubeContext is non-empty it overrides the current context.
+func BuildRESTConfig(kubeContext string) (*rest.Config, error) {
+	rules := clientcmd.NewDefaultClientConfigLoadingRules()
+	rules.ExplicitPath = kubeConfigPath()
+	var overrides *clientcmd.ConfigOverrides
+	if kubeContext != "" {
+		overrides = &clientcmd.ConfigOverrides{CurrentContext: kubeContext}
+	}
+	cc := clientcmd.NewNonInteractiveDeferredLoadingClientConfig(rules, overrides)
+	return cc.ClientConfig()
+}
+
+// CreateK8sClientSetForContext returns a Kubernetes clientset bound to the named kubeconfig context.
+func CreateK8sClientSetForContext(kubeContext string) (*kubernetes.Clientset, error) {
+	config, err := BuildRESTConfig(kubeContext)
+	if err != nil {
+		return nil, fmt.Errorf("unable to load kubeconfig for context %q: %w", kubeContext, err)
+	}
+	return kubernetes.NewForConfig(config)
+}
+
 func CreateK8sClientSet() (*kubernetes.Clientset, error) {
-	kubeconfig := filepath.Join(os.Getenv("HOME"), ".kube", "config")
-	config, err := clientcmd.BuildConfigFromFlags("", kubeconfig)
+	config, err := BuildRESTConfig("")
 	if err != nil {
 		return nil, fmt.Errorf("unable to load kubeconfig %w", err)
 	}
@@ -115,8 +141,7 @@ func CreateK8sClientSet() (*kubernetes.Clientset, error) {
 }
 
 func CreateDynamicK8sClient() (*dynamic.DynamicClient, error) {
-	kubeconfig := filepath.Join(os.Getenv("HOME"), ".kube", "config")
-	config, err := clientcmd.BuildConfigFromFlags("", kubeconfig)
+	config, err := BuildRESTConfig("")
 	if err != nil {
 		return nil, fmt.Errorf("unable to load kubeconfig %w", err)
 	}

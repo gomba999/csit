@@ -11,6 +11,9 @@ on:
   pull_request:
     paths:
       - "kind-slim-multi-host/**"
+      - "integrations/kind-slim-multicluster/**"
+      - "integrations/testutils/k8shelper/**"
+      - "integrations/go.mod"
       - ".github/workflows/kind-slim-multicluster.yml"
       - ".github/actions/setup-k8s/**"
   push:
@@ -18,6 +21,9 @@ on:
       - main
     paths:
       - "kind-slim-multi-host/**"
+      - "integrations/kind-slim-multicluster/**"
+      - "integrations/testutils/k8shelper/**"
+      - "integrations/go.mod"
       - ".github/workflows/kind-slim-multicluster.yml"
       - ".github/actions/setup-k8s/**"
 
@@ -110,7 +116,7 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
-          go-version: "1.23.x"
+          go-version: "1.25.x"
 
       - name: Install Task
         uses: arduino/setup-task@v2
@@ -201,6 +207,24 @@ jobs:
           helm list --kube-context kind-csit-a --namespace admin | grep -q slim-control
           helm list --kube-context kind-csit-a --namespace cluster-a | grep -q agntcy-cluster-a
           helm list --kube-context kind-csit-b --namespace cluster-b | grep -q agntcy-cluster-b
+
+      - name: Install Rust (slimctl)
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Build slimctl and run multicluster SLIM Ginkgo suite
+        working-directory: kind-slim-multi-host
+        env:
+          CSIT_KIND_SLIM_MULTICLUSTER: "1"
+          SLIMCTL_PATH: ${{ github.workspace }}/kind-slim-multi-host/bin/slimctl
+          SLIM_REPO_PATH: ${{ github.workspace }}/slim-src
+          SLIM_CHARTS_PATH: ${{ github.workspace }}/slim-src/charts
+        run: |
+          set -euo pipefail
+          task slimctl:build
+          cd "${GITHUB_WORKSPACE}/integrations"
+          go test -v ./kind-slim-multicluster/... -count=1 \
+            -ginkgo.label-filter=kind-slim-multicluster \
+            -timeout=30m
 
       - name: Teardown full stack
         if: always()

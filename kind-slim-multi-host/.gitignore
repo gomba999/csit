@@ -3,3 +3,4 @@
 compose/dns/Corefile
 compose/dns/csittest.zone
 .bin/
+.cache/

@@ -148,6 +148,38 @@ tasks:
     cmds:
       - bash scripts/slimctl-controller-via-port-forward.sh route
 
+  test:integrations:kind-slim-multicluster:
+    desc: |
+      Run integrations/kind-slim-multicluster Ginkgo suite against the local KinD stack (downstream link + controller restart).
+      Requires stack:up (or stack:install), kubectl contexts CTX_A/CTX_B, and Go. Builds slimctl via slimctl:build.
+      Uses northbound localhost:51551 by default (avoids clashing with a manual port-forward on 50051).
+    deps: [slimctl:build]
+    dir: "{{.TASKFILE_DIR}}"
+    env:
+      CSIT_KIND_SLIM_MULTICLUSTER: "1"
+      KIND_CTX_A: '{{ .CTX_A }}'
+      KIND_CTX_B: '{{ .CTX_B }}'
+      NS_ADMIN: '{{ .NS_ADMIN }}'
+      CTRL_RELEASE: '{{ .CTRL_RELEASE }}'
+      NS_A: '{{ .NS_A }}'
+      NS_B: '{{ .NS_B }}'
+      SLIM_RELEASE_A: '{{ .SLIM_RELEASE_A }}'
+      SLIM_RELEASE_B: '{{ .SLIM_RELEASE_B }}'
+      SLIMCTL_PF_LOCAL_PORT: "51551"
+      # Writable caches: avoid ~/.asdf/.../pkg/mod when that tree is not writable (permission denied).
+      GOMODCACHE: '{{ .TASKFILE_DIR }}/.cache/gomod'
+      GOCACHE: '{{ .TASKFILE_DIR }}/.cache/gobuild'
+    cmds:
+      - |
+        set -euo pipefail
+        ROOT='{{ .TASKFILE_DIR }}'
+        export SLIMCTL_PATH="${SLIMCTL_PATH:-"$ROOT/bin/slimctl"}"
+        mkdir -p "${GOMODCACHE}" "${GOCACHE}"
+        cd "$ROOT/../integrations"
+        go test -v ./kind-slim-multicluster/... -count=1 \
+          -ginkgo.label-filter=kind-slim-multicluster \
+          -timeout=30m
+
   kind:create:a:
     desc: Create KinD cluster A (minimal config)
     cmds:
@@ -352,10 +384,10 @@ tasks:
       - task apps:install:cluster-b
       - task compose:dns:up
       - task compose:dns:verify
-      - task echo-agent:server:deploy
-      - task echo-agent:client:deploy
-      - task slimctl:controller:link:outline
-      - task slimctl:controller:route:outline
+      # - task echo-agent:server:deploy
+      # - task echo-agent:client:deploy
+      # - task slimctl:controller:link:outline
+      # - task slimctl:controller:route:outline
 
   stack:up:
     desc: cluster:up + stack:install (full dev environment)
