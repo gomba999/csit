@@ -20,19 +20,19 @@ fullnameOverride: "slim-control"
 
 config:
   northbound:
-    httpHost: 0.0.0.0
-    httpPort: "{{ .Values.service.north.port }}"
+    endpoint: "0.0.0.0:{{ .Values.service.north.port }}"
 
   southbound:
-    httpHost: 0.0.0.0
-    httpPort: "{{ .Values.service.south.port }}"
+    endpoint: "0.0.0.0:{{ .Values.service.south.port }}"
     # tls:
+    #   insecure: false
     #   useSpiffe: true
-    # spire:
+    # auth:
+    #   type: spire
     #   socketPath: "unix:///run/spire/agent-sockets/api.sock"
 
-  logging:
-    level: DEBUG
+  tracing:
+    log_level: debug
 
 spire:
   enabled: false
