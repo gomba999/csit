@@ -35,8 +35,16 @@ task -t analitics/Taskfile.yml dashboard:build
 task -t analitics/Taskfile.yml dashboard:build:only
 ```
 
-`dashboard:build` depends on `slim:benchmark:ci:suite-smoke`, imported from
-`benchmarks/agntcy-slim/Taskfile.yml` (same task used in CI).
+`dashboard:build` runs `slim:deps:slimctl-download` then `benchmark:ci:suite-smoke`
+from `benchmarks/agntcy-slim/Taskfile.yml`, with `benchmarks/agntcy-slim/bin` on
+`PATH` (tests invoke `slimctl` by name).
+
+If smoke fails with `slimctl: executable file not found in $PATH`, run:
+
+```bash
+task -t analitics/Taskfile.yml slim:deps:slimctl-download
+export PATH="$(pwd)/benchmarks/agntcy-slim/bin:$PATH"
+```
 
 Steps:
 

@@ -19,7 +19,7 @@ tasks:
       - mkdir -p "{{.PUBLISHED_DIR}}/smoke"
 
   dashboard:run:smoke:
-    desc: Run SLIM CI smoke suite (imported from benchmarks/agntcy-slim)
+    desc: Run SLIM CI smoke suite (slimctl download + benchmarks/agntcy-slim smoke)
     deps: [slim:benchmark:ci:suite-smoke]
 
   dashboard:sync:markdown:

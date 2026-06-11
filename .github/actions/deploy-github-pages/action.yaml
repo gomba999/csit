@@ -1,0 +1,31 @@
+# Copyright AGNTCY Contributors (https://github.com/agntcy)
+# SPDX-License-Identifier: Apache-2.0
+
+name: Deploy GitHub Pages site
+description: Upload a prepared site directory and deploy it to GitHub Pages.
+
+inputs:
+  site-path:
+    description: Path to the static site directory to publish
+    required: false
+    default: ./site
+
+outputs:
+  page_url:
+    description: URL of the deployed GitHub Pages site
+    value: ${{ steps.deployment.outputs.page_url }}
+
+runs:
+  using: composite
+  steps:
+    - name: Setup Pages
+      uses: actions/configure-pages@v5
+
+    - name: Upload Pages artifact
+      uses: actions/upload-pages-artifact@v3
+      with:
+        path: ${{ inputs.site-path }}
+
+    - name: Deploy to GitHub Pages
+      id: deployment
+      uses: actions/deploy-pages@v5
