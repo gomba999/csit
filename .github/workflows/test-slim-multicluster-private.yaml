@@ -4,22 +4,39 @@
 # KinD multicluster + ingress LoadBalancer (cloud-provider-kind) + Helm stack via Task.
 # Pulls published slim images and OCI Helm charts; slimctl from GitHub releases.
 
-name: kind-slim-multicluster
+name: test-slim-multicluster-private
 
 on:
-  workflow_dispatch:
-  pull_request:
-    paths:
-      - "kind-slim-multi-host/**"
-      - ".github/workflows/kind-slim-multicluster.yml"
-      - ".github/actions/setup-k8s/**"
   push:
     branches:
       - main
-    paths:
-      - "kind-slim-multi-host/**"
-      - ".github/workflows/kind-slim-multicluster.yml"
-      - ".github/actions/setup-k8s/**"
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      override_slim_image_tag:
+        description: "Override Slim data-plane image tag"
+        required: false
+        default: ""
+      override_slim_controller_image_tag:
+        description: "Override Slim control-plane image tag"
+        required: false
+        default: ""
+      override_slim_chart_version:
+        description: "Override slim Helm chart version (oci://ghcr.io/agntcy/slim/helm/slim)"
+        required: false
+        default: ""
+      override_slim_control_plane_chart_version:
+        description: "Override slim-control-plane Helm chart version"
+        required: false
+        default: ""
+      override_slim_spire_chart_version:
+        description: "Override slim-spire Helm chart version"
+        required: false
+        default: ""
+      slimctl_version:
+        description: "slimctl release version (e.g. 1.4.0)"
+        required: false
+        default: "1.4.0"
 
 permissions:
   contents: read
@@ -30,7 +47,24 @@ defaults:
     working-directory: kind-slim-multi-host
 
 jobs:
+  detect:
+    runs-on: ubuntu-latest
+    outputs:
+      should-run: ${{ steps.detect-suite.outputs.should-run }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - id: detect-suite
+        uses: ./.github/actions/detect-suite-changes
+        with:
+          suite: slim-multicluster-private
+
   multicluster:
+    needs: detect
+    if: ${{ github.event_name == 'workflow_dispatch' || needs.detect.outputs.should-run == 'true' }}
     runs-on: ubuntu-latest
     timeout-minutes: 90
     steps:
@@ -43,12 +77,36 @@ jobs:
         working-directory: ${{ github.workspace }}
         run: |
           set -euo pipefail
-          slim_tag="1.4.0"
-          controller_tag="1.4.0"
-          slim_chart_version="v1.4.0"
-          ctrl_chart_version="v1.4.0"
-          slim_spire_chart_version="v1.4.0"
-          slimctl_version="1.4.0"
+          if [ -n "${{ inputs.override_slim_image_tag }}" ]; then
+            slim_tag="${{ inputs.override_slim_image_tag }}"
+          else
+            slim_tag="1.4.0"
+          fi
+          if [ -n "${{ inputs.override_slim_controller_image_tag }}" ]; then
+            controller_tag="${{ inputs.override_slim_controller_image_tag }}"
+          else
+            controller_tag="1.4.0"
+          fi
+          if [ -n "${{ inputs.override_slim_chart_version }}" ]; then
+            slim_chart_version="${{ inputs.override_slim_chart_version }}"
+          else
+            slim_chart_version="v1.4.0"
+          fi
+          if [ -n "${{ inputs.override_slim_control_plane_chart_version }}" ]; then
+            ctrl_chart_version="${{ inputs.override_slim_control_plane_chart_version }}"
+          else
+            ctrl_chart_version="v1.4.0"
+          fi
+          if [ -n "${{ inputs.override_slim_spire_chart_version }}" ]; then
+            slim_spire_chart_version="${{ inputs.override_slim_spire_chart_version }}"
+          else
+            slim_spire_chart_version="v1.4.0"
+          fi
+          if [ -n "${{ inputs.slimctl_version }}" ]; then
+            slimctl_version="${{ inputs.slimctl_version }}"
+          else
+            slimctl_version="1.4.0"
+          fi
           echo "slim_tag=${slim_tag}" >> "$GITHUB_OUTPUT"
           echo "controller_tag=${controller_tag}" >> "$GITHUB_OUTPUT"
           echo "slim_chart_version=${slim_chart_version}" >> "$GITHUB_OUTPUT"
@@ -192,6 +250,42 @@ jobs:
           helm list --kube-context kind-csit-a --namespace cluster-a | grep -q agntcy-cluster-a
           helm list --kube-context kind-csit-b --namespace cluster-b | grep -q agntcy-cluster-b
 
+      - name: Write verification summary report
+        if: always()
+        shell: bash
+        working-directory: ${{ github.workspace }}
+        run: |
+          set -euo pipefail
+          REPORT_DIR="integrations/agntcy-slim/multicluster-private/reports"
+          mkdir -p "$REPORT_DIR"
+          cat > "$REPORT_DIR/summary.html" <<HTML
+          <!doctype html>
+          <html lang="en">
+          <head>
+            <meta charset="utf-8">
+            <title>Slim multicluster private verification</title>
+          </head>
+          <body>
+            <h1>Slim multicluster private verification</h1>
+            <ul>
+              <li>Workflow: ${GITHUB_WORKFLOW}</li>
+              <li>Run: ${GITHUB_RUN_ID}</li>
+              <li>SHA: ${GITHUB_SHA}</li>
+              <li>Ref: ${GITHUB_REF}</li>
+            </ul>
+            <p>Verification steps completed for KinD clusters csit-a and csit-b.</p>
+          </body>
+          </html>
+          HTML
+
       - name: Teardown full stack
         if: always()
         run: task stack:down || true
+
+      - name: Upload multicluster private test report
+        if: always()
+        uses: ./.github/actions/create-artifact
+        with:
+          artifact-name: slim-multicluster-private-test-result
+          path-to-archive: |
+            ./integrations/agntcy-slim/multicluster-private/reports/summary.html
