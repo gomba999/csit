@@ -16,9 +16,9 @@
       "name": "Slim integration",
       "workflow_file": "test-slim-integration.yaml",
       "report_path": "slim-integration/",
-      "last_run_id": "",
-      "last_run_conclusion": "",
-      "last_run_updated_at": "",
+      "last_run_id": "28040141708",
+      "last_run_conclusion": "success",
+      "last_run_updated_at": "2026-06-23T16:28:00Z",
       "published_report_run_id": "",
       "published_report_updated_at": ""
     },
