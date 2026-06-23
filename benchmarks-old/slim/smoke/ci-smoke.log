@@ -1,0 +1,232 @@
+go: downloading github.com/agntcy/slim-bindings-go v1.2.0
+╔═══════════════════════════════════════════════════════════╗
+║              SLIM Bindings Setup                          ║
+╚═══════════════════════════════════════════════════════════╝
+
+Version:  v1.2.0
+Platform: linux/amd64 (ABI: gnu)
+Target:   x86_64-unknown-linux-gnu
+
+📦 Downloading SLIM bindings library...
+   Version:  v1.2.0
+   Platform: x86_64-unknown-linux-gnu
+   URL:      https://github.com/agntcy/slim/releases/download/slim-bindings-v1.2.0/slim-bindings-x86_64-unknown-linux-gnu.zip
+   Extracted: libslim_bindings_x86_64_linux_gnu.a (176.8 MB)
+✅ Library installed to: /home/runner/go/.cgo-cache/slim-bindings
+
+✅ Setup complete! You can now build Go projects using SLIM bindings.
+go: downloading go1.24.1 (linux/amd64)
+go: downloading github.com/onsi/ginkgo/v2 v2.23.4
+go: downloading github.com/onsi/gomega v1.37.0
+go: downloading gonum.org/v1/gonum v0.16.0
+go: downloading golang.org/x/net v0.37.0
+go: downloading github.com/go-logr/logr v1.4.2
+go: downloading golang.org/x/sys v0.32.0
+go: downloading golang.org/x/text v0.23.0
+=== RUN   TestCapacitySweepImproved
+--- PASS: TestCapacitySweepImproved (0.00s)
+=== RUN   TestCapacitySweepRegressed
+--- PASS: TestCapacitySweepRegressed (0.00s)
+=== RUN   TestMidpointRate
+--- PASS: TestMidpointRate (0.00s)
+=== RUN   TestCanonicalBenchmarkMode
+=== RUN   TestCanonicalBenchmarkMode/request_reply
+=== RUN   TestCanonicalBenchmarkMode/fire_and_forget_uppercase
+=== RUN   TestCanonicalBenchmarkMode/write
+=== RUN   TestCanonicalBenchmarkMode/unsupported
+--- PASS: TestCanonicalBenchmarkMode (0.00s)
+    --- PASS: TestCanonicalBenchmarkMode/request_reply (0.00s)
+    --- PASS: TestCanonicalBenchmarkMode/fire_and_forget_uppercase (0.00s)
+    --- PASS: TestCanonicalBenchmarkMode/write (0.00s)
+    --- PASS: TestCanonicalBenchmarkMode/unsupported (0.00s)
+=== RUN   TestModeRateValues
+--- PASS: TestModeRateValues (0.00s)
+=== RUN   TestBenchmarkModeMetadata
+--- PASS: TestBenchmarkModeMetadata (0.00s)
+=== RUN   TestComputeSampleStatsEmpty
+--- PASS: TestComputeSampleStatsEmpty (0.00s)
+=== RUN   TestComputeSampleStatsSingleValue
+--- PASS: TestComputeSampleStatsSingleValue (0.00s)
+=== RUN   TestComputeSampleStatsSampleVariance
+--- PASS: TestComputeSampleStatsSampleVariance (0.00s)
+=== RUN   TestTests
+Running Suite: Tests Suite - /home/runner/work/csit/csit/benchmarks/agntcy-slim/tests
+=====================================================================================
+Random Seed: [1m1780475234[0m
+
+Will run [1m1[0m of [1m8[0m specs
+
+BENCHMARK_RESULT mode=request-reply clients=1 size=16 rate=100 repeat=1 sender_mps=95.60 observed_mps=101.01 sink_mps=50.00 sink_active_mps=101.01 sender_errors=0 sink_errors=0 node_cpu=2.84 total_cpu=17.90 mean_latency_ms=0.62 p50_latency_ms=0.62 p99_latency_ms=0.70
+
+BENCHMARK_RESULT mode=request-reply clients=1 size=16 rate=100 repeat=2 sender_mps=95.58 observed_mps=101.01 sink_mps=49.97 sink_active_mps=101.01 sender_errors=0 sink_errors=0 node_cpu=2.84 total_cpu=18.01 mean_latency_ms=0.62 p50_latency_ms=0.62 p99_latency_ms=0.71
+
+BENCHMARK_RESULT mode=request-reply clients=1 size=16 rate=100 repeat=3 sender_mps=95.61 observed_mps=101.08 sink_mps=50.00 sink_active_mps=101.08 sender_errors=0 sink_errors=0 node_cpu=1.89 total_cpu=16.56 mean_latency_ms=0.62 p50_latency_ms=0.62 p99_latency_ms=0.73
+
+BENCHMARK_RESULT mode=request-reply clients=1 size=16 rate=100 repeat=4 sender_mps=95.60 observed_mps=101.04 sink_mps=49.97 sink_active_mps=101.04 sender_errors=0 sink_errors=0 node_cpu=2.84 total_cpu=16.81 mean_latency_ms=0.62 p50_latency_ms=0.61 p99_latency_ms=0.74
+
+BENCHMARK_RESULT mode=request-reply clients=1 size=16 rate=100 repeat=5 sender_mps=95.55 observed_mps=101.00 sink_mps=49.98 sink_active_mps=101.00 sender_errors=0 sink_errors=0 node_cpu=1.89 total_cpu=16.67 mean_latency_ms=0.62 p50_latency_ms=0.62 p99_latency_ms=0.71
+
+BENCHMARK_RESULT mode=request-reply clients=1 size=16 rate=100 repeat=6 sender_mps=95.55 observed_mps=100.98 sink_mps=49.99 sink_active_mps=100.98 sender_errors=0 sink_errors=0 node_cpu=2.84 total_cpu=16.49 mean_latency_ms=0.62 p50_latency_ms=0.62 p99_latency_ms=0.68
+
+BENCHMARK_RESULT mode=request-reply clients=1 size=16 rate=100 repeat=7 sender_mps=95.56 observed_mps=101.04 sink_mps=49.98 sink_active_mps=101.04 sender_errors=0 sink_errors=0 node_cpu=2.83 total_cpu=18.58 mean_latency_ms=0.62 p50_latency_ms=0.62 p99_latency_ms=0.71
+
+BENCHMARK_RESULT mode=request-reply clients=1 size=16 rate=100 repeat=8 sender_mps=92.01 observed_mps=101.03 sink_mps=49.99 sink_active_mps=101.03 sender_errors=0 sink_errors=0 node_cpu=2.73 total_cpu=17.71 mean_latency_ms=0.63 p50_latency_ms=0.62 p99_latency_ms=0.76
+
+BENCHMARK_RESULT mode=request-reply clients=1 size=16 rate=100 repeat=9 sender_mps=95.64 observed_mps=101.08 sink_mps=49.98 sink_active_mps=101.08 sender_errors=0 sink_errors=0 node_cpu=1.89 total_cpu=17.37 mean_latency_ms=0.63 p50_latency_ms=0.62 p99_latency_ms=0.71
+
+BENCHMARK_RESULT mode=request-reply clients=1 size=16 rate=100 repeat=10 sender_mps=95.55 observed_mps=100.99 sink_mps=49.97 sink_active_mps=100.99 sender_errors=0 sink_errors=0 node_cpu=2.84 total_cpu=17.64 mean_latency_ms=0.63 p50_latency_ms=0.62 p99_latency_ms=0.72
+
+BENCHMARK_RESULT mode=request-reply clients=1 size=16 rate=100 repeat=11 sender_mps=95.58 observed_mps=101.02 sink_mps=49.99 sink_active_mps=101.02 sender_errors=0 sink_errors=0 node_cpu=2.84 total_cpu=17.74 mean_latency_ms=0.62 p50_latency_ms=0.62 p99_latency_ms=0.70
+
+BENCHMARK_RESULT mode=request-reply clients=1 size=16 rate=100 repeat=12 sender_mps=95.65 observed_mps=101.06 sink_mps=49.98 sink_active_mps=101.06 sender_errors=0 sink_errors=0 node_cpu=1.89 total_cpu=14.77 mean_latency_ms=0.61 p50_latency_ms=0.61 p99_latency_ms=0.69
+
+BENCHMARK_RESULT mode=request-reply clients=1 size=16 rate=100 repeat=13 sender_mps=95.64 observed_mps=101.07 sink_mps=49.97 sink_active_mps=101.07 sender_errors=0 sink_errors=0 node_cpu=3.78 total_cpu=18.55 mean_latency_ms=0.62 p50_latency_ms=0.62 p99_latency_ms=0.72
+
+BENCHMARK_RESULT mode=request-reply clients=1 size=16 rate=100 repeat=14 sender_mps=95.55 observed_mps=101.02 sink_mps=49.99 sink_active_mps=101.02 sender_errors=0 sink_errors=0 node_cpu=1.89 total_cpu=16.04 mean_latency_ms=0.61 p50_latency_ms=0.61 p99_latency_ms=0.70
+
+BENCHMARK_RESULT mode=request-reply clients=1 size=16 rate=100 repeat=15 sender_mps=95.63 observed_mps=101.06 sink_mps=49.99 sink_active_mps=101.06 sender_errors=0 sink_errors=0 node_cpu=2.84 total_cpu=18.26 mean_latency_ms=0.62 p50_latency_ms=0.62 p99_latency_ms=0.71
+
+BENCHMARK_RESULT mode=request-reply clients=1 size=16 rate=100 repeat=16 sender_mps=95.60 observed_mps=101.03 sink_mps=49.97 sink_active_mps=101.03 sender_errors=0 sink_errors=0 node_cpu=2.84 total_cpu=17.67 mean_latency_ms=0.62 p50_latency_ms=0.61 p99_latency_ms=0.68
+
+BENCHMARK_RESULT mode=request-reply clients=1 size=16 rate=100 repeat=17 sender_mps=95.63 observed_mps=101.05 sink_mps=49.97 sink_active_mps=101.05 sender_errors=0 sink_errors=0 node_cpu=1.89 total_cpu=17.29 mean_latency_ms=0.62 p50_latency_ms=0.61 p99_latency_ms=0.72
+
+BENCHMARK_RESULT mode=request-reply clients=1 size=16 rate=100 repeat=18 sender_mps=92.06 observed_mps=101.04 sink_mps=49.98 sink_active_mps=101.04 sender_errors=0 sink_errors=0 node_cpu=3.64 total_cpu=18.54 mean_latency_ms=0.62 p50_latency_ms=0.62 p99_latency_ms=0.69
+
+BENCHMARK_RESULT mode=request-reply clients=1 size=16 rate=100 repeat=19 sender_mps=95.61 observed_mps=101.00 sink_mps=49.99 sink_active_mps=101.00 sender_errors=0 sink_errors=0 node_cpu=1.89 total_cpu=17.24 mean_latency_ms=0.62 p50_latency_ms=0.61 p99_latency_ms=0.69
+
+BENCHMARK_RESULT mode=request-reply clients=1 size=16 rate=100 repeat=20 sender_mps=92.02 observed_mps=101.07 sink_mps=49.98 sink_active_mps=101.07 sender_errors=0 sink_errors=0 node_cpu=3.64 total_cpu=18.55 mean_latency_ms=0.62 p50_latency_ms=0.62 p99_latency_ms=0.69
+
+BENCHMARK_RESULT mode=request-reply clients=1 size=16 rate=100 repeat=21 sender_mps=95.58 observed_mps=101.02 sink_mps=49.97 sink_active_mps=101.02 sender_errors=0 sink_errors=0 node_cpu=1.89 total_cpu=17.91 mean_latency_ms=0.62 p50_latency_ms=0.61 p99_latency_ms=0.70
+
+BENCHMARK_RESULT mode=request-reply clients=1 size=16 rate=100 repeat=22 sender_mps=95.61 observed_mps=101.08 sink_mps=49.97 sink_active_mps=101.08 sender_errors=0 sink_errors=0 node_cpu=2.84 total_cpu=18.22 mean_latency_ms=0.62 p50_latency_ms=0.62 p99_latency_ms=0.70
+
+BENCHMARK_RESULT mode=request-reply clients=1 size=16 rate=100 repeat=23 sender_mps=95.62 observed_mps=101.04 sink_mps=49.98 sink_active_mps=101.04 sender_errors=0 sink_errors=0 node_cpu=2.84 total_cpu=17.38 mean_latency_ms=0.62 p50_latency_ms=0.62 p99_latency_ms=0.73
+
+BENCHMARK_RESULT mode=request-reply clients=1 size=16 rate=100 repeat=24 sender_mps=95.63 observed_mps=101.05 sink_mps=49.97 sink_active_mps=101.05 sender_errors=0 sink_errors=0 node_cpu=2.84 total_cpu=18.69 mean_latency_ms=0.62 p50_latency_ms=0.62 p99_latency_ms=0.74
+
+BENCHMARK_RESULT mode=request-reply clients=1 size=16 rate=100 repeat=25 sender_mps=95.61 observed_mps=101.03 sink_mps=49.98 sink_active_mps=101.03 sender_errors=0 sink_errors=0 node_cpu=2.83 total_cpu=19.18 mean_latency_ms=0.62 p50_latency_ms=0.62 p99_latency_ms=0.71
+
+MODE_SUMMARY mode=request-reply runs=25 cases=1 mean_latency_ms=0.62 p50_latency_ms=0.62 p99_latency_ms=0.71 node_cpu=2.63 total_cpu=17.59 total_errors=0
+
+BENCHMARK_RESULT mode=fire-and-forget clients=1 size=16 rate=1000 repeat=1 sender_mps=923.55 observed_mps=963.89 sink_mps=499.77 sink_active_mps=963.89 sender_errors=0 sink_errors=0 node_cpu=1.84 total_cpu=24.72
+
+BENCHMARK_RESULT mode=fire-and-forget clients=1 size=16 rate=1000 repeat=2 sender_mps=936.28 observed_mps=977.50 sink_mps=499.73 sink_active_mps=977.50 sender_errors=0 sink_errors=0 node_cpu=1.86 total_cpu=22.90
+
+BENCHMARK_RESULT mode=fire-and-forget clients=1 size=16 rate=1000 repeat=3 sender_mps=929.39 observed_mps=970.23 sink_mps=499.85 sink_active_mps=970.23 sender_errors=0 sink_errors=0 node_cpu=1.84 total_cpu=24.20
+
+BENCHMARK_RESULT mode=fire-and-forget clients=1 size=16 rate=1000 repeat=4 sender_mps=923.51 observed_mps=963.72 sink_mps=499.72 sink_active_mps=963.72 sender_errors=0 sink_errors=0 node_cpu=1.84 total_cpu=23.62
+
+BENCHMARK_RESULT mode=fire-and-forget clients=1 size=16 rate=1000 repeat=5 sender_mps=931.18 observed_mps=971.73 sink_mps=499.75 sink_active_mps=971.73 sender_errors=0 sink_errors=0 node_cpu=1.85 total_cpu=25.33
+
+BENCHMARK_RESULT mode=fire-and-forget clients=1 size=16 rate=1000 repeat=6 sender_mps=892.09 observed_mps=965.73 sink_mps=499.74 sink_active_mps=965.73 sender_errors=0 sink_errors=0 node_cpu=1.77 total_cpu=22.15
+
+BENCHMARK_RESULT mode=fire-and-forget clients=1 size=16 rate=1000 repeat=7 sender_mps=932.70 observed_mps=973.69 sink_mps=499.84 sink_active_mps=973.69 sender_errors=0 sink_errors=0 node_cpu=1.85 total_cpu=24.35
+
+BENCHMARK_RESULT mode=fire-and-forget clients=1 size=16 rate=1000 repeat=8 sender_mps=933.42 observed_mps=974.60 sink_mps=499.22 sink_active_mps=974.60 sender_errors=0 sink_errors=0 node_cpu=1.85 total_cpu=25.73
+
+BENCHMARK_RESULT mode=fire-and-forget clients=1 size=16 rate=1000 repeat=9 sender_mps=928.46 observed_mps=969.25 sink_mps=499.24 sink_active_mps=969.25 sender_errors=0 sink_errors=0 node_cpu=1.84 total_cpu=23.74
+
+BENCHMARK_RESULT mode=fire-and-forget clients=1 size=16 rate=1000 repeat=10 sender_mps=921.36 observed_mps=999.98 sink_mps=499.81 sink_active_mps=999.98 sender_errors=0 sink_errors=0 node_cpu=1.82 total_cpu=23.56
+
+BENCHMARK_RESULT mode=fire-and-forget clients=1 size=16 rate=1000 repeat=11 sender_mps=933.33 observed_mps=974.70 sink_mps=499.81 sink_active_mps=974.70 sender_errors=0 sink_errors=0 node_cpu=1.85 total_cpu=24.98
+
+BENCHMARK_RESULT mode=fire-and-forget clients=1 size=16 rate=1000 repeat=12 sender_mps=936.57 observed_mps=977.34 sink_mps=499.92 sink_active_mps=977.34 sender_errors=0 sink_errors=0 node_cpu=1.85 total_cpu=23.52
+
+BENCHMARK_RESULT mode=fire-and-forget clients=1 size=16 rate=1000 repeat=13 sender_mps=925.23 observed_mps=965.51 sink_mps=499.84 sink_active_mps=965.51 sender_errors=0 sink_errors=0 node_cpu=1.84 total_cpu=25.38
+
+BENCHMARK_RESULT mode=fire-and-forget clients=1 size=16 rate=1000 repeat=14 sender_mps=935.25 observed_mps=976.59 sink_mps=499.74 sink_active_mps=976.59 sender_errors=0 sink_errors=0 node_cpu=1.86 total_cpu=22.14
+
+BENCHMARK_RESULT mode=fire-and-forget clients=1 size=16 rate=1000 repeat=15 sender_mps=931.51 observed_mps=972.21 sink_mps=499.93 sink_active_mps=972.21 sender_errors=0 sink_errors=0 node_cpu=1.84 total_cpu=24.21
+
+BENCHMARK_RESULT mode=fire-and-forget clients=1 size=16 rate=1000 repeat=16 sender_mps=892.99 observed_mps=967.26 sink_mps=499.79 sink_active_mps=967.26 sender_errors=0 sink_errors=0 node_cpu=1.77 total_cpu=21.62
+
+BENCHMARK_RESULT mode=fire-and-forget clients=1 size=16 rate=1000 repeat=17 sender_mps=928.61 observed_mps=969.21 sink_mps=499.74 sink_active_mps=969.21 sender_errors=0 sink_errors=0 node_cpu=1.84 total_cpu=22.85
+
+BENCHMARK_RESULT mode=fire-and-forget clients=1 size=16 rate=1000 repeat=18 sender_mps=930.76 observed_mps=971.08 sink_mps=499.76 sink_active_mps=971.08 sender_errors=0 sink_errors=0 node_cpu=1.84 total_cpu=22.93
+
+BENCHMARK_RESULT mode=fire-and-forget clients=1 size=16 rate=1000 repeat=19 sender_mps=933.74 observed_mps=974.76 sink_mps=499.74 sink_active_mps=974.76 sender_errors=0 sink_errors=0 node_cpu=1.85 total_cpu=23.30
+
+BENCHMARK_RESULT mode=fire-and-forget clients=1 size=16 rate=1000 repeat=20 sender_mps=937.26 observed_mps=978.54 sink_mps=499.86 sink_active_mps=978.54 sender_errors=0 sink_errors=0 node_cpu=1.86 total_cpu=24.30
+
+BENCHMARK_RESULT mode=fire-and-forget clients=1 size=16 rate=1000 repeat=21 sender_mps=929.05 observed_mps=970.16 sink_mps=499.87 sink_active_mps=970.16 sender_errors=0 sink_errors=0 node_cpu=1.84 total_cpu=22.30
+
+BENCHMARK_RESULT mode=fire-and-forget clients=1 size=16 rate=1000 repeat=22 sender_mps=956.47 observed_mps=999.67 sink_mps=499.36 sink_active_mps=999.67 sender_errors=0 sink_errors=0 node_cpu=1.89 total_cpu=23.85
+
+BENCHMARK_RESULT mode=fire-and-forget clients=1 size=16 rate=1000 repeat=23 sender_mps=934.02 observed_mps=974.95 sink_mps=499.71 sink_active_mps=974.95 sender_errors=0 sink_errors=0 node_cpu=0.93 total_cpu=21.30
+
+BENCHMARK_RESULT mode=fire-and-forget clients=1 size=16 rate=1000 repeat=24 sender_mps=930.69 observed_mps=971.80 sink_mps=499.75 sink_active_mps=971.80 sender_errors=0 sink_errors=0 node_cpu=1.84 total_cpu=23.17
+
+BENCHMARK_RESULT mode=fire-and-forget clients=1 size=16 rate=1000 repeat=25 sender_mps=935.14 observed_mps=976.53 sink_mps=499.75 sink_active_mps=976.53 sender_errors=0 sink_errors=0 node_cpu=1.85 total_cpu=23.15
+
+MODE_SUMMARY mode=fire-and-forget runs=25 cases=1 sender_mean_mps=928.90 observed_mean_mps=974.03 node_cpu=1.80 total_cpu=23.57 total_errors=0
+
+BENCHMARK_RESULT mode=write clients=1 size=16 rate=1000 repeat=1 sender_mps=903.30 observed_mps=903.30 sink_mps=0.00 sink_active_mps=0.00 sender_errors=0 sink_errors=0 node_cpu=2.68 total_cpu=18.66
+
+BENCHMARK_RESULT mode=write clients=1 size=16 rate=1000 repeat=2 sender_mps=924.85 observed_mps=924.85 sink_mps=0.00 sink_active_mps=0.00 sender_errors=0 sink_errors=0 node_cpu=0.92 total_cpu=17.30
+
+BENCHMARK_RESULT mode=write clients=1 size=16 rate=1000 repeat=3 sender_mps=888.80 observed_mps=888.80 sink_mps=0.00 sink_active_mps=0.00 sender_errors=0 sink_errors=0 node_cpu=2.63 total_cpu=19.01
+
+BENCHMARK_RESULT mode=write clients=1 size=16 rate=1000 repeat=4 sender_mps=939.87 observed_mps=939.87 sink_mps=0.00 sink_active_mps=0.00 sender_errors=0 sink_errors=0 node_cpu=0.93 total_cpu=17.64
+
+BENCHMARK_RESULT mode=write clients=1 size=16 rate=1000 repeat=5 sender_mps=938.79 observed_mps=938.79 sink_mps=0.00 sink_active_mps=0.00 sender_errors=0 sink_errors=0 node_cpu=2.79 total_cpu=18.74
+
+BENCHMARK_RESULT mode=write clients=1 size=16 rate=1000 repeat=6 sender_mps=927.92 observed_mps=927.92 sink_mps=0.00 sink_active_mps=0.00 sender_errors=0 sink_errors=0 node_cpu=1.84 total_cpu=18.52
+
+BENCHMARK_RESULT mode=write clients=1 size=16 rate=1000 repeat=7 sender_mps=933.40 observed_mps=933.40 sink_mps=0.00 sink_active_mps=0.00 sender_errors=0 sink_errors=0 node_cpu=1.85 total_cpu=19.23
+
+BENCHMARK_RESULT mode=write clients=1 size=16 rate=1000 repeat=8 sender_mps=931.01 observed_mps=931.01 sink_mps=0.00 sink_active_mps=0.00 sender_errors=0 sink_errors=0 node_cpu=1.84 total_cpu=19.72
+
+BENCHMARK_RESULT mode=write clients=1 size=16 rate=1000 repeat=9 sender_mps=935.74 observed_mps=935.74 sink_mps=0.00 sink_active_mps=0.00 sender_errors=0 sink_errors=0 node_cpu=1.85 total_cpu=17.87
+
+BENCHMARK_RESULT mode=write clients=1 size=16 rate=1000 repeat=10 sender_mps=923.75 observed_mps=923.75 sink_mps=0.00 sink_active_mps=0.00 sender_errors=0 sink_errors=0 node_cpu=1.84 total_cpu=18.94
+
+BENCHMARK_RESULT mode=write clients=1 size=16 rate=1000 repeat=11 sender_mps=933.27 observed_mps=933.27 sink_mps=0.00 sink_active_mps=0.00 sender_errors=0 sink_errors=0 node_cpu=1.85 total_cpu=18.44
+
+BENCHMARK_RESULT mode=write clients=1 size=16 rate=1000 repeat=12 sender_mps=890.42 observed_mps=890.42 sink_mps=0.00 sink_active_mps=0.00 sender_errors=0 sink_errors=0 node_cpu=1.77 total_cpu=18.10
+
+BENCHMARK_RESULT mode=write clients=1 size=16 rate=1000 repeat=13 sender_mps=926.72 observed_mps=926.72 sink_mps=0.00 sink_active_mps=0.00 sender_errors=0 sink_errors=0 node_cpu=1.84 total_cpu=18.64
+
+BENCHMARK_RESULT mode=write clients=1 size=16 rate=1000 repeat=14 sender_mps=893.91 observed_mps=893.91 sink_mps=0.00 sink_active_mps=0.00 sender_errors=0 sink_errors=0 node_cpu=1.77 total_cpu=16.88
+
+BENCHMARK_RESULT mode=write clients=1 size=16 rate=1000 repeat=15 sender_mps=930.57 observed_mps=930.57 sink_mps=0.00 sink_active_mps=0.00 sender_errors=0 sink_errors=0 node_cpu=1.84 total_cpu=17.57
+
+BENCHMARK_RESULT mode=write clients=1 size=16 rate=1000 repeat=16 sender_mps=934.34 observed_mps=934.34 sink_mps=0.00 sink_active_mps=0.00 sender_errors=0 sink_errors=0 node_cpu=1.86 total_cpu=18.30
+
+BENCHMARK_RESULT mode=write clients=1 size=16 rate=1000 repeat=17 sender_mps=904.91 observed_mps=904.91 sink_mps=0.00 sink_active_mps=0.00 sender_errors=0 sink_errors=0 node_cpu=1.79 total_cpu=18.81
+
+BENCHMARK_RESULT mode=write clients=1 size=16 rate=1000 repeat=18 sender_mps=931.92 observed_mps=931.92 sink_mps=0.00 sink_active_mps=0.00 sender_errors=0 sink_errors=0 node_cpu=1.85 total_cpu=18.97
+
+BENCHMARK_RESULT mode=write clients=1 size=16 rate=1000 repeat=19 sender_mps=927.46 observed_mps=927.46 sink_mps=0.00 sink_active_mps=0.00 sender_errors=0 sink_errors=0 node_cpu=1.84 total_cpu=17.53
+
+BENCHMARK_RESULT mode=write clients=1 size=16 rate=1000 repeat=20 sender_mps=926.08 observed_mps=926.08 sink_mps=0.00 sink_active_mps=0.00 sender_errors=0 sink_errors=0 node_cpu=1.84 total_cpu=17.41
+
+BENCHMARK_RESULT mode=write clients=1 size=16 rate=1000 repeat=21 sender_mps=926.14 observed_mps=926.14 sink_mps=0.00 sink_active_mps=0.00 sender_errors=0 sink_errors=0 node_cpu=1.83 total_cpu=17.69
+
+BENCHMARK_RESULT mode=write clients=1 size=16 rate=1000 repeat=22 sender_mps=928.04 observed_mps=928.04 sink_mps=0.00 sink_active_mps=0.00 sender_errors=0 sink_errors=0 node_cpu=1.84 total_cpu=18.35
+
+BENCHMARK_RESULT mode=write clients=1 size=16 rate=1000 repeat=23 sender_mps=928.30 observed_mps=928.30 sink_mps=0.00 sink_active_mps=0.00 sender_errors=0 sink_errors=0 node_cpu=1.84 total_cpu=18.01
+
+BENCHMARK_RESULT mode=write clients=1 size=16 rate=1000 repeat=24 sender_mps=923.74 observed_mps=923.74 sink_mps=0.00 sink_active_mps=0.00 sender_errors=0 sink_errors=0 node_cpu=1.84 total_cpu=17.62
+
+BENCHMARK_RESULT mode=write clients=1 size=16 rate=1000 repeat=25 sender_mps=923.67 observed_mps=923.67 sink_mps=0.00 sink_active_mps=0.00 sender_errors=0 sink_errors=0 node_cpu=1.84 total_cpu=17.89
+
+MODE_SUMMARY mode=write runs=25 cases=1 sender_mean_mps=923.08 observed_mean_mps=923.08 node_cpu=1.86 total_cpu=18.23 total_errors=0
+[38;5;243m------------------------------[0m
+[38;5;10m• [158.247 seconds][0m
+[0mSLIM Benchmark Suite Matrix [38;5;10m[1mruns the repeated benchmark matrix and generates reports[0m [38;5;204m[benchmark-suite][0m
+[38;5;243m/home/runner/work/csit/csit/benchmarks/agntcy-slim/tests/benchmark_suite_test.go:22[0m
+
+  [38;5;243mReport Entries >>[0m
+  [1mBenchmark Suite Summary[38;5;243m - /home/runner/work/csit/csit/benchmarks/agntcy-slim/tests/benchmark_suite_test.go:53 @ 06/03/26 08:30:13.369[0m
+    /home/runner/work/csit/csit/benchmarks/agntcy-slim/reports/suite_summary.md
+  [1mBenchmark Technical Report[38;5;243m - /home/runner/work/csit/csit/benchmarks/agntcy-slim/tests/benchmark_suite_test.go:54 @ 06/03/26 08:30:13.369[0m
+    /home/runner/work/csit/csit/benchmarks/agntcy-slim/reports/technical_report.md
+  [38;5;243m<< Report Entries[0m
+[38;5;243m------------------------------[0m
+[38;5;14mS[0m[38;5;14mS[0m[38;5;14mS[0m[38;5;14mS[0m[38;5;14mS[0m[38;5;14mS[0m[38;5;14mS[0m
+
+[38;5;10m[1mRan 1 of 8 Specs in 179.348 seconds[0m
+[38;5;10m[1mSUCCESS![0m -- [38;5;10m[1m1 Passed[0m | [38;5;9m[1m0 Failed[0m | [38;5;11m[1m0 Pending[0m | [38;5;14m[1m7 Skipped[0m
+--- PASS: TestTests (179.35s)
+PASS
+ok  	github.com/agntcy/csit/benchmarks/agntcy-slim/tests	179.354s
