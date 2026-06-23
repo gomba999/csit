@@ -1,6 +1,5 @@
 <!doctype html>
 <html lang="en">
-
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -16,12 +15,13 @@
       --accent-strong: #134e4a;
       --border: rgba(15, 118, 110, 0.18);
       --shadow: 0 24px 60px rgba(31, 41, 51, 0.12);
+      --success: #166534;
+      --failure: #b91c1c;
+      --cancelled: #92400e;
+      --skipped: #64748b;
+      --unknown: #475569;
     }
-
-    * {
-      box-sizing: border-box;
-    }
-
+    * { box-sizing: border-box; }
     body {
       margin: 0;
       min-height: 100vh;
@@ -33,9 +33,8 @@
         linear-gradient(180deg, #fbf8f3 0%, var(--bg) 100%);
       padding: 48px 20px;
     }
-
     main {
-      max-width: 900px;
+      max-width: 1080px;
       margin: 0 auto;
       background: var(--panel);
       border: 1px solid var(--border);
@@ -43,44 +42,13 @@
       box-shadow: var(--shadow);
       padding: 40px;
     }
-
     h1 {
       margin: 0 0 12px;
       font-size: clamp(2.5rem, 4vw, 4rem);
       line-height: 0.95;
       letter-spacing: -0.04em;
     }
-
-    p {
-      margin: 0 0 16px;
-      font-size: 1.05rem;
-      line-height: 1.7;
-      color: var(--muted);
-    }
-
-    .card-grid {
-      display: grid;
-      gap: 18px;
-      margin-top: 32px;
-    }
-
-    .report-card {
-      display: block;
-      text-decoration: none;
-      color: inherit;
-      background: rgba(255, 255, 255, 0.8);
-      border: 1px solid var(--border);
-      border-radius: 20px;
-      padding: 24px;
-      transition: transform 160ms ease, box-shadow 160ms ease, border-color 160ms ease;
-    }
-
-    .report-card:hover {
-      transform: translateY(-2px);
-      border-color: rgba(15, 118, 110, 0.34);
-      box-shadow: 0 20px 40px rgba(15, 118, 110, 0.12);
-    }
-
+    p { margin: 0 0 16px; font-size: 1.05rem; line-height: 1.7; color: var(--muted); }
     .eyebrow {
       display: inline-block;
       font-size: 0.78rem;
@@ -89,42 +57,137 @@
       color: var(--accent);
       margin-bottom: 14px;
     }
-
-    .report-card h2 {
-      margin: 0 0 10px;
-      font-size: 1.55rem;
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 24px 0 32px;
+      font-size: 0.98rem;
     }
-
-    .report-card span {
-      color: var(--accent-strong);
-      font-weight: 600;
+    th, td {
+      text-align: left;
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--border);
+      vertical-align: top;
     }
-
-    footer {
-      margin-top: 32px;
-      font-size: 0.95rem;
-      color: var(--muted);
+    th { color: var(--muted); font-weight: 600; font-size: 0.82rem; text-transform: uppercase; letter-spacing: 0.08em; }
+    .status { font-weight: 600; }
+    .status-success { color: var(--success); }
+    .status-failure { color: var(--failure); }
+    .status-cancelled { color: var(--cancelled); }
+    .status-skipped { color: var(--skipped); }
+    .status-unknown { color: var(--unknown); }
+    .note { display: block; margin-top: 4px; font-size: 0.88rem; color: var(--muted); }
+    .card-grid { display: grid; gap: 18px; margin-top: 12px; }
+    .report-card, .report-card-disabled {
+      display: block;
+      text-decoration: none;
+      color: inherit;
+      background: rgba(255, 255, 255, 0.8);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 24px;
     }
-
+    .report-card {
+      transition: transform 160ms ease, box-shadow 160ms ease, border-color 160ms ease;
+    }
+    .report-card:hover {
+      transform: translateY(-2px);
+      border-color: rgba(15, 118, 110, 0.34);
+      box-shadow: 0 20px 40px rgba(15, 118, 110, 0.12);
+    }
+    .report-card-disabled { opacity: 0.62; }
+    .report-card h2, .report-card-disabled h2 { margin: 0 0 10px; font-size: 1.55rem; }
+    .report-card span { color: var(--accent-strong); font-weight: 600; }
+    .report-card-disabled span { color: var(--muted); font-weight: 600; }
+    footer { margin-top: 32px; font-size: 0.95rem; color: var(--muted); }
     @media (max-width: 640px) {
-      body {
-        padding: 20px 14px;
-      }
-
-      main {
-        padding: 28px 20px;
-        border-radius: 22px;
-      }
+      body { padding: 20px 14px; }
+      main { padding: 28px 20px; border-radius: 22px; }
+      table { font-size: 0.9rem; }
     }
   </style>
 </head>
-
 <body>
   <main>
     <div class="eyebrow">GitHub Pages</div>
     <h1>CSIT Test Reports</h1>
-    <p>Static report outputs from CI — A2A interoperability results and SLIM data-plane benchmark dashboards.</p>
+    <p>Static report outputs from CI. The dashboard lists the latest workflow run separately from the report currently published on this site.</p>
+    <table>
+      <thead>
+        <tr>
+          <th>Workflow</th>
+          <th>Last run</th>
+          <th>Last run status</th>
+          <th>Published report</th>
+          <th>Report from run</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>A2A interoperability</td>
+          <td><a href="https://github.com/gomba999/csit/actions/runs/28035728141">#28035728141</a>
+<span class="note">2026-06-23T15:09:54Z</span></td>
+          <td class="status status-failure">Failure</td>
+          <td><a href="./a2a/">Open</a>
+<span class="note">Updated 2026-06-23T15:09:54Z</span></td>
+          <td><a href="https://github.com/gomba999/csit/actions/runs/28035728141">#28035728141</a></td>
+        </tr>
+        <tr>
+          <td>Slim integration</td>
+          <td><a href="https://github.com/gomba999/csit/actions/runs/slim-integration/">#slim-integration/</a></td>
+          <td class="status status-unknown">test-slim-integration</td>
+          <td>Not published</td>
+          <td>—</td>
+        </tr>
+        <tr>
+          <td>Slim benchmarks</td>
+          <td><a href="https://github.com/gomba999/csit/actions/runs/benchmarks/slim/">#benchmarks/slim/</a></td>
+          <td class="status status-unknown">test-slim-benchmarks</td>
+          <td>Not published</td>
+          <td>—</td>
+        </tr>
+        <tr>
+          <td>Slim multicluster private</td>
+          <td><a href="https://github.com/gomba999/csit/actions/runs/slim-multicluster-private/">#slim-multicluster-private/</a></td>
+          <td class="status status-unknown">test-slim-multicluster-private</td>
+          <td>Not published</td>
+          <td>—</td>
+        </tr>
+        <tr>
+          <td>Directory conformance</td>
+          <td><a href="https://github.com/gomba999/csit/actions/runs/directory/">#directory/</a></td>
+          <td class="status status-unknown">test-directory-conformance</td>
+          <td>Not published</td>
+          <td>—</td>
+        </tr>
+      </tbody>
+    </table>
     <div class="card-grid">
+      <a class="report-card" href="./a2a/">
+        <h2>A2A interoperability</h2>
+        <p>Cross-SDK interoperability results with merged JSON, XML, and HTML dashboard output.</p>
+        <span>Open report</span>
+      </a>
+      <div class="report-card-disabled">
+        <h2>Slim integration</h2>
+        <p>Published CI report output.</p>
+        <span>No report published yet</span>
+      </div>
+      <div class="report-card-disabled">
+        <h2>Slim benchmarks</h2>
+        <p>Published CI report output.</p>
+        <span>No report published yet</span>
+      </div>
+      <div class="report-card-disabled">
+        <h2>Slim multicluster private</h2>
+        <p>Published CI report output.</p>
+        <span>No report published yet</span>
+      </div>
+      <div class="report-card-disabled">
+        <h2>Directory conformance</h2>
+        <p>Published CI report output.</p>
+        <span>No report published yet</span>
+      </div>
       <a class="report-card" href="./a2a-old/">
         <h2>A2A interoperability</h2>
         <p>Cross-SDK interoperability results with merged JSON, XML, and HTML dashboard output.</p>
@@ -141,10 +204,7 @@
         <span>Open report</span>
       </a>
     </div>
-    <footer>Sources: <a href="https://github.com/agntcy/csit/actions/runs/27932803093">test-integrations
-        #27932803093</a> &mdash; <a href="https://github.com/agntcy/csit/actions/runs/26872909165">test-benchmarks-slim
-        #26872909165</a></footer>
+    <footer>Reports are published under <code>gh-pages/docs</code> after workflow runs on <code>main</code>. Legacy reports live alongside current reports under <code>docs/a2a-old/</code>, <code>docs/benchmarks-old/slim/</code>, and <code>docs/directory-old/</code>. When a run produces no artifact, the previous published report remains available.</footer>
   </main>
 </body>
-
 </html>
