@@ -5,11 +5,11 @@
       "name": "A2A interoperability",
       "workflow_file": "test-a2a.yaml",
       "report_path": "a2a/",
-      "last_run_id": "28060590049",
+      "last_run_id": "28112781201",
       "last_run_conclusion": "failure",
-      "last_run_updated_at": "2026-06-23T22:14:20Z",
-      "published_report_run_id": "28060590049",
-      "published_report_updated_at": "2026-06-23T22:14:20Z"
+      "last_run_updated_at": "2026-06-24T16:21:11Z",
+      "published_report_run_id": "28112781201",
+      "published_report_updated_at": "2026-06-24T16:21:11Z"
     },
     {
       "id": "test-slim-integration",
