@@ -12,11 +12,11 @@
       "TotalSpecs": 4,
       "SpecsThatWillRun": 1
     },
-    "StartTime": "2026-06-24T16:22:17.377061143Z",
-    "EndTime": "2026-06-24T16:23:19.332101566Z",
-    "RunTime": 61955040423,
+    "StartTime": "2026-06-24T20:15:49.67248596Z",
+    "EndTime": "2026-06-24T20:16:51.33257051Z",
+    "RunTime": 61660084550,
     "SuiteConfig": {
-      "RandomSeed": 1782318137,
+      "RandomSeed": 1782332149,
       "RandomizeAllSpecs": false,
       "FocusStrings": [
         "Slim topology test"
@@ -44,6 +44,363 @@
       "ParallelHost": ""
     },
     "SpecReports": [
+      {
+        "ContainerHierarchyTexts": [
+          "Agntcy slim topology test",
+          "Slim topology test"
+        ],
+        "ContainerHierarchyLocations": [
+          {
+            "FileName": "/home/runner/work/csit/csit/integrations/agntcy-slim/tests/topology_test.go",
+            "LineNumber": 113
+          },
+          {
+            "FileName": "/home/runner/work/csit/csit/integrations/agntcy-slim/tests/topology_test.go",
+            "LineNumber": 146
+          }
+        ],
+        "ContainerHierarchyLabels": [
+          [],
+          []
+        ],
+        "ContainerHierarchySemVerConstraints": [
+          [],
+          []
+        ],
+        "ContainerHierarchyComponentSemVerConstraints": [
+          {},
+          {}
+        ],
+        "LeafNodeType": "It",
+        "LeafNodeLocation": {
+          "FileName": "/home/runner/work/csit/csit/integrations/agntcy-slim/tests/topology_test.go",
+          "LineNumber": 151
+        },
+        "LeafNodeLabels": [],
+        "LeafNodeSemVerConstraints": [],
+        "LeafNodeText": "Create SLIM client Pods",
+        "State": "passed",
+        "StartTime": "2026-06-24T20:15:49.672591547Z",
+        "EndTime": "2026-06-24T20:16:51.332473139Z",
+        "RunTime": 61659881592,
+        "ParallelProcess": 1,
+        "NumAttempts": 1,
+        "MaxFlakeAttempts": 0,
+        "MaxMustPassRepeatedly": 0,
+        "SpecEvents": [
+          {
+            "SpecEventType": "Node",
+            "CodeLocation": {
+              "FileName": "/home/runner/work/csit/csit/integrations/agntcy-slim/tests/topology_test.go",
+              "LineNumber": 124
+            },
+            "TimelineLocation": {
+              "Order": 1,
+              "Time": "2026-06-24T20:15:49.672623927Z"
+            },
+            "Message": "Agntcy slim topology test",
+            "NodeType": "BeforeEach"
+          },
+          {
+            "SpecEventType": "Node (End)",
+            "CodeLocation": {
+              "FileName": "/home/runner/work/csit/csit/integrations/agntcy-slim/tests/topology_test.go",
+              "LineNumber": 124
+            },
+            "TimelineLocation": {
+              "Order": 3,
+              "Time": "2026-06-24T20:15:49.674477218Z"
+            },
+            "Message": "Agntcy slim topology test",
+            "Duration": 1853301,
+            "NodeType": "BeforeEach"
+          },
+          {
+            "SpecEventType": "Node",
+            "CodeLocation": {
+              "FileName": "/home/runner/work/csit/csit/integrations/agntcy-slim/tests/topology_test.go",
+              "LineNumber": 147
+            },
+            "TimelineLocation": {
+              "Order": 4,
+              "Time": "2026-06-24T20:15:49.674486005Z"
+            },
+            "Message": "Slim topology test",
+            "NodeType": "BeforeAll"
+          },
+          {
+            "SpecEventType": "Node (End)",
+            "CodeLocation": {
+              "FileName": "/home/runner/work/csit/csit/integrations/agntcy-slim/tests/topology_test.go",
+              "LineNumber": 147
+            },
+            "TimelineLocation": {
+              "Order": 6,
+              "Time": "2026-06-24T20:15:49.674536929Z"
+            },
+            "Message": "Slim topology test",
+            "Duration": 50925,
+            "NodeType": "BeforeAll"
+          },
+          {
+            "SpecEventType": "Node",
+            "CodeLocation": {
+              "FileName": "/home/runner/work/csit/csit/integrations/agntcy-slim/tests/topology_test.go",
+              "LineNumber": 151
+            },
+            "TimelineLocation": {
+              "Order": 7,
+              "Time": "2026-06-24T20:15:49.674538683Z"
+            },
+            "Message": "Create SLIM client Pods",
+            "NodeType": "It"
+          },
+          {
+            "SpecEventType": "By",
+            "CodeLocation": {
+              "FileName": "/home/runner/work/csit/csit/integrations/agntcy-slim/tests/topology_test.go",
+              "LineNumber": 278
+            },
+            "TimelineLocation": {
+              "Order": 8,
+              "Time": "2026-06-24T20:16:51.307936862Z"
+            },
+            "Message": "Waiting for alice to show received: hello message"
+          },
+          {
+            "SpecEventType": "By",
+            "CodeLocation": {
+              "FileName": "/home/runner/work/csit/csit/integrations/agntcy-slim/tests/topology_test.go",
+              "LineNumber": 278
+            },
+            "TimelineLocation": {
+              "Order": 9,
+              "Time": "2026-06-24T20:16:51.307994279Z"
+            },
+            "Message": "Waiting for bob to show Sent message hello - 10/10 message"
+          },
+          {
+            "SpecEventType": "Node (End)",
+            "CodeLocation": {
+              "FileName": "/home/runner/work/csit/csit/integrations/agntcy-slim/tests/topology_test.go",
+              "LineNumber": 151
+            },
+            "TimelineLocation": {
+              "Order": 11,
+              "Time": "2026-06-24T20:16:51.312634295Z"
+            },
+            "Message": "Create SLIM client Pods",
+            "Duration": 61638095612,
+            "NodeType": "It"
+          },
+          {
+            "SpecEventType": "Node",
+            "CodeLocation": {
+              "FileName": "/home/runner/work/csit/csit/integrations/agntcy-slim/tests/topology_test.go",
+              "LineNumber": 269
+            },
+            "TimelineLocation": {
+              "Order": 12,
+              "Time": "2026-06-24T20:16:51.312754549Z"
+            },
+            "Message": "Slim topology test",
+            "NodeType": "DeferCleanup (Each)"
+          },
+          {
+            "SpecEventType": "Node (End)",
+            "CodeLocation": {
+              "FileName": "/home/runner/work/csit/csit/integrations/agntcy-slim/tests/topology_test.go",
+              "LineNumber": 269
+            },
+            "TimelineLocation": {
+              "Order": 14,
+              "Time": "2026-06-24T20:16:51.319047686Z"
+            },
+            "Message": "Slim topology test",
+            "Duration": 6293136,
+            "NodeType": "DeferCleanup (Each)"
+          },
+          {
+            "SpecEventType": "Node",
+            "CodeLocation": {
+              "FileName": "/home/runner/work/csit/csit/integrations/agntcy-slim/tests/topology_test.go",
+              "LineNumber": 260
+            },
+            "TimelineLocation": {
+              "Order": 15,
+              "Time": "2026-06-24T20:16:51.319053356Z"
+            },
+            "Message": "Slim topology test",
+            "NodeType": "DeferCleanup (Each)"
+          },
+          {
+            "SpecEventType": "Node (End)",
+            "CodeLocation": {
+              "FileName": "/home/runner/work/csit/csit/integrations/agntcy-slim/tests/topology_test.go",
+              "LineNumber": 260
+            },
+            "TimelineLocation": {
+              "Order": 17,
+              "Time": "2026-06-24T20:16:51.319090936Z"
+            },
+            "Message": "Slim topology test",
+            "Duration": 37580,
+            "NodeType": "DeferCleanup (Each)"
+          },
+          {
+            "SpecEventType": "Node",
+            "CodeLocation": {
+              "FileName": "/home/runner/work/csit/csit/integrations/agntcy-slim/tests/topology_test.go",
+              "LineNumber": 234
+            },
+            "TimelineLocation": {
+              "Order": 18,
+              "Time": "2026-06-24T20:16:51.319092549Z"
+            },
+            "Message": "Slim topology test",
+            "NodeType": "DeferCleanup (Each)"
+          },
+          {
+            "SpecEventType": "Node (End)",
+            "CodeLocation": {
+              "FileName": "/home/runner/work/csit/csit/integrations/agntcy-slim/tests/topology_test.go",
+              "LineNumber": 234
+            },
+            "TimelineLocation": {
+              "Order": 20,
+              "Time": "2026-06-24T20:16:51.322101832Z"
+            },
+            "Message": "Slim topology test",
+            "Duration": 3009283,
+            "NodeType": "DeferCleanup (Each)"
+          },
+          {
+            "SpecEventType": "Node",
+            "CodeLocation": {
+              "FileName": "/home/runner/work/csit/csit/integrations/agntcy-slim/tests/topology_test.go",
+              "LineNumber": 269
+            },
+            "TimelineLocation": {
+              "Order": 21,
+              "Time": "2026-06-24T20:16:51.322106851Z"
+            },
+            "Message": "Slim topology test",
+            "NodeType": "DeferCleanup (Each)"
+          },
+          {
+            "SpecEventType": "Node (End)",
+            "CodeLocation": {
+              "FileName": "/home/runner/work/csit/csit/integrations/agntcy-slim/tests/topology_test.go",
+              "LineNumber": 269
+            },
+            "TimelineLocation": {
+              "Order": 23,
+              "Time": "2026-06-24T20:16:51.325206953Z"
+            },
+            "Message": "Slim topology test",
+            "Duration": 3100102,
+            "NodeType": "DeferCleanup (Each)"
+          },
+          {
+            "SpecEventType": "Node",
+            "CodeLocation": {
+              "FileName": "/home/runner/work/csit/csit/integrations/agntcy-slim/tests/topology_test.go",
+              "LineNumber": 260
+            },
+            "TimelineLocation": {
+              "Order": 24,
+              "Time": "2026-06-24T20:16:51.325210069Z"
+            },
+            "Message": "Slim topology test",
+            "NodeType": "DeferCleanup (Each)"
+          },
+          {
+            "SpecEventType": "Node (End)",
+            "CodeLocation": {
+              "FileName": "/home/runner/work/csit/csit/integrations/agntcy-slim/tests/topology_test.go",
+              "LineNumber": 260
+            },
+            "TimelineLocation": {
+              "Order": 26,
+              "Time": "2026-06-24T20:16:51.325308252Z"
+            },
+            "Message": "Slim topology test",
+            "Duration": 98193,
+            "NodeType": "DeferCleanup (Each)"
+          },
+          {
+            "SpecEventType": "Node",
+            "CodeLocation": {
+              "FileName": "/home/runner/work/csit/csit/integrations/agntcy-slim/tests/topology_test.go",
+              "LineNumber": 234
+            },
+            "TimelineLocation": {
+              "Order": 27,
+              "Time": "2026-06-24T20:16:51.325309885Z"
+            },
+            "Message": "Slim topology test",
+            "NodeType": "DeferCleanup (Each)"
+          },
+          {
+            "SpecEventType": "Node (End)",
+            "CodeLocation": {
+              "FileName": "/home/runner/work/csit/csit/integrations/agntcy-slim/tests/topology_test.go",
+              "LineNumber": 234
+            },
+            "TimelineLocation": {
+              "Order": 29,
+              "Time": "2026-06-24T20:16:51.33246829Z"
+            },
+            "Message": "Slim topology test",
+            "Duration": 7158405,
+            "NodeType": "DeferCleanup (Each)"
+          }
+        ]
+      },
+      {
+        "ContainerHierarchyTexts": [
+          "Agntcy slim sanity test",
+          "Slim sanity test"
+        ],
+        "ContainerHierarchyLocations": [
+          {
+            "FileName": "/home/runner/work/csit/csit/integrations/agntcy-slim/tests/sanity_test.go",
+            "LineNumber": 20
+          },
+          {
+            "FileName": "/home/runner/work/csit/csit/integrations/agntcy-slim/tests/sanity_test.go",
+            "LineNumber": 54
+          }
+        ],
+        "ContainerHierarchyLabels": [
+          [],
+          []
+        ],
+        "ContainerHierarchySemVerConstraints": [
+          [],
+          []
+        ],
+        "ContainerHierarchyComponentSemVerConstraints": [
+          {},
+          {}
+        ],
+        "LeafNodeType": "It",
+        "LeafNodeLocation": {
+          "FileName": "/home/runner/work/csit/csit/integrations/agntcy-slim/tests/sanity_test.go",
+          "LineNumber": 133
+        },
+        "LeafNodeLabels": [],
+        "LeafNodeSemVerConstraints": [],
+        "LeafNodeText": "Create langchain agent Job",
+        "State": "skipped",
+        "StartTime": "2026-06-24T20:16:51.332537278Z",
+        "EndTime": "0001-01-01T00:00:00Z",
+        "RunTime": 0,
+        "ParallelProcess": 1,
+        "NumAttempts": 0,
+        "MaxFlakeAttempts": 0,
+        "MaxMustPassRepeatedly": 0
+      },
       {
         "ContainerHierarchyTexts": [
           "MCP over Slim test",
@@ -80,7 +437,7 @@
         "LeafNodeSemVerConstraints": [],
         "LeafNodeText": "Create Llamaindex time agent Job",
         "State": "skipped",
-        "StartTime": "2026-06-24T16:22:17.377140472Z",
+        "StartTime": "2026-06-24T20:16:51.332555652Z",
         "EndTime": "0001-01-01T00:00:00Z",
         "RunTime": 0,
         "ParallelProcess": 1,
@@ -124,364 +481,7 @@
         "LeafNodeSemVerConstraints": [],
         "LeafNodeText": "Create Llamaindex time agent Job",
         "State": "skipped",
-        "StartTime": "2026-06-24T16:22:17.377156506Z",
-        "EndTime": "0001-01-01T00:00:00Z",
-        "RunTime": 0,
-        "ParallelProcess": 1,
-        "NumAttempts": 0,
-        "MaxFlakeAttempts": 0,
-        "MaxMustPassRepeatedly": 0
-      },
-      {
-        "ContainerHierarchyTexts": [
-          "Agntcy slim topology test",
-          "Slim topology test"
-        ],
-        "ContainerHierarchyLocations": [
-          {
-            "FileName": "/home/runner/work/csit/csit/integrations/agntcy-slim/tests/topology_test.go",
-            "LineNumber": 113
-          },
-          {
-            "FileName": "/home/runner/work/csit/csit/integrations/agntcy-slim/tests/topology_test.go",
-            "LineNumber": 146
-          }
-        ],
-        "ContainerHierarchyLabels": [
-          [],
-          []
-        ],
-        "ContainerHierarchySemVerConstraints": [
-          [],
-          []
-        ],
-        "ContainerHierarchyComponentSemVerConstraints": [
-          {},
-          {}
-        ],
-        "LeafNodeType": "It",
-        "LeafNodeLocation": {
-          "FileName": "/home/runner/work/csit/csit/integrations/agntcy-slim/tests/topology_test.go",
-          "LineNumber": 151
-        },
-        "LeafNodeLabels": [],
-        "LeafNodeSemVerConstraints": [],
-        "LeafNodeText": "Create SLIM client Pods",
-        "State": "passed",
-        "StartTime": "2026-06-24T16:22:17.377184809Z",
-        "EndTime": "2026-06-24T16:23:19.33204505Z",
-        "RunTime": 61954860251,
-        "ParallelProcess": 1,
-        "NumAttempts": 1,
-        "MaxFlakeAttempts": 0,
-        "MaxMustPassRepeatedly": 0,
-        "SpecEvents": [
-          {
-            "SpecEventType": "Node",
-            "CodeLocation": {
-              "FileName": "/home/runner/work/csit/csit/integrations/agntcy-slim/tests/topology_test.go",
-              "LineNumber": 124
-            },
-            "TimelineLocation": {
-              "Order": 1,
-              "Time": "2026-06-24T16:22:17.377211519Z"
-            },
-            "Message": "Agntcy slim topology test",
-            "NodeType": "BeforeEach"
-          },
-          {
-            "SpecEventType": "Node (End)",
-            "CodeLocation": {
-              "FileName": "/home/runner/work/csit/csit/integrations/agntcy-slim/tests/topology_test.go",
-              "LineNumber": 124
-            },
-            "TimelineLocation": {
-              "Order": 3,
-              "Time": "2026-06-24T16:22:17.37889744Z"
-            },
-            "Message": "Agntcy slim topology test",
-            "Duration": 1685931,
-            "NodeType": "BeforeEach"
-          },
-          {
-            "SpecEventType": "Node",
-            "CodeLocation": {
-              "FileName": "/home/runner/work/csit/csit/integrations/agntcy-slim/tests/topology_test.go",
-              "LineNumber": 147
-            },
-            "TimelineLocation": {
-              "Order": 4,
-              "Time": "2026-06-24T16:22:17.378899052Z"
-            },
-            "Message": "Slim topology test",
-            "NodeType": "BeforeAll"
-          },
-          {
-            "SpecEventType": "Node (End)",
-            "CodeLocation": {
-              "FileName": "/home/runner/work/csit/csit/integrations/agntcy-slim/tests/topology_test.go",
-              "LineNumber": 147
-            },
-            "TimelineLocation": {
-              "Order": 6,
-              "Time": "2026-06-24T16:22:17.378947015Z"
-            },
-            "Message": "Slim topology test",
-            "Duration": 47963,
-            "NodeType": "BeforeAll"
-          },
-          {
-            "SpecEventType": "Node",
-            "CodeLocation": {
-              "FileName": "/home/runner/work/csit/csit/integrations/agntcy-slim/tests/topology_test.go",
-              "LineNumber": 151
-            },
-            "TimelineLocation": {
-              "Order": 7,
-              "Time": "2026-06-24T16:22:17.378948297Z"
-            },
-            "Message": "Create SLIM client Pods",
-            "NodeType": "It"
-          },
-          {
-            "SpecEventType": "By",
-            "CodeLocation": {
-              "FileName": "/home/runner/work/csit/csit/integrations/agntcy-slim/tests/topology_test.go",
-              "LineNumber": 278
-            },
-            "TimelineLocation": {
-              "Order": 8,
-              "Time": "2026-06-24T16:23:19.308793682Z"
-            },
-            "Message": "Waiting for alice to show received: hello message"
-          },
-          {
-            "SpecEventType": "By",
-            "CodeLocation": {
-              "FileName": "/home/runner/work/csit/csit/integrations/agntcy-slim/tests/topology_test.go",
-              "LineNumber": 278
-            },
-            "TimelineLocation": {
-              "Order": 9,
-              "Time": "2026-06-24T16:23:19.308869386Z"
-            },
-            "Message": "Waiting for bob to show Sent message hello - 10/10 message"
-          },
-          {
-            "SpecEventType": "Node (End)",
-            "CodeLocation": {
-              "FileName": "/home/runner/work/csit/csit/integrations/agntcy-slim/tests/topology_test.go",
-              "LineNumber": 151
-            },
-            "TimelineLocation": {
-              "Order": 11,
-              "Time": "2026-06-24T16:23:19.312944196Z"
-            },
-            "Message": "Create SLIM client Pods",
-            "Duration": 61933995899,
-            "NodeType": "It"
-          },
-          {
-            "SpecEventType": "Node",
-            "CodeLocation": {
-              "FileName": "/home/runner/work/csit/csit/integrations/agntcy-slim/tests/topology_test.go",
-              "LineNumber": 269
-            },
-            "TimelineLocation": {
-              "Order": 12,
-              "Time": "2026-06-24T16:23:19.312961292Z"
-            },
-            "Message": "Slim topology test",
-            "NodeType": "DeferCleanup (Each)"
-          },
-          {
-            "SpecEventType": "Node (End)",
-            "CodeLocation": {
-              "FileName": "/home/runner/work/csit/csit/integrations/agntcy-slim/tests/topology_test.go",
-              "LineNumber": 269
-            },
-            "TimelineLocation": {
-              "Order": 14,
-              "Time": "2026-06-24T16:23:19.319161606Z"
-            },
-            "Message": "Slim topology test",
-            "Duration": 6200314,
-            "NodeType": "DeferCleanup (Each)"
-          },
-          {
-            "SpecEventType": "Node",
-            "CodeLocation": {
-              "FileName": "/home/runner/work/csit/csit/integrations/agntcy-slim/tests/topology_test.go",
-              "LineNumber": 260
-            },
-            "TimelineLocation": {
-              "Order": 15,
-              "Time": "2026-06-24T16:23:19.319166213Z"
-            },
-            "Message": "Slim topology test",
-            "NodeType": "DeferCleanup (Each)"
-          },
-          {
-            "SpecEventType": "Node (End)",
-            "CodeLocation": {
-              "FileName": "/home/runner/work/csit/csit/integrations/agntcy-slim/tests/topology_test.go",
-              "LineNumber": 260
-            },
-            "TimelineLocation": {
-              "Order": 17,
-              "Time": "2026-06-24T16:23:19.319254716Z"
-            },
-            "Message": "Slim topology test",
-            "Duration": 88503,
-            "NodeType": "DeferCleanup (Each)"
-          },
-          {
-            "SpecEventType": "Node",
-            "CodeLocation": {
-              "FileName": "/home/runner/work/csit/csit/integrations/agntcy-slim/tests/topology_test.go",
-              "LineNumber": 234
-            },
-            "TimelineLocation": {
-              "Order": 18,
-              "Time": "2026-06-24T16:23:19.31925707Z"
-            },
-            "Message": "Slim topology test",
-            "NodeType": "DeferCleanup (Each)"
-          },
-          {
-            "SpecEventType": "Node (End)",
-            "CodeLocation": {
-              "FileName": "/home/runner/work/csit/csit/integrations/agntcy-slim/tests/topology_test.go",
-              "LineNumber": 234
-            },
-            "TimelineLocation": {
-              "Order": 20,
-              "Time": "2026-06-24T16:23:19.322802302Z"
-            },
-            "Message": "Slim topology test",
-            "Duration": 3545222,
-            "NodeType": "DeferCleanup (Each)"
-          },
-          {
-            "SpecEventType": "Node",
-            "CodeLocation": {
-              "FileName": "/home/runner/work/csit/csit/integrations/agntcy-slim/tests/topology_test.go",
-              "LineNumber": 269
-            },
-            "TimelineLocation": {
-              "Order": 21,
-              "Time": "2026-06-24T16:23:19.322805657Z"
-            },
-            "Message": "Slim topology test",
-            "NodeType": "DeferCleanup (Each)"
-          },
-          {
-            "SpecEventType": "Node (End)",
-            "CodeLocation": {
-              "FileName": "/home/runner/work/csit/csit/integrations/agntcy-slim/tests/topology_test.go",
-              "LineNumber": 269
-            },
-            "TimelineLocation": {
-              "Order": 23,
-              "Time": "2026-06-24T16:23:19.326114143Z"
-            },
-            "Message": "Slim topology test",
-            "Duration": 3308486,
-            "NodeType": "DeferCleanup (Each)"
-          },
-          {
-            "SpecEventType": "Node",
-            "CodeLocation": {
-              "FileName": "/home/runner/work/csit/csit/integrations/agntcy-slim/tests/topology_test.go",
-              "LineNumber": 260
-            },
-            "TimelineLocation": {
-              "Order": 24,
-              "Time": "2026-06-24T16:23:19.326116507Z"
-            },
-            "Message": "Slim topology test",
-            "NodeType": "DeferCleanup (Each)"
-          },
-          {
-            "SpecEventType": "Node (End)",
-            "CodeLocation": {
-              "FileName": "/home/runner/work/csit/csit/integrations/agntcy-slim/tests/topology_test.go",
-              "LineNumber": 260
-            },
-            "TimelineLocation": {
-              "Order": 26,
-              "Time": "2026-06-24T16:23:19.326319082Z"
-            },
-            "Message": "Slim topology test",
-            "Duration": 202575,
-            "NodeType": "DeferCleanup (Each)"
-          },
-          {
-            "SpecEventType": "Node",
-            "CodeLocation": {
-              "FileName": "/home/runner/work/csit/csit/integrations/agntcy-slim/tests/topology_test.go",
-              "LineNumber": 234
-            },
-            "TimelineLocation": {
-              "Order": 27,
-              "Time": "2026-06-24T16:23:19.326321345Z"
-            },
-            "Message": "Slim topology test",
-            "NodeType": "DeferCleanup (Each)"
-          },
-          {
-            "SpecEventType": "Node (End)",
-            "CodeLocation": {
-              "FileName": "/home/runner/work/csit/csit/integrations/agntcy-slim/tests/topology_test.go",
-              "LineNumber": 234
-            },
-            "TimelineLocation": {
-              "Order": 29,
-              "Time": "2026-06-24T16:23:19.332040023Z"
-            },
-            "Message": "Slim topology test",
-            "Duration": 5718678,
-            "NodeType": "DeferCleanup (Each)"
-          }
-        ]
-      },
-      {
-        "ContainerHierarchyTexts": [
-          "Agntcy slim sanity test",
-          "Slim sanity test"
-        ],
-        "ContainerHierarchyLocations": [
-          {
-            "FileName": "/home/runner/work/csit/csit/integrations/agntcy-slim/tests/sanity_test.go",
-            "LineNumber": 20
-          },
-          {
-            "FileName": "/home/runner/work/csit/csit/integrations/agntcy-slim/tests/sanity_test.go",
-            "LineNumber": 54
-          }
-        ],
-        "ContainerHierarchyLabels": [
-          [],
-          []
-        ],
-        "ContainerHierarchySemVerConstraints": [
-          [],
-          []
-        ],
-        "ContainerHierarchyComponentSemVerConstraints": [
-          {},
-          {}
-        ],
-        "LeafNodeType": "It",
-        "LeafNodeLocation": {
-          "FileName": "/home/runner/work/csit/csit/integrations/agntcy-slim/tests/sanity_test.go",
-          "LineNumber": 133
-        },
-        "LeafNodeLabels": [],
-        "LeafNodeSemVerConstraints": [],
-        "LeafNodeText": "Create langchain agent Job",
-        "State": "skipped",
-        "StartTime": "2026-06-24T16:23:19.332095657Z",
+        "StartTime": "2026-06-24T20:16:51.332565301Z",
         "EndTime": "0001-01-01T00:00:00Z",
         "RunTime": 0,
         "ParallelProcess": 1,

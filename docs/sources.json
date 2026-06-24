@@ -16,11 +16,11 @@
       "name": "Slim integration",
       "workflow_file": "test-slim-integration.yaml",
       "report_path": "slim-integration/",
-      "last_run_id": "28112781245",
+      "last_run_id": "28126535863",
       "last_run_conclusion": "success",
-      "last_run_updated_at": "2026-06-24T16:23:46Z",
-      "published_report_run_id": "28112781245",
-      "published_report_updated_at": "2026-06-24T16:23:46Z"
+      "last_run_updated_at": "2026-06-24T20:17:22Z",
+      "published_report_run_id": "28126535863",
+      "published_report_updated_at": "2026-06-24T20:17:22Z"
     },
     {
       "id": "test-slim-benchmarks",
