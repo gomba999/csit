@@ -5,7 +5,7 @@
 # Build one gh-pages docs section from a staging directory populated by download-artifact.
 #
 # Required env:
-#   SUITE         a2a | slim-integration | slim-benchmarks | slim-multicluster-private | directory-conformance
+#   SUITE         a2a | a2a-slimrpc | slim-integration | slim-benchmarks | slim-multicluster-private | directory-conformance
 #   STAGING_DIR   directory with downloaded artifact contents
 #   SITE_DIR      gh-pages docs root (e.g. site/docs; suite dirs a2a/, directory/, …)
 #   REPO_ROOT     csit checkout (for go run)
@@ -29,6 +29,21 @@ case "$SUITE" in
         go run ./agntcy-a2a/tools/report_dashboard.go \
           --reports-dir "$SITE_DIR/a2a" \
           --output "$SITE_DIR/a2a/index.html"
+      )
+      has_report=true
+    fi
+    ;;
+
+  a2a-slimrpc)
+    mkdir -p "$SITE_DIR/a2a-slimrpc"
+    find "$STAGING_DIR" -type f \( -name '*.json' -o -name '*.xml' \) -exec cp {} "$SITE_DIR/a2a-slimrpc/" \;
+    if compgen -G "$SITE_DIR/a2a-slimrpc/*.json" > /dev/null; then
+      (
+        cd "$REPO_ROOT/integrations"
+        go run ./agntcy-a2a/tools/report_dashboard.go \
+          --reports-dir "$SITE_DIR/a2a-slimrpc" \
+          --output "$SITE_DIR/a2a-slimrpc/index.html" \
+          --title "A2A over SLIMRPC Interop Dashboard"
       )
       has_report=true
     fi

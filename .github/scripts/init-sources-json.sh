@@ -2,18 +2,22 @@
 # Copyright AGNTCY Contributors (https://github.com/agntcy)
 # SPDX-License-Identifier: Apache-2.0
 #
-# Writes a default sources.json when missing under docs/.
+# Canonical sources.json for gh-pages docs/.
+#
+# - Creates the file when missing.
+# - Merges any new workflow entries into an existing file (by id), without
+#   overwriting last_run_* / published_report_* on entries that already exist.
+#
+# Add new publishable workflows here only.
 
 set -euo pipefail
 
 OUTPUT="${1:?sources.json path required}"
 
-if [[ -f "$OUTPUT" ]]; then
-  exit 0
-fi
+defaults="$(mktemp)"
+trap 'rm -f "$defaults"' EXIT
 
-mkdir -p "$(dirname "$OUTPUT")"
-cat > "$OUTPUT" <<'JSON'
+cat > "$defaults" <<'JSON'
 {
   "workflows": [
     {
@@ -21,6 +25,17 @@ cat > "$OUTPUT" <<'JSON'
       "name": "A2A interoperability",
       "workflow_file": "test-a2a.yaml",
       "report_path": "a2a/",
+      "last_run_id": "",
+      "last_run_conclusion": "",
+      "last_run_updated_at": "",
+      "published_report_run_id": "",
+      "published_report_updated_at": ""
+    },
+    {
+      "id": "test-a2a-slimrpc",
+      "name": "A2A SlimRPC interoperability",
+      "workflow_file": "test-a2a-slimrpc.yaml",
+      "report_path": "a2a-slimrpc/",
       "last_run_id": "",
       "last_run_conclusion": "",
       "last_run_updated_at": "",
@@ -75,4 +90,22 @@ cat > "$OUTPUT" <<'JSON'
 }
 JSON
 
-echo "initialized $OUTPUT"
+mkdir -p "$(dirname "$OUTPUT")"
+
+if [[ ! -f "$OUTPUT" ]]; then
+  cp "$defaults" "$OUTPUT"
+  echo "initialized $OUTPUT"
+  exit 0
+fi
+
+tmp="$(mktemp)"
+jq --slurpfile defaults "$defaults" '
+  ([.workflows[].id]) as $existing_ids |
+  .workflows += [
+    $defaults[0].workflows[] |
+    select(.id as $id | ($existing_ids | index($id) | not))
+  ]
+' "$OUTPUT" > "$tmp"
+mv "$tmp" "$OUTPUT"
+
+echo "synced workflow catalog into $OUTPUT"

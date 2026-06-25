@@ -252,6 +252,9 @@ HTML
       test-a2a)
         blurb="Cross-SDK interoperability results with merged JSON, XML, and HTML dashboard output."
         ;;
+      test-a2a-slimrpc)
+        blurb="Cross-language A2A-over-SlimRPC interoperability results with merged JSON, XML, and HTML dashboard output."
+        ;;
       test-slim-integration)
         blurb="KinD multicluster Slim topology integration tests with bindings examples."
         ;;
