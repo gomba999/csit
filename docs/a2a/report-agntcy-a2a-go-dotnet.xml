@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-  <testsuites tests="164" disabled="152" errors="0" failures="0" time="45.230101835">
-      <testsuite name="A2A Interop Suite" package="/home/runner/work/csit/csit/integrations/agntcy-a2a/tests" tests="164" disabled="0" skipped="152" errors="0" failures="0" time="45.230101835" timestamp="2026-06-25T12:43:55">
+  <testsuites tests="164" disabled="148" errors="0" failures="0" time="16.477772867">
+      <testsuite name="A2A Interop Suite" package="/home/runner/work/csit/csit/integrations/agntcy-a2a/tests" tests="164" disabled="0" skipped="148" errors="0" failures="0" time="16.477772867" timestamp="2026-06-25T12:43:55">
           <properties>
               <property name="SuiteSucceeded" value="true"></property>
               <property name="SuiteHasProgrammaticFocus" value="false"></property>
@@ -10,7 +10,7 @@
               <property name="SuiteComponentSemVerConstraints" value="[]"></property>
               <property name="RandomSeed" value="1782391435"></property>
               <property name="RandomizeAllSpecs" value="false"></property>
-              <property name="LabelFilter" value="suite-self-rust"></property>
+              <property name="LabelFilter" value="suite-go-dotnet"></property>
               <property name="SemVerFilter" value=""></property>
               <property name="FocusStrings" value=""></property>
               <property name="SkipStrings" value=""></property>
@@ -72,53 +72,53 @@
           <testcase name="[It] Rust+.NET rest Rust→.NET scenario-parity [suite-rust-dotnet, rest, rust-dotnet, behavior-parity]" classname="A2A Interop Suite" status="skipped" time="0">
               <skipped message="skipped"></skipped>
           </testcase>
-          <testcase name="[It] Go+.NET jsonrpc Go→.NET task-streaming [suite-go-dotnet, jsonrpc, go-dotnet, behavior-core, behavior-task-streaming]" classname="A2A Interop Suite" status="skipped" time="0">
-              <skipped message="skipped"></skipped>
+          <testcase name="[It] Go+.NET jsonrpc Go→.NET task-streaming [suite-go-dotnet, jsonrpc, go-dotnet, behavior-core, behavior-task-streaming]" classname="A2A Interop Suite" status="passed" time="12.748297954">
+              <system-err>&gt; Enter [BeforeAll] Go+.NET - /home/runner/work/csit/csit/integrations/agntcy-a2a/tests/interop_go_dotnet_test.go:76 @ 06/25/26 12:43:55.831&#xA;&lt; Exit [BeforeAll] Go+.NET - /home/runner/work/csit/csit/integrations/agntcy-a2a/tests/interop_go_dotnet_test.go:76 @ 06/25/26 12:44:08.431 (12.6s)&#xA;&gt; Enter [It] task-streaming - /home/runner/work/csit/csit/integrations/agntcy-a2a/tests/interop_behaviors_test.go:122 @ 06/25/26 12:44:08.431&#xA;&lt; Exit [It] task-streaming - /home/runner/work/csit/csit/integrations/agntcy-a2a/tests/interop_behaviors_test.go:122 @ 06/25/26 12:44:08.579 (148ms)&#xA;</system-err>
           </testcase>
-          <testcase name="[It] Go+.NET jsonrpc Go→.NET task-lifecycle [suite-go-dotnet, jsonrpc, go-dotnet, behavior-core, behavior-lifecycle]" classname="A2A Interop Suite" status="skipped" time="0">
-              <skipped message="skipped"></skipped>
+          <testcase name="[It] Go+.NET jsonrpc Go→.NET task-lifecycle [suite-go-dotnet, jsonrpc, go-dotnet, behavior-core, behavior-lifecycle]" classname="A2A Interop Suite" status="passed" time="0.026034485">
+              <system-err>&gt; Enter [It] task-lifecycle - /home/runner/work/csit/csit/integrations/agntcy-a2a/tests/interop_behaviors_test.go:122 @ 06/25/26 12:44:08.579&#xA;&lt; Exit [It] task-lifecycle - /home/runner/work/csit/csit/integrations/agntcy-a2a/tests/interop_behaviors_test.go:122 @ 06/25/26 12:44:08.605 (26ms)&#xA;</system-err>
           </testcase>
-          <testcase name="[It] Go+.NET jsonrpc Go→.NET push-config [suite-go-dotnet, jsonrpc, go-dotnet, behavior-core, behavior-push-config]" classname="A2A Interop Suite" status="skipped" time="0">
-              <skipped message="skipped"></skipped>
+          <testcase name="[It] Go+.NET jsonrpc Go→.NET push-config [suite-go-dotnet, jsonrpc, go-dotnet, behavior-core, behavior-push-config]" classname="A2A Interop Suite" status="passed" time="0.004948163">
+              <system-err>&gt; Enter [It] push-config - /home/runner/work/csit/csit/integrations/agntcy-a2a/tests/interop_behaviors_test.go:122 @ 06/25/26 12:44:08.605&#xA;&lt; Exit [It] push-config - /home/runner/work/csit/csit/integrations/agntcy-a2a/tests/interop_behaviors_test.go:122 @ 06/25/26 12:44:08.61 (5ms)&#xA;</system-err>
           </testcase>
-          <testcase name="[It] Go+.NET jsonrpc Go→.NET scenario-parity [suite-go-dotnet, jsonrpc, go-dotnet, behavior-parity]" classname="A2A Interop Suite" status="skipped" time="0">
-              <skipped message="skipped"></skipped>
+          <testcase name="[It] Go+.NET jsonrpc Go→.NET scenario-parity [suite-go-dotnet, jsonrpc, go-dotnet, behavior-parity]" classname="A2A Interop Suite" status="passed" time="0.345253843">
+              <system-err>&gt; Enter [It] scenario-parity - /home/runner/work/csit/csit/integrations/agntcy-a2a/tests/interop_behaviors_test.go:122 @ 06/25/26 12:44:08.61&#xA;&lt; Exit [It] scenario-parity - /home/runner/work/csit/csit/integrations/agntcy-a2a/tests/interop_behaviors_test.go:122 @ 06/25/26 12:44:08.956 (345ms)&#xA;</system-err>
           </testcase>
-          <testcase name="[It] Go+.NET jsonrpc .NET→Go task-streaming [suite-go-dotnet, jsonrpc, dotnet-go, behavior-core, behavior-task-streaming]" classname="A2A Interop Suite" status="skipped" time="0">
-              <skipped message="skipped"></skipped>
+          <testcase name="[It] Go+.NET jsonrpc .NET→Go task-streaming [suite-go-dotnet, jsonrpc, dotnet-go, behavior-core, behavior-task-streaming]" classname="A2A Interop Suite" status="passed" time="0.31685592">
+              <system-err>&gt; Enter [It] task-streaming - /home/runner/work/csit/csit/integrations/agntcy-a2a/tests/interop_behaviors_test.go:122 @ 06/25/26 12:44:08.956&#xA;&lt; Exit [It] task-streaming - /home/runner/work/csit/csit/integrations/agntcy-a2a/tests/interop_behaviors_test.go:122 @ 06/25/26 12:44:09.273 (317ms)&#xA;</system-err>
           </testcase>
-          <testcase name="[It] Go+.NET jsonrpc .NET→Go task-lifecycle [suite-go-dotnet, jsonrpc, dotnet-go, behavior-core, behavior-lifecycle]" classname="A2A Interop Suite" status="skipped" time="0">
-              <skipped message="skipped"></skipped>
+          <testcase name="[It] Go+.NET jsonrpc .NET→Go task-lifecycle [suite-go-dotnet, jsonrpc, dotnet-go, behavior-core, behavior-lifecycle]" classname="A2A Interop Suite" status="passed" time="0.28513272">
+              <system-err>&gt; Enter [It] task-lifecycle - /home/runner/work/csit/csit/integrations/agntcy-a2a/tests/interop_behaviors_test.go:122 @ 06/25/26 12:44:09.273&#xA;&lt; Exit [It] task-lifecycle - /home/runner/work/csit/csit/integrations/agntcy-a2a/tests/interop_behaviors_test.go:122 @ 06/25/26 12:44:09.558 (285ms)&#xA;</system-err>
           </testcase>
-          <testcase name="[It] Go+.NET jsonrpc .NET→Go push-config [suite-go-dotnet, jsonrpc, dotnet-go, behavior-core, behavior-push-config]" classname="A2A Interop Suite" status="skipped" time="0">
-              <skipped message="skipped"></skipped>
+          <testcase name="[It] Go+.NET jsonrpc .NET→Go push-config [suite-go-dotnet, jsonrpc, dotnet-go, behavior-core, behavior-push-config]" classname="A2A Interop Suite" status="passed" time="0.282526413">
+              <system-err>&gt; Enter [It] push-config - /home/runner/work/csit/csit/integrations/agntcy-a2a/tests/interop_behaviors_test.go:122 @ 06/25/26 12:44:09.558&#xA;&lt; Exit [It] push-config - /home/runner/work/csit/csit/integrations/agntcy-a2a/tests/interop_behaviors_test.go:122 @ 06/25/26 12:44:09.841 (283ms)&#xA;</system-err>
           </testcase>
-          <testcase name="[It] Go+.NET jsonrpc .NET→Go scenario-parity [suite-go-dotnet, jsonrpc, dotnet-go, behavior-parity]" classname="A2A Interop Suite" status="skipped" time="0">
-              <skipped message="skipped"></skipped>
+          <testcase name="[It] Go+.NET jsonrpc .NET→Go scenario-parity [suite-go-dotnet, jsonrpc, dotnet-go, behavior-parity]" classname="A2A Interop Suite" status="passed" time="0.603274497">
+              <system-err>&gt; Enter [It] scenario-parity - /home/runner/work/csit/csit/integrations/agntcy-a2a/tests/interop_behaviors_test.go:122 @ 06/25/26 12:44:09.841&#xA;&lt; Exit [It] scenario-parity - /home/runner/work/csit/csit/integrations/agntcy-a2a/tests/interop_behaviors_test.go:122 @ 06/25/26 12:44:10.444 (603ms)&#xA;</system-err>
           </testcase>
-          <testcase name="[It] Go+.NET rest Go→.NET task-streaming [suite-go-dotnet, rest, go-dotnet, behavior-core, behavior-task-streaming]" classname="A2A Interop Suite" status="skipped" time="0">
-              <skipped message="skipped"></skipped>
+          <testcase name="[It] Go+.NET rest Go→.NET task-streaming [suite-go-dotnet, rest, go-dotnet, behavior-core, behavior-task-streaming]" classname="A2A Interop Suite" status="passed" time="0.087895161">
+              <system-err>&gt; Enter [It] task-streaming - /home/runner/work/csit/csit/integrations/agntcy-a2a/tests/interop_behaviors_test.go:122 @ 06/25/26 12:44:10.444&#xA;&lt; Exit [It] task-streaming - /home/runner/work/csit/csit/integrations/agntcy-a2a/tests/interop_behaviors_test.go:122 @ 06/25/26 12:44:10.532 (88ms)&#xA;</system-err>
           </testcase>
-          <testcase name="[It] Go+.NET rest Go→.NET task-lifecycle [suite-go-dotnet, rest, go-dotnet, behavior-core, behavior-lifecycle]" classname="A2A Interop Suite" status="skipped" time="0">
-              <skipped message="skipped"></skipped>
+          <testcase name="[It] Go+.NET rest Go→.NET task-lifecycle [suite-go-dotnet, rest, go-dotnet, behavior-core, behavior-lifecycle]" classname="A2A Interop Suite" status="passed" time="0.029654466">
+              <system-err>&gt; Enter [It] task-lifecycle - /home/runner/work/csit/csit/integrations/agntcy-a2a/tests/interop_behaviors_test.go:122 @ 06/25/26 12:44:10.532&#xA;&lt; Exit [It] task-lifecycle - /home/runner/work/csit/csit/integrations/agntcy-a2a/tests/interop_behaviors_test.go:122 @ 06/25/26 12:44:10.561 (29ms)&#xA;</system-err>
           </testcase>
-          <testcase name="[It] Go+.NET rest Go→.NET push-config [suite-go-dotnet, rest, go-dotnet, behavior-core, behavior-push-config]" classname="A2A Interop Suite" status="skipped" time="0">
-              <skipped message="skipped"></skipped>
+          <testcase name="[It] Go+.NET rest Go→.NET push-config [suite-go-dotnet, rest, go-dotnet, behavior-core, behavior-push-config]" classname="A2A Interop Suite" status="passed" time="0.005792763">
+              <system-err>&gt; Enter [It] push-config - /home/runner/work/csit/csit/integrations/agntcy-a2a/tests/interop_behaviors_test.go:122 @ 06/25/26 12:44:10.562&#xA;&lt; Exit [It] push-config - /home/runner/work/csit/csit/integrations/agntcy-a2a/tests/interop_behaviors_test.go:122 @ 06/25/26 12:44:10.568 (6ms)&#xA;</system-err>
           </testcase>
-          <testcase name="[It] Go+.NET rest Go→.NET scenario-parity [suite-go-dotnet, rest, go-dotnet, behavior-parity]" classname="A2A Interop Suite" status="skipped" time="0">
-              <skipped message="skipped"></skipped>
+          <testcase name="[It] Go+.NET rest Go→.NET scenario-parity [suite-go-dotnet, rest, go-dotnet, behavior-parity]" classname="A2A Interop Suite" status="passed" time="0.343814321">
+              <system-err>&gt; Enter [It] scenario-parity - /home/runner/work/csit/csit/integrations/agntcy-a2a/tests/interop_behaviors_test.go:122 @ 06/25/26 12:44:10.568&#xA;&lt; Exit [It] scenario-parity - /home/runner/work/csit/csit/integrations/agntcy-a2a/tests/interop_behaviors_test.go:122 @ 06/25/26 12:44:10.912 (344ms)&#xA;</system-err>
           </testcase>
-          <testcase name="[It] Go+.NET rest .NET→Go task-streaming [suite-go-dotnet, rest, dotnet-go, behavior-core, behavior-task-streaming]" classname="A2A Interop Suite" status="skipped" time="0">
-              <skipped message="skipped"></skipped>
+          <testcase name="[It] Go+.NET rest .NET→Go task-streaming [suite-go-dotnet, rest, dotnet-go, behavior-core, behavior-task-streaming]" classname="A2A Interop Suite" status="passed" time="0.269430002">
+              <system-err>&gt; Enter [It] task-streaming - /home/runner/work/csit/csit/integrations/agntcy-a2a/tests/interop_behaviors_test.go:122 @ 06/25/26 12:44:10.912&#xA;&lt; Exit [It] task-streaming - /home/runner/work/csit/csit/integrations/agntcy-a2a/tests/interop_behaviors_test.go:122 @ 06/25/26 12:44:11.181 (269ms)&#xA;</system-err>
           </testcase>
-          <testcase name="[It] Go+.NET rest .NET→Go task-lifecycle [suite-go-dotnet, rest, dotnet-go, behavior-core, behavior-lifecycle]" classname="A2A Interop Suite" status="skipped" time="0">
-              <skipped message="skipped"></skipped>
+          <testcase name="[It] Go+.NET rest .NET→Go task-lifecycle [suite-go-dotnet, rest, dotnet-go, behavior-core, behavior-lifecycle]" classname="A2A Interop Suite" status="passed" time="0.269527119">
+              <system-err>&gt; Enter [It] task-lifecycle - /home/runner/work/csit/csit/integrations/agntcy-a2a/tests/interop_behaviors_test.go:122 @ 06/25/26 12:44:11.181&#xA;&lt; Exit [It] task-lifecycle - /home/runner/work/csit/csit/integrations/agntcy-a2a/tests/interop_behaviors_test.go:122 @ 06/25/26 12:44:11.451 (270ms)&#xA;</system-err>
           </testcase>
-          <testcase name="[It] Go+.NET rest .NET→Go push-config [suite-go-dotnet, rest, dotnet-go, behavior-core, behavior-push-config]" classname="A2A Interop Suite" status="skipped" time="0">
-              <skipped message="skipped"></skipped>
+          <testcase name="[It] Go+.NET rest .NET→Go push-config [suite-go-dotnet, rest, dotnet-go, behavior-core, behavior-push-config]" classname="A2A Interop Suite" status="passed" time="0.255604194">
+              <system-err>&gt; Enter [It] push-config - /home/runner/work/csit/csit/integrations/agntcy-a2a/tests/interop_behaviors_test.go:122 @ 06/25/26 12:44:11.451&#xA;&lt; Exit [It] push-config - /home/runner/work/csit/csit/integrations/agntcy-a2a/tests/interop_behaviors_test.go:122 @ 06/25/26 12:44:11.707 (256ms)&#xA;</system-err>
           </testcase>
-          <testcase name="[It] Go+.NET rest .NET→Go scenario-parity [suite-go-dotnet, rest, dotnet-go, behavior-parity]" classname="A2A Interop Suite" status="skipped" time="0">
-              <skipped message="skipped"></skipped>
+          <testcase name="[It] Go+.NET rest .NET→Go scenario-parity [suite-go-dotnet, rest, dotnet-go, behavior-parity]" classname="A2A Interop Suite" status="passed" time="0.598850847">
+              <system-err>&gt; Enter [It] scenario-parity - /home/runner/work/csit/csit/integrations/agntcy-a2a/tests/interop_behaviors_test.go:122 @ 06/25/26 12:44:11.707&#xA;&lt; Exit [It] scenario-parity - /home/runner/work/csit/csit/integrations/agntcy-a2a/tests/interop_behaviors_test.go:122 @ 06/25/26 12:44:12.283 (576ms)&#xA;&gt; Enter [AfterAll] Go+.NET - /home/runner/work/csit/csit/integrations/agntcy-a2a/tests/interop_go_dotnet_test.go:89 @ 06/25/26 12:44:12.283&#xA;&lt; Exit [AfterAll] Go+.NET - /home/runner/work/csit/csit/integrations/agntcy-a2a/tests/interop_go_dotnet_test.go:89 @ 06/25/26 12:44:12.306 (23ms)&#xA;</system-err>
           </testcase>
           <testcase name="[It] Rust+Python jsonrpc Rust→Python task-streaming [suite-rust-python, jsonrpc, rust-python, behavior-core, behavior-task-streaming]" classname="A2A Interop Suite" status="skipped" time="0">
               <skipped message="skipped"></skipped>
@@ -264,41 +264,41 @@
           <testcase name="[It] Go grpc Go→Go scenario-parity [suite-self-go, grpc, go-go, behavior-parity]" classname="A2A Interop Suite" status="skipped" time="0">
               <skipped message="skipped"></skipped>
           </testcase>
-          <testcase name="[It] Rust jsonrpc Rust→Rust task-streaming [suite-self-rust, jsonrpc, rust-rust, behavior-core, behavior-task-streaming]" classname="A2A Interop Suite" status="passed" time="43.899041268">
-              <system-err>&gt; Enter [BeforeAll] Rust - /home/runner/work/csit/csit/integrations/agntcy-a2a/tests/interop_self_rust_test.go:42 @ 06/25/26 12:43:55.548&#xA;&lt; Exit [BeforeAll] Rust - /home/runner/work/csit/csit/integrations/agntcy-a2a/tests/interop_self_rust_test.go:42 @ 06/25/26 12:44:39.398 (43.85s)&#xA;&gt; Enter [It] task-streaming - /home/runner/work/csit/csit/integrations/agntcy-a2a/tests/interop_behaviors_test.go:122 @ 06/25/26 12:44:39.398&#xA;&lt; Exit [It] task-streaming - /home/runner/work/csit/csit/integrations/agntcy-a2a/tests/interop_behaviors_test.go:122 @ 06/25/26 12:44:39.447 (49ms)&#xA;</system-err>
+          <testcase name="[It] Rust jsonrpc Rust→Rust task-streaming [suite-self-rust, jsonrpc, rust-rust, behavior-core, behavior-task-streaming]" classname="A2A Interop Suite" status="skipped" time="0">
+              <skipped message="skipped"></skipped>
           </testcase>
-          <testcase name="[It] Rust jsonrpc Rust→Rust task-lifecycle [suite-self-rust, jsonrpc, rust-rust, behavior-core, behavior-lifecycle]" classname="A2A Interop Suite" status="passed" time="0.013092061">
-              <system-err>&gt; Enter [It] task-lifecycle - /home/runner/work/csit/csit/integrations/agntcy-a2a/tests/interop_behaviors_test.go:122 @ 06/25/26 12:44:39.447&#xA;&lt; Exit [It] task-lifecycle - /home/runner/work/csit/csit/integrations/agntcy-a2a/tests/interop_behaviors_test.go:122 @ 06/25/26 12:44:39.46 (13ms)&#xA;</system-err>
+          <testcase name="[It] Rust jsonrpc Rust→Rust task-lifecycle [suite-self-rust, jsonrpc, rust-rust, behavior-core, behavior-lifecycle]" classname="A2A Interop Suite" status="skipped" time="0">
+              <skipped message="skipped"></skipped>
           </testcase>
-          <testcase name="[It] Rust jsonrpc Rust→Rust push-config [suite-self-rust, jsonrpc, rust-rust, behavior-core, behavior-push-config]" classname="A2A Interop Suite" status="passed" time="0.009842155">
-              <system-err>&gt; Enter [It] push-config - /home/runner/work/csit/csit/integrations/agntcy-a2a/tests/interop_behaviors_test.go:122 @ 06/25/26 12:44:39.46&#xA;&lt; Exit [It] push-config - /home/runner/work/csit/csit/integrations/agntcy-a2a/tests/interop_behaviors_test.go:122 @ 06/25/26 12:44:39.47 (10ms)&#xA;</system-err>
+          <testcase name="[It] Rust jsonrpc Rust→Rust push-config [suite-self-rust, jsonrpc, rust-rust, behavior-core, behavior-push-config]" classname="A2A Interop Suite" status="skipped" time="0">
+              <skipped message="skipped"></skipped>
           </testcase>
-          <testcase name="[It] Rust jsonrpc Rust→Rust scenario-parity [suite-self-rust, jsonrpc, rust-rust, behavior-parity]" classname="A2A Interop Suite" status="passed" time="0.370853511">
-              <system-err>&gt; Enter [It] scenario-parity - /home/runner/work/csit/csit/integrations/agntcy-a2a/tests/interop_behaviors_test.go:122 @ 06/25/26 12:44:39.47&#xA;&lt; Exit [It] scenario-parity - /home/runner/work/csit/csit/integrations/agntcy-a2a/tests/interop_behaviors_test.go:122 @ 06/25/26 12:44:39.841 (371ms)&#xA;</system-err>
+          <testcase name="[It] Rust jsonrpc Rust→Rust scenario-parity [suite-self-rust, jsonrpc, rust-rust, behavior-parity]" classname="A2A Interop Suite" status="skipped" time="0">
+              <skipped message="skipped"></skipped>
           </testcase>
-          <testcase name="[It] Rust rest Rust→Rust task-streaming [suite-self-rust, rest, rust-rust, behavior-core, behavior-task-streaming]" classname="A2A Interop Suite" status="passed" time="0.049098759">
-              <system-err>&gt; Enter [It] task-streaming - /home/runner/work/csit/csit/integrations/agntcy-a2a/tests/interop_behaviors_test.go:122 @ 06/25/26 12:44:39.841&#xA;&lt; Exit [It] task-streaming - /home/runner/work/csit/csit/integrations/agntcy-a2a/tests/interop_behaviors_test.go:122 @ 06/25/26 12:44:39.89 (49ms)&#xA;</system-err>
+          <testcase name="[It] Rust rest Rust→Rust task-streaming [suite-self-rust, rest, rust-rust, behavior-core, behavior-task-streaming]" classname="A2A Interop Suite" status="skipped" time="0">
+              <skipped message="skipped"></skipped>
           </testcase>
-          <testcase name="[It] Rust rest Rust→Rust task-lifecycle [suite-self-rust, rest, rust-rust, behavior-core, behavior-lifecycle]" classname="A2A Interop Suite" status="passed" time="0.012237131">
-              <system-err>&gt; Enter [It] task-lifecycle - /home/runner/work/csit/csit/integrations/agntcy-a2a/tests/interop_behaviors_test.go:122 @ 06/25/26 12:44:39.891&#xA;&lt; Exit [It] task-lifecycle - /home/runner/work/csit/csit/integrations/agntcy-a2a/tests/interop_behaviors_test.go:122 @ 06/25/26 12:44:39.903 (12ms)&#xA;</system-err>
+          <testcase name="[It] Rust rest Rust→Rust task-lifecycle [suite-self-rust, rest, rust-rust, behavior-core, behavior-lifecycle]" classname="A2A Interop Suite" status="skipped" time="0">
+              <skipped message="skipped"></skipped>
           </testcase>
-          <testcase name="[It] Rust rest Rust→Rust push-config [suite-self-rust, rest, rust-rust, behavior-core, behavior-push-config]" classname="A2A Interop Suite" status="passed" time="0.008937361">
-              <system-err>&gt; Enter [It] push-config - /home/runner/work/csit/csit/integrations/agntcy-a2a/tests/interop_behaviors_test.go:122 @ 06/25/26 12:44:39.903&#xA;&lt; Exit [It] push-config - /home/runner/work/csit/csit/integrations/agntcy-a2a/tests/interop_behaviors_test.go:122 @ 06/25/26 12:44:39.912 (9ms)&#xA;</system-err>
+          <testcase name="[It] Rust rest Rust→Rust push-config [suite-self-rust, rest, rust-rust, behavior-core, behavior-push-config]" classname="A2A Interop Suite" status="skipped" time="0">
+              <skipped message="skipped"></skipped>
           </testcase>
-          <testcase name="[It] Rust rest Rust→Rust scenario-parity [suite-self-rust, rest, rust-rust, behavior-parity]" classname="A2A Interop Suite" status="passed" time="0.370965832">
-              <system-err>&gt; Enter [It] scenario-parity - /home/runner/work/csit/csit/integrations/agntcy-a2a/tests/interop_behaviors_test.go:122 @ 06/25/26 12:44:39.912&#xA;&lt; Exit [It] scenario-parity - /home/runner/work/csit/csit/integrations/agntcy-a2a/tests/interop_behaviors_test.go:122 @ 06/25/26 12:44:40.283 (371ms)&#xA;</system-err>
+          <testcase name="[It] Rust rest Rust→Rust scenario-parity [suite-self-rust, rest, rust-rust, behavior-parity]" classname="A2A Interop Suite" status="skipped" time="0">
+              <skipped message="skipped"></skipped>
           </testcase>
-          <testcase name="[It] Rust grpc Rust→Rust task-streaming [suite-self-rust, grpc, rust-rust, behavior-core, behavior-task-streaming]" classname="A2A Interop Suite" status="passed" time="0.008181999">
-              <system-err>&gt; Enter [It] task-streaming - /home/runner/work/csit/csit/integrations/agntcy-a2a/tests/interop_behaviors_test.go:122 @ 06/25/26 12:44:40.283&#xA;&lt; Exit [It] task-streaming - /home/runner/work/csit/csit/integrations/agntcy-a2a/tests/interop_behaviors_test.go:122 @ 06/25/26 12:44:40.291 (8ms)&#xA;</system-err>
+          <testcase name="[It] Rust grpc Rust→Rust task-streaming [suite-self-rust, grpc, rust-rust, behavior-core, behavior-task-streaming]" classname="A2A Interop Suite" status="skipped" time="0">
+              <skipped message="skipped"></skipped>
           </testcase>
-          <testcase name="[It] Rust grpc Rust→Rust task-lifecycle [suite-self-rust, grpc, rust-rust, behavior-core, behavior-lifecycle]" classname="A2A Interop Suite" status="passed" time="0.014352312">
-              <system-err>&gt; Enter [It] task-lifecycle - /home/runner/work/csit/csit/integrations/agntcy-a2a/tests/interop_behaviors_test.go:122 @ 06/25/26 12:44:40.291&#xA;&lt; Exit [It] task-lifecycle - /home/runner/work/csit/csit/integrations/agntcy-a2a/tests/interop_behaviors_test.go:122 @ 06/25/26 12:44:40.306 (14ms)&#xA;</system-err>
+          <testcase name="[It] Rust grpc Rust→Rust task-lifecycle [suite-self-rust, grpc, rust-rust, behavior-core, behavior-lifecycle]" classname="A2A Interop Suite" status="skipped" time="0">
+              <skipped message="skipped"></skipped>
           </testcase>
-          <testcase name="[It] Rust grpc Rust→Rust push-config [suite-self-rust, grpc, rust-rust, behavior-core, behavior-push-config]" classname="A2A Interop Suite" status="passed" time="0.011322982">
-              <system-err>&gt; Enter [It] push-config - /home/runner/work/csit/csit/integrations/agntcy-a2a/tests/interop_behaviors_test.go:122 @ 06/25/26 12:44:40.306&#xA;&lt; Exit [It] push-config - /home/runner/work/csit/csit/integrations/agntcy-a2a/tests/interop_behaviors_test.go:122 @ 06/25/26 12:44:40.317 (11ms)&#xA;</system-err>
+          <testcase name="[It] Rust grpc Rust→Rust push-config [suite-self-rust, grpc, rust-rust, behavior-core, behavior-push-config]" classname="A2A Interop Suite" status="skipped" time="0">
+              <skipped message="skipped"></skipped>
           </testcase>
-          <testcase name="[It] Rust grpc Rust→Rust scenario-parity [suite-self-rust, grpc, rust-rust, behavior-parity]" classname="A2A Interop Suite" status="passed" time="0.458893697">
-              <system-err>&gt; Enter [It] scenario-parity - /home/runner/work/csit/csit/integrations/agntcy-a2a/tests/interop_behaviors_test.go:122 @ 06/25/26 12:44:40.317&#xA;&lt; Exit [It] scenario-parity - /home/runner/work/csit/csit/integrations/agntcy-a2a/tests/interop_behaviors_test.go:122 @ 06/25/26 12:44:40.649 (332ms)&#xA;&gt; Enter [AfterAll] Rust - /home/runner/work/csit/csit/integrations/agntcy-a2a/tests/interop_self_rust_test.go:51 @ 06/25/26 12:44:40.649&#xA;&lt; Exit [AfterAll] Rust - /home/runner/work/csit/csit/integrations/agntcy-a2a/tests/interop_self_rust_test.go:51 @ 06/25/26 12:44:40.776 (127ms)&#xA;</system-err>
+          <testcase name="[It] Rust grpc Rust→Rust scenario-parity [suite-self-rust, grpc, rust-rust, behavior-parity]" classname="A2A Interop Suite" status="skipped" time="0">
+              <skipped message="skipped"></skipped>
           </testcase>
           <testcase name="[It] .NET jsonrpc .NET→.NET task-streaming [suite-self-dotnet, jsonrpc, dotnet-dotnet, behavior-core, behavior-task-streaming]" classname="A2A Interop Suite" status="skipped" time="0">
               <skipped message="skipped"></skipped>
