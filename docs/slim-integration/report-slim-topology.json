@@ -12,11 +12,11 @@
       "TotalSpecs": 4,
       "SpecsThatWillRun": 1
     },
-    "StartTime": "2026-06-24T20:15:49.67248596Z",
-    "EndTime": "2026-06-24T20:16:51.33257051Z",
-    "RunTime": 61660084550,
+    "StartTime": "2026-06-25T12:46:18.507528265Z",
+    "EndTime": "2026-06-25T12:47:20.237884055Z",
+    "RunTime": 61730355789,
     "SuiteConfig": {
-      "RandomSeed": 1782332149,
+      "RandomSeed": 1782391578,
       "RandomizeAllSpecs": false,
       "FocusStrings": [
         "Slim topology test"
@@ -80,9 +80,9 @@
         "LeafNodeSemVerConstraints": [],
         "LeafNodeText": "Create SLIM client Pods",
         "State": "passed",
-        "StartTime": "2026-06-24T20:15:49.672591547Z",
-        "EndTime": "2026-06-24T20:16:51.332473139Z",
-        "RunTime": 61659881592,
+        "StartTime": "2026-06-25T12:46:18.507652589Z",
+        "EndTime": "2026-06-25T12:47:20.237787123Z",
+        "RunTime": 61730134525,
         "ParallelProcess": 1,
         "NumAttempts": 1,
         "MaxFlakeAttempts": 0,
@@ -96,7 +96,7 @@
             },
             "TimelineLocation": {
               "Order": 1,
-              "Time": "2026-06-24T20:15:49.672623927Z"
+              "Time": "2026-06-25T12:46:18.507681102Z"
             },
             "Message": "Agntcy slim topology test",
             "NodeType": "BeforeEach"
@@ -109,10 +109,10 @@
             },
             "TimelineLocation": {
               "Order": 3,
-              "Time": "2026-06-24T20:15:49.674477218Z"
+              "Time": "2026-06-25T12:46:18.509101917Z"
             },
             "Message": "Agntcy slim topology test",
-            "Duration": 1853301,
+            "Duration": 1420815,
             "NodeType": "BeforeEach"
           },
           {
@@ -123,7 +123,7 @@
             },
             "TimelineLocation": {
               "Order": 4,
-              "Time": "2026-06-24T20:15:49.674486005Z"
+              "Time": "2026-06-25T12:46:18.509103771Z"
             },
             "Message": "Slim topology test",
             "NodeType": "BeforeAll"
@@ -136,10 +136,10 @@
             },
             "TimelineLocation": {
               "Order": 6,
-              "Time": "2026-06-24T20:15:49.674536929Z"
+              "Time": "2026-06-25T12:46:18.509165937Z"
             },
             "Message": "Slim topology test",
-            "Duration": 50925,
+            "Duration": 62176,
             "NodeType": "BeforeAll"
           },
           {
@@ -150,7 +150,7 @@
             },
             "TimelineLocation": {
               "Order": 7,
-              "Time": "2026-06-24T20:15:49.674538683Z"
+              "Time": "2026-06-25T12:46:18.509168662Z"
             },
             "Message": "Create SLIM client Pods",
             "NodeType": "It"
@@ -163,7 +163,7 @@
             },
             "TimelineLocation": {
               "Order": 8,
-              "Time": "2026-06-24T20:16:51.307936862Z"
+              "Time": "2026-06-25T12:47:20.214666609Z"
             },
             "Message": "Waiting for alice to show received: hello message"
           },
@@ -175,7 +175,7 @@
             },
             "TimelineLocation": {
               "Order": 9,
-              "Time": "2026-06-24T20:16:51.307994279Z"
+              "Time": "2026-06-25T12:47:20.214730088Z"
             },
             "Message": "Waiting for bob to show Sent message hello - 10/10 message"
           },
@@ -187,10 +187,10 @@
             },
             "TimelineLocation": {
               "Order": 11,
-              "Time": "2026-06-24T20:16:51.312634295Z"
+              "Time": "2026-06-25T12:47:20.218624901Z"
             },
             "Message": "Create SLIM client Pods",
-            "Duration": 61638095612,
+            "Duration": 61709456239,
             "NodeType": "It"
           },
           {
@@ -201,7 +201,7 @@
             },
             "TimelineLocation": {
               "Order": 12,
-              "Time": "2026-06-24T20:16:51.312754549Z"
+              "Time": "2026-06-25T12:47:20.218635962Z"
             },
             "Message": "Slim topology test",
             "NodeType": "DeferCleanup (Each)"
@@ -214,10 +214,10 @@
             },
             "TimelineLocation": {
               "Order": 14,
-              "Time": "2026-06-24T20:16:51.319047686Z"
+              "Time": "2026-06-25T12:47:20.225345727Z"
             },
             "Message": "Slim topology test",
-            "Duration": 6293136,
+            "Duration": 6709766,
             "NodeType": "DeferCleanup (Each)"
           },
           {
@@ -228,7 +228,7 @@
             },
             "TimelineLocation": {
               "Order": 15,
-              "Time": "2026-06-24T20:16:51.319053356Z"
+              "Time": "2026-06-25T12:47:20.225350697Z"
             },
             "Message": "Slim topology test",
             "NodeType": "DeferCleanup (Each)"
@@ -241,10 +241,10 @@
             },
             "TimelineLocation": {
               "Order": 17,
-              "Time": "2026-06-24T20:16:51.319090936Z"
+              "Time": "2026-06-25T12:47:20.225396403Z"
             },
             "Message": "Slim topology test",
-            "Duration": 37580,
+            "Duration": 45706,
             "NodeType": "DeferCleanup (Each)"
           },
           {
@@ -255,7 +255,7 @@
             },
             "TimelineLocation": {
               "Order": 18,
-              "Time": "2026-06-24T20:16:51.319092549Z"
+              "Time": "2026-06-25T12:47:20.225398306Z"
             },
             "Message": "Slim topology test",
             "NodeType": "DeferCleanup (Each)"
@@ -268,10 +268,10 @@
             },
             "TimelineLocation": {
               "Order": 20,
-              "Time": "2026-06-24T20:16:51.322101832Z"
+              "Time": "2026-06-25T12:47:20.228083654Z"
             },
             "Message": "Slim topology test",
-            "Duration": 3009283,
+            "Duration": 2685348,
             "NodeType": "DeferCleanup (Each)"
           },
           {
@@ -282,7 +282,7 @@
             },
             "TimelineLocation": {
               "Order": 21,
-              "Time": "2026-06-24T20:16:51.322106851Z"
+              "Time": "2026-06-25T12:47:20.2280867Z"
             },
             "Message": "Slim topology test",
             "NodeType": "DeferCleanup (Each)"
@@ -295,10 +295,10 @@
             },
             "TimelineLocation": {
               "Order": 23,
-              "Time": "2026-06-24T20:16:51.325206953Z"
+              "Time": "2026-06-25T12:47:20.232726167Z"
             },
             "Message": "Slim topology test",
-            "Duration": 3100102,
+            "Duration": 4639487,
             "NodeType": "DeferCleanup (Each)"
           },
           {
@@ -309,7 +309,7 @@
             },
             "TimelineLocation": {
               "Order": 24,
-              "Time": "2026-06-24T20:16:51.325210069Z"
+              "Time": "2026-06-25T12:47:20.232728471Z"
             },
             "Message": "Slim topology test",
             "NodeType": "DeferCleanup (Each)"
@@ -322,10 +322,10 @@
             },
             "TimelineLocation": {
               "Order": 26,
-              "Time": "2026-06-24T20:16:51.325308252Z"
+              "Time": "2026-06-25T12:47:20.232745543Z"
             },
             "Message": "Slim topology test",
-            "Duration": 98193,
+            "Duration": 17061,
             "NodeType": "DeferCleanup (Each)"
           },
           {
@@ -336,7 +336,7 @@
             },
             "TimelineLocation": {
               "Order": 27,
-              "Time": "2026-06-24T20:16:51.325309885Z"
+              "Time": "2026-06-25T12:47:20.232746465Z"
             },
             "Message": "Slim topology test",
             "NodeType": "DeferCleanup (Each)"
@@ -349,57 +349,13 @@
             },
             "TimelineLocation": {
               "Order": 29,
-              "Time": "2026-06-24T20:16:51.33246829Z"
+              "Time": "2026-06-25T12:47:20.237783577Z"
             },
             "Message": "Slim topology test",
-            "Duration": 7158405,
+            "Duration": 5037112,
             "NodeType": "DeferCleanup (Each)"
           }
         ]
-      },
-      {
-        "ContainerHierarchyTexts": [
-          "Agntcy slim sanity test",
-          "Slim sanity test"
-        ],
-        "ContainerHierarchyLocations": [
-          {
-            "FileName": "/home/runner/work/csit/csit/integrations/agntcy-slim/tests/sanity_test.go",
-            "LineNumber": 20
-          },
-          {
-            "FileName": "/home/runner/work/csit/csit/integrations/agntcy-slim/tests/sanity_test.go",
-            "LineNumber": 54
-          }
-        ],
-        "ContainerHierarchyLabels": [
-          [],
-          []
-        ],
-        "ContainerHierarchySemVerConstraints": [
-          [],
-          []
-        ],
-        "ContainerHierarchyComponentSemVerConstraints": [
-          {},
-          {}
-        ],
-        "LeafNodeType": "It",
-        "LeafNodeLocation": {
-          "FileName": "/home/runner/work/csit/csit/integrations/agntcy-slim/tests/sanity_test.go",
-          "LineNumber": 133
-        },
-        "LeafNodeLabels": [],
-        "LeafNodeSemVerConstraints": [],
-        "LeafNodeText": "Create langchain agent Job",
-        "State": "skipped",
-        "StartTime": "2026-06-24T20:16:51.332537278Z",
-        "EndTime": "0001-01-01T00:00:00Z",
-        "RunTime": 0,
-        "ParallelProcess": 1,
-        "NumAttempts": 0,
-        "MaxFlakeAttempts": 0,
-        "MaxMustPassRepeatedly": 0
       },
       {
         "ContainerHierarchyTexts": [
@@ -437,7 +393,7 @@
         "LeafNodeSemVerConstraints": [],
         "LeafNodeText": "Create Llamaindex time agent Job",
         "State": "skipped",
-        "StartTime": "2026-06-24T20:16:51.332555652Z",
+        "StartTime": "2026-06-25T12:47:20.237843519Z",
         "EndTime": "0001-01-01T00:00:00Z",
         "RunTime": 0,
         "ParallelProcess": 1,
@@ -481,7 +437,51 @@
         "LeafNodeSemVerConstraints": [],
         "LeafNodeText": "Create Llamaindex time agent Job",
         "State": "skipped",
-        "StartTime": "2026-06-24T20:16:51.332565301Z",
+        "StartTime": "2026-06-25T12:47:20.237869598Z",
+        "EndTime": "0001-01-01T00:00:00Z",
+        "RunTime": 0,
+        "ParallelProcess": 1,
+        "NumAttempts": 0,
+        "MaxFlakeAttempts": 0,
+        "MaxMustPassRepeatedly": 0
+      },
+      {
+        "ContainerHierarchyTexts": [
+          "Agntcy slim sanity test",
+          "Slim sanity test"
+        ],
+        "ContainerHierarchyLocations": [
+          {
+            "FileName": "/home/runner/work/csit/csit/integrations/agntcy-slim/tests/sanity_test.go",
+            "LineNumber": 20
+          },
+          {
+            "FileName": "/home/runner/work/csit/csit/integrations/agntcy-slim/tests/sanity_test.go",
+            "LineNumber": 54
+          }
+        ],
+        "ContainerHierarchyLabels": [
+          [],
+          []
+        ],
+        "ContainerHierarchySemVerConstraints": [
+          [],
+          []
+        ],
+        "ContainerHierarchyComponentSemVerConstraints": [
+          {},
+          {}
+        ],
+        "LeafNodeType": "It",
+        "LeafNodeLocation": {
+          "FileName": "/home/runner/work/csit/csit/integrations/agntcy-slim/tests/sanity_test.go",
+          "LineNumber": 133
+        },
+        "LeafNodeLabels": [],
+        "LeafNodeSemVerConstraints": [],
+        "LeafNodeText": "Create langchain agent Job",
+        "State": "skipped",
+        "StartTime": "2026-06-25T12:47:20.237879467Z",
         "EndTime": "0001-01-01T00:00:00Z",
         "RunTime": 0,
         "ParallelProcess": 1,
