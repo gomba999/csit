@@ -27,11 +27,11 @@
       "name": "Slim benchmarks",
       "workflow_file": "test-slim-benchmarks.yaml",
       "report_path": "benchmarks/slim/",
-      "last_run_id": "28126535868",
+      "last_run_id": "28170700117",
       "last_run_conclusion": "success",
-      "last_run_updated_at": "2026-06-24T21:08:17Z",
-      "published_report_run_id": "28126535868",
-      "published_report_updated_at": "2026-06-24T21:08:17Z"
+      "last_run_updated_at": "2026-06-25T13:37:11Z",
+      "published_report_run_id": "28170700117",
+      "published_report_updated_at": "2026-06-25T13:37:11Z"
     },
     {
       "id": "test-slim-multicluster-private",
