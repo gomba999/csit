@@ -2,7 +2,9 @@
 # Copyright AGNTCY Contributors (https://github.com/agntcy)
 # SPDX-License-Identifier: Apache-2.0
 #
-# Builds docs/index.html from docs/sources.json. Suite reports live in docs subdirs.
+# Builds docs/index.html from docs/sources.json.
+# GitHub Pages serves from the gh-pages branch /docs folder; all paths below
+# are relative to that docs root.
 #
 # Required env:
 #   GITHUB_REPOSITORY   e.g. agntcy/csit
@@ -10,6 +12,9 @@
 # Optional env:
 #   SOURCES_JSON        path to sources.json (default: site/docs/sources.json)
 #   OUTPUT              landing page path (default: site/docs/index.html)
+#
+# New report paths (under docs/, from sources.json):
+#   a2a/, slim-integration/, benchmarks/slim/, slim-multicluster-private/, directory/
 
 set -euo pipefail
 
