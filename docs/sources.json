@@ -38,11 +38,11 @@
       "name": "Slim multicluster private",
       "workflow_file": "test-slim-multicluster-private.yaml",
       "report_path": "slim-multicluster-private/",
-      "last_run_id": "28126535897",
+      "last_run_id": "28170699965",
       "last_run_conclusion": "success",
-      "last_run_updated_at": "2026-06-24T20:18:12Z",
-      "published_report_run_id": "28126535897",
-      "published_report_updated_at": "2026-06-24T20:18:12Z"
+      "last_run_updated_at": "2026-06-25T12:50:26Z",
+      "published_report_run_id": "28170699965",
+      "published_report_updated_at": "2026-06-25T12:50:26Z"
     },
     {
       "id": "test-directory-conformance",
