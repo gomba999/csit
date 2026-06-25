@@ -1,0 +1,216 @@
+// Copyright AGNTCY Contributors (https://github.com/agntcy)
+// SPDX-License-Identifier: Apache-2.0
+
+// CSIT fixture: minimal A2A echo agent over SLIMRPC (v1) for cross-language interop.
+package main
+
+import (
+	"context"
+	"flag"
+	"fmt"
+	"io"
+	"iter"
+	"log/slog"
+	"os"
+	"strings"
+
+	"github.com/a2aproject/a2a-go/v2/a2a"
+	"github.com/a2aproject/a2a-go/v2/a2asrv"
+	a2aslimrpcv1 "github.com/agntcy/slim-a2a-go/a2aslimrpc/v1"
+	slim_bindings "github.com/agntcy/slim-bindings-go"
+)
+
+const readyMarker = "CSIT_SLIM_SERVER_READY"
+
+// Scenario sentinels: the probe sends one of these as the request text to drive a
+// non-echo server response. Must match the sentinels in cmd/probe/main.go and the
+// Python fixtures byte-for-byte (they travel over the wire).
+const (
+	sentinelMessageOnly       = "csit-scenario:message-only"
+	sentinelTaskFailure       = "csit-scenario:task-failure"
+	sentinelInputRequired     = "csit-scenario:input-required"
+	sentinelStreaming         = "csit-scenario:streaming"
+	sentinelCancel            = "csit-scenario:cancel"
+	sentinelMultiTurn         = "csit-scenario:multi-turn"
+	sentinelMultiTurnContinue = "csit-scenario:multi-turn-continue"
+)
+
+// multiTurnCompleteText is the artifact emitted on the multi-turn continuation turn.
+// Must match the Python fixtures and the harness's multiTurnCompleteMarker.
+const multiTurnCompleteText = "multi-turn complete"
+
+func main() {
+	endpoint := flag.String("slim-endpoint", envOr("SLIM_SERVER", "http://127.0.0.1:46357"), "SLIM node endpoint")
+	identity := flag.String("identity", "agntcy/a2a_csit_slim/server_go", "Full SLIM name ns/group/name")
+	secret := flag.String("secret", envOr("SLIM_SHARED_SECRET", "my_shared_secret_for_testing_purposes_only"), "Shared secret for SLIM app")
+	flag.Parse()
+
+	ns, group, name, err := parseIdentity(*identity)
+	if err != nil {
+		slog.Error("bad --identity", "err", err)
+		os.Exit(1)
+	}
+
+	slog.Info("starting CSIT slim echo server", "endpoint", *endpoint, "identity", *identity)
+
+	if err := run(*endpoint, *secret, ns, group, name); err != nil {
+		slog.Error("server error", "err", err)
+		os.Exit(1)
+	}
+}
+
+func envOr(key, def string) string {
+	if v := os.Getenv(key); v != "" {
+		return v
+	}
+	return def
+}
+
+func parseIdentity(s string) (ns, group, name string, err error) {
+	p := strings.Split(strings.Trim(s, "/"), "/")
+	if len(p) != 3 {
+		return "", "", "", fmt.Errorf("identity must be ns/group/name, got %q", s)
+	}
+	return p[0], p[1], p[2], nil
+}
+
+func run(endpoint, secret, ns, group, name string) error {
+	slim_bindings.InitializeWithDefaults()
+	svc := slim_bindings.GetGlobalService()
+
+	slimName := slim_bindings.NewName(ns, group, name)
+	app, err := svc.CreateAppWithSecret(slimName, secret)
+	if err != nil {
+		return fmt.Errorf("create app: %w", err)
+	}
+
+	connID, err := svc.Connect(slim_bindings.NewInsecureClientConfig(endpoint))
+	if err != nil {
+		return fmt.Errorf("connect: %w", err)
+	}
+
+	if err := app.Subscribe(slimName, &connID); err != nil {
+		return fmt.Errorf("subscribe: %w", err)
+	}
+
+	requestHandler := a2asrv.NewHandler(&echoExecutor{})
+	server := slim_bindings.ServerNewWithConnection(app, slimName, &connID)
+	a2aslimrpcv1.NewHandler(requestHandler).RegisterWith(server)
+
+	if _, err := io.WriteString(os.Stdout, readyMarker+"\n"); err != nil {
+		return err
+	}
+	return server.Serve()
+}
+
+type echoExecutor struct{}
+
+var _ a2asrv.AgentExecutor = (*echoExecutor)(nil)
+
+func (e *echoExecutor) Execute(_ context.Context, execCtx *a2asrv.ExecutorContext) iter.Seq2[a2a.Event, error] {
+	return func(yield func(a2a.Event, error) bool) {
+		switch extractText(execCtx.Message) {
+		case sentinelMessageOnly:
+			// Bare message response: no task is created.
+			yield(a2a.NewMessage(a2a.MessageRoleAgent, a2a.NewTextPart("go server message-only response")), nil)
+		case sentinelTaskFailure:
+			if execCtx.StoredTask == nil {
+				if !yield(a2a.NewSubmittedTask(execCtx, execCtx.Message), nil) {
+					return
+				}
+			}
+			yield(a2a.NewStatusUpdateEvent(execCtx, a2a.TaskStateFailed, nil), nil)
+		case sentinelInputRequired:
+			if execCtx.StoredTask == nil {
+				if !yield(a2a.NewSubmittedTask(execCtx, execCtx.Message), nil) {
+					return
+				}
+			}
+			yield(a2a.NewStatusUpdateEvent(execCtx, a2a.TaskStateInputRequired, nil), nil)
+		case sentinelMultiTurn:
+			// Multi-turn turn 1: pause for more input. The probe continues this same
+			// task (by ID) with sentinelMultiTurnContinue.
+			if execCtx.StoredTask == nil {
+				if !yield(a2a.NewSubmittedTask(execCtx, execCtx.Message), nil) {
+					return
+				}
+			}
+			yield(a2a.NewStatusUpdateEvent(execCtx, a2a.TaskStateInputRequired, nil), nil)
+		case sentinelMultiTurnContinue:
+			// Multi-turn turn 2: the task already exists (StoredTask set when the client
+			// references the same task ID), so emit the completion artifact and finish.
+			if execCtx.StoredTask == nil {
+				if !yield(a2a.NewSubmittedTask(execCtx, execCtx.Message), nil) {
+					return
+				}
+			}
+			if !yield(a2a.NewArtifactEvent(execCtx, a2a.NewTextPart(multiTurnCompleteText)), nil) {
+				return
+			}
+			yield(a2a.NewStatusUpdateEvent(execCtx, a2a.TaskStateCompleted, nil), nil)
+		case sentinelStreaming:
+			// Multiple status + artifact events so a streaming client observes a stream.
+			if execCtx.StoredTask == nil {
+				if !yield(a2a.NewSubmittedTask(execCtx, execCtx.Message), nil) {
+					return
+				}
+			}
+			if !yield(a2a.NewStatusUpdateEvent(execCtx, a2a.TaskStateWorking, nil), nil) {
+				return
+			}
+			if !yield(a2a.NewArtifactEvent(execCtx, a2a.NewTextPart("streaming chunk 1 ")), nil) {
+				return
+			}
+			if !yield(a2a.NewArtifactEvent(execCtx, a2a.NewTextPart("streaming chunk 2")), nil) {
+				return
+			}
+			yield(a2a.NewStatusUpdateEvent(execCtx, a2a.TaskStateCompleted, nil), nil)
+		case sentinelCancel:
+			// Leave the task in a non-terminal working state so CancelTask can cancel it.
+			if execCtx.StoredTask == nil {
+				if !yield(a2a.NewSubmittedTask(execCtx, execCtx.Message), nil) {
+					return
+				}
+			}
+			yield(a2a.NewStatusUpdateEvent(execCtx, a2a.TaskStateWorking, nil), nil)
+		default:
+			e.echo(execCtx, yield)
+		}
+	}
+}
+
+// echo runs the default round-trip behavior: submit, work, emit the input text as an
+// artifact, and complete.
+func (e *echoExecutor) echo(execCtx *a2asrv.ExecutorContext, yield func(a2a.Event, error) bool) {
+	if execCtx.StoredTask == nil {
+		if !yield(a2a.NewSubmittedTask(execCtx, execCtx.Message), nil) {
+			return
+		}
+	}
+	if !yield(a2a.NewStatusUpdateEvent(execCtx, a2a.TaskStateWorking, nil), nil) {
+		return
+	}
+	text := extractText(execCtx.Message)
+	if !yield(a2a.NewArtifactEvent(execCtx, a2a.NewTextPart(text)), nil) {
+		return
+	}
+	yield(a2a.NewStatusUpdateEvent(execCtx, a2a.TaskStateCompleted, nil), nil)
+}
+
+func (e *echoExecutor) Cancel(_ context.Context, execCtx *a2asrv.ExecutorContext) iter.Seq2[a2a.Event, error] {
+	return func(yield func(a2a.Event, error) bool) {
+		yield(a2a.NewStatusUpdateEvent(execCtx, a2a.TaskStateCanceled, nil), nil)
+	}
+}
+
+func extractText(msg *a2a.Message) string {
+	if msg == nil {
+		return ""
+	}
+	for _, part := range msg.Parts {
+		if text, ok := part.Content.(a2a.Text); ok {
+			return string(text)
+		}
+	}
+	return ""
+}
